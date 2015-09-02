@@ -6,14 +6,14 @@
  * @license [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
  */
 
-namespace app\filemanager\behaviors;
+namespace rkit\filemanager\behaviors;
 
 use Yii;
 use yii\base\Behavior;
 use yii\base\InvalidParamException;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
-use app\filemanager\models\File;
+use rkit\filemanager\models\File;
 
 class FileBehavior extends Behavior
 {

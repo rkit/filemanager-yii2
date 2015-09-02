@@ -6,14 +6,14 @@
  * @license [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
  */
 
-namespace app\filemanager\actions;
+namespace rkit\filemanager\actions;
 
 use Yii;
 use yii\base\Action;
 use yii\base\DynamicModel;
 use yii\base\InvalidParamException;
 use yii\web\UploadedFile;
-use app\filemanager\models\File;
+use rkit\filemanager\models\File;
 
 class UploadAction extends Action
 {

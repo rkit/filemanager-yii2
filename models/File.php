@@ -5,8 +5,8 @@
  * @copyright Copyright (c) 2015 Igor Romanov
  * @license [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
  */
- 
-namespace app\filemanager\models;
+
+namespace rkit\filemanager\models;
 
 use Yii;
 use yii\imagine;

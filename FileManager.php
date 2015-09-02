@@ -6,7 +6,7 @@
  * @license [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
  */
 
-namespace app\filemanager;
+namespace rkit\filemanager;
 
 use yii\base\Component;
 use yii\base\InvalidParamException;
