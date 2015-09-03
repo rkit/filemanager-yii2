@@ -20,9 +20,17 @@ use yii\base\InvalidParamException;
 class FileManager extends Component
 {
     /**
-     * @var string Path to upload.
+     * @var string Directory to upload files protected, not accessible from the web.
      */
-    public $uploadDir = 'uploads';
+    public $uploadDirProtected = '@runtime';
+    /**
+     * @var string Directory to upload files, accessible from the web.
+     */
+    public $uploadDirUnprotected = '@app/web';
+    /**
+     * @var string Public path to files.
+     */
+    public $publicPath = 'uploads';
     /**
      * @var array Type of owner in format: title:string => type:int
      */

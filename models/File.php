@@ -177,9 +177,13 @@ class File extends \yii\db\ActiveRecord
         }
     }
 
-    private static function getFullPathToDir($status)
+    private static function getUploadDir($status)
     {
-        return $status === self::STATUS_PROTECTED ? Yii::getAlias('@runtime') : Yii::getAlias('@app/web');
+        if ($status === self::STATUS_PROTECTED) {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
+        } else {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
+        }
     }
 
     /**
@@ -190,10 +194,10 @@ class File extends \yii\db\ActiveRecord
      */
     public function dirTmp($full = false)
     {
-        $uploadDir = $full ? self::getFullPathToDir($this->status) : '';
+        $uploadDir = $full ? self::getUploadDir($this->status) : '';
         return
             $uploadDir . '/' .
-            Yii::$app->fileManager->uploadDir . '/tmp/' .
+            Yii::$app->fileManager->publicPath . '/tmp/' .
             $this->owner_type . '/' .
             $this->getTimestampOfFile();
     }
@@ -209,10 +213,10 @@ class File extends \yii\db\ActiveRecord
         if ($this->tmp) {
             return $this->dirTmp($full);
         } else {
-            $uploadDir = $full ? self::getFullPathToDir($this->status) : '';
+            $uploadDir = $full ? self::getUploadDir($this->status) : '';
             return
                 $uploadDir . '/' .
-                Yii::$app->fileManager->uploadDir . '/' .
+                Yii::$app->fileManager->publicPath . '/' .
                 $this->owner_type . '/' .
                 $this->getTimestampOfFile() . '/' .
                 $this->owner_id . '/' .
@@ -562,7 +566,7 @@ class File extends \yii\db\ActiveRecord
         $replace = false,
         $status = self::STATUS_UNPROTECTED
     ) {
-        $fullPathToDir = self::getFullPathToDir($status);
+        $fullPathToDir = self::getUploadDir($status);
 
         if (!file_exists($fullPathToDir . $file)) {
             return $file;
