@@ -14,6 +14,7 @@ use yii\base\InvalidParamException;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 use rkit\filemanager\models\File;
+use rkit\filemanager\FileManager;
 
 class FileBehavior extends Behavior
 {
@@ -21,6 +22,12 @@ class FileBehavior extends Behavior
      * @var array
      */
     public $attributes = [];
+
+    public function init()
+    {
+        parent::init();
+        FileManager::registerTranslations();
+    }
 
     /**
      * @inheritdoc
@@ -189,13 +196,13 @@ class FileBehavior extends Behavior
     private function prepareMaxSizeDescription($rules)
     {
         $maxSize = Yii::$app->formatter->asShortSize($rules);
-        return Yii::t('app', 'Max. file size') . ': ' . $maxSize . ' ';
+        return Yii::t('filemanager-yii2', 'Max. file size') . ': ' . $maxSize . ' ';
     }
 
     private function prepareExtensionDescription($rules)
     {
         $extensions = strtoupper(implode(', ', $rules));
-        return Yii::t('app', 'File types') . ': ' . $extensions . ' ';
+        return Yii::t('filemanager-yii2', 'File types') . ': ' . $extensions . ' ';
     }
 
     private function prepareImageSizeDescription($rules)
@@ -207,15 +214,15 @@ class FileBehavior extends Behavior
 
         $text = '';
         if (count($rules) == 4 && ($maxWidth == $minWidth && $maxHeight == $minHeight)) {
-            $text .= Yii::t('app', 'Image size') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
+            $text .= Yii::t('filemanager-yii2', 'Image size') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
         } elseif (count($rules) == 4) {
-            $text .= Yii::t('app', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
-            $text .= Yii::t('app', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
+            $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
+            $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
         } elseif ((count($rules) == 2 || count($rules) == 3) && $minWidth && $minHeight) {
-            $text .= Yii::t('app', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
+            $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
             $text .= $this->prepareImageFullSizeDescription($rules, ['minWidth', 'minHeight']);
         } elseif ((count($rules) == 2 || count($rules) == 3) && $maxWidth && $maxHeight) {
-            $text .= Yii::t('app', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
+            $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
             $text .= $this->prepareImageFullSizeDescription($rules, ['maxWidth', 'maxHeight']);
         } else {
             $text .= $this->prepareImageFullSizeDescription($rules);
@@ -237,16 +244,16 @@ class FileBehavior extends Behavior
         foreach ($rules as $rule => $value) {
             switch ($rule) {
                 case 'minWidth':
-                    $text .= Yii::t('app', 'Min. width') . ' ' . $value . 'px;';
+                    $text .= Yii::t('filemanager-yii2', 'Min. width') . ' ' . $value . 'px;';
                     break;
                 case 'minHeight':
-                    $text .= Yii::t('app', 'Min. height') . ' ' . $value . 'px;';
+                    $text .= Yii::t('filemanager-yii2', 'Min. height') . ' ' . $value . 'px;';
                     break;
                 case 'maxWidth':
-                    $text .= Yii::t('app', 'Max. width') . ' ' . $value . 'px;';
+                    $text .= Yii::t('filemanager-yii2', 'Max. width') . ' ' . $value . 'px;';
                     break;
                 case 'maxHeight':
-                    $text .= Yii::t('app', 'Max. height') . ' ' . $value . 'px;';
+                    $text .= Yii::t('filemanager-yii2', 'Max. height') . ' ' . $value . 'px;';
                     break;
             }
         }

@@ -92,7 +92,9 @@ class UploadAction extends Action
         $file = UploadedFile::getInstanceByName($this->inputName);
 
         if (!$file) {
-            return $this->controller->response(['error' => Yii::t('app', 'An error occured, try again later…')]);
+            return $this->controller->response(
+                ['error' => Yii::t('filemanager-yii2', 'An error occured, try again later…')]
+            );
         }
 
         $model = new DynamicModel(compact('file'));
@@ -135,7 +137,7 @@ class UploadAction extends Action
                 return $this->controller->response(['id' => $file->id, $this->resultName => $file->path()]);
             }
         } else {
-            return $this->controller->response(['error' => Yii::t('app', 'Error saving file')]);
+            return $this->controller->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]);
         }
     }
 }

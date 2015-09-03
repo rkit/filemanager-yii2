@@ -62,18 +62,18 @@ class File extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => Yii::t('app', 'ID'),
-            'user_id' => Yii::t('app', 'User'),
-            'owner_id' => Yii::t('app', 'Owner'),
-            'owner_type' => Yii::t('app', 'Owner type'),
-            'title' => Yii::t('app', 'Title'),
-            'name' => Yii::t('app', 'Name'),
-            'size' => Yii::t('app', 'Size'),
-            'mime' => Yii::t('app', 'Mime'),
-            'date_create' => Yii::t('app', 'Date create'),
-            'date_update' => Yii::t('app', 'Date update'),
-            'ip' => Yii::t('app', 'IP'),
-            'position' => Yii::t('app', 'Position'),
+            'id' => Yii::t('filemanager-yii2', 'ID'),
+            'user_id' => Yii::t('filemanager-yii2', 'User'),
+            'owner_id' => Yii::t('filemanager-yii2', 'Owner'),
+            'owner_type' => Yii::t('filemanager-yii2', 'Owner type'),
+            'title' => Yii::t('filemanager-yii2', 'Title'),
+            'name' => Yii::t('filemanager-yii2', 'Name'),
+            'size' => Yii::t('filemanager-yii2', 'Size'),
+            'mime' => Yii::t('filemanager-yii2', 'Mime'),
+            'date_create' => Yii::t('filemanager-yii2', 'Date create'),
+            'date_update' => Yii::t('filemanager-yii2', 'Date update'),
+            'ip' => Yii::t('filemanager-yii2', 'IP'),
+            'position' => Yii::t('filemanager-yii2', 'Position'),
         ];
     }
 
@@ -131,8 +131,8 @@ class File extends \yii\db\ActiveRecord
     public static function getStatuses()
     {
         return [
-            self::STATUS_UNPROTECTED => Yii::t('app', 'Unprotected, access from the web'),
-            self::STATUS_PROTECTED  => Yii::t('app', 'Protected'),
+            self::STATUS_UNPROTECTED => Yii::t('filemanager-yii2', 'Unprotected, access from the web'),
+            self::STATUS_PROTECTED  => Yii::t('filemanager-yii2', 'Protected'),
         ];
     }
 

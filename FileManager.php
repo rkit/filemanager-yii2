@@ -36,6 +36,12 @@ class FileManager extends Component
      */
     public $ownerTypes = [];
 
+    public function init()
+    {
+        parent::init();
+        self::registerTranslations();
+    }
+
     public function getOwnerType($ownerType)
     {
         if (!isset($this->ownerTypes[$ownerType])) {
@@ -43,5 +49,19 @@ class FileManager extends Component
         }
 
         return $this->ownerTypes[$ownerType];
+    }
+
+    /**
+     * Registers translator.
+     */
+    public static function registerTranslations()
+    {
+        if (!isset(\Yii::$app->i18n->translations['filemanager-yii2'])) {
+            \Yii::$app->i18n->translations['filemanager-yii2'] = [
+                'class' => 'yii\i18n\PhpMessageSource',
+                'basePath' => '@vendor/rkit/filemanager-yii2/messages',
+                'sourceLanguage' => 'en',
+            ];
+        }
     }
 }
