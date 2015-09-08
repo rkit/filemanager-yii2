@@ -66,9 +66,7 @@ class FileBehavior extends Behavior
 
             if (isset($data['savePath']) && $data['savePath'] === true) {
                 $this->owner->updateAttributes([$attribute => $this->getFilePath($file, $data['oldValue'])]);
-            }
-
-            if (isset($data['saveFileId']) && $data['saveFileId'] === true) {
+            } elseif (isset($data['saveFileId']) && $data['saveFileId'] === true) {
                 $this->owner->updateAttributes([$attribute => $this->getFileId($file, $data['oldValue'])]);
             }
         }
@@ -151,7 +149,7 @@ class FileBehavior extends Behavior
                     unset($newFiles[$file->id]);
                     continue;
                 }
-                if (!$this->bindMultipleFile($file, $ownerId, $files, $newFiles)) {
+                if (!$this->bindMultipleFile($file, $ownerId, $files)) {
                     return false;
                 }
             }
@@ -345,15 +343,15 @@ class FileBehavior extends Behavior
         $minHeight = ArrayHelper::getValue($rules, 'minHeight');
 
         $text = '';
-        if (count($rules) == 4 && ($maxWidth == $minWidth && $maxHeight == $minHeight)) {
+        if ($this->imageWithStrictSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Image size') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-        } elseif (count($rules) == 4) {
+        } elseif ($this->imageWithMinAndMaxSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
             $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-        } elseif ((count($rules) == 2 || count($rules) == 3) && $minWidth && $minHeight) {
+        } elseif ($this->imageWithMinSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
             $text .= $this->prepareImageFullSizeDescription($rules, ['minWidth', 'minHeight']);
-        } elseif ((count($rules) == 2 || count($rules) == 3) && $maxWidth && $maxHeight) {
+        } elseif ($this->imageWithMaxSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
             $text .= $this->prepareImageFullSizeDescription($rules, ['maxWidth', 'maxHeight']);
         } else {
@@ -364,6 +362,37 @@ class FileBehavior extends Behavior
         $text = str_replace(';', '<br>', $text);
 
         return $text;
+    }
+
+    private function imageWithStrictSize($rules)
+    {
+        $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
+        $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
+        $maxHeight = ArrayHelper::getValue($rules, 'maxHeight');
+        $minHeight = ArrayHelper::getValue($rules, 'minHeight');
+
+        return count($rules) == 4 && ($maxWidth == $minWidth && $maxHeight == $minHeight);
+    }
+
+    private function imageWithMinAndMaxSize($rules)
+    {
+        return count($rules) == 4;
+    }
+
+    private function imageWithMinSize($rules)
+    {
+        $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
+        $minHeight = ArrayHelper::getValue($rules, 'minHeight');
+
+        return (count($rules) == 2 || count($rules) == 3) && $minWidth && $minHeight;
+    }
+
+    private function imageWithMaxSize($rules)
+    {
+        $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
+        $maxHeight = ArrayHelper::getValue($rules, 'maxHeight');
+
+        return (count($rules) == 2 || count($rules) == 3) && $maxWidth && $maxHeight;
     }
 
     private function prepareImageFullSizeDescription($rules, $exclude = [])

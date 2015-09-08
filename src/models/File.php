@@ -155,7 +155,7 @@ class File extends \yii\db\ActiveRecord
     }
 
 
-    public function getTimestampOfFile()
+    public function getDateOfFile()
     {
         if ($this->isNewRecord || is_object($this->date_create)) {
             return date('Ym');
@@ -180,10 +180,9 @@ class File extends \yii\db\ActiveRecord
     {
         return
             ($full ? $this->getUploadDir() : '') . '/' .
-            Yii::$app->fileManager->publicPath . '/' .
-            'tmp/' .
+            Yii::$app->fileManager->publicPath . '/tmp/' .
             $this->owner_type . '/' .
-            $this->getTimestampOfFile();
+            $this->getDateOfFile();
     }
 
     /**
@@ -201,7 +200,7 @@ class File extends \yii\db\ActiveRecord
                 ($full ? $this->getUploadDir() : '') . '/' .
                 Yii::$app->fileManager->publicPath . '/' .
                 $this->owner_type . '/' .
-                $this->getTimestampOfFile() . '/' .
+                $this->getDateOfFile() . '/' .
                 $this->owner_id . '/' .
                 $this->id;
         }
@@ -397,7 +396,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * Check owner.
      *
-     * @param int $ownerId
+     * @param int $ownerId
      * @param int $ownerType
      * @return bool
      */
@@ -407,9 +406,7 @@ class File extends \yii\db\ActiveRecord
         $ownerId = $this->owner_id === $ownerId;
         $user = $this->user_id === Yii::$app->user->id || $this->user_id === 0;
 
-        return
-            (!$this->tmp && $ownerType && $ownerId) ||
-            ($this->tmp && $ownerType && $user);
+        return (!$this->tmp && $ownerType && $ownerId) || ($this->tmp && $ownerType && $user);
     }
 
     /**
