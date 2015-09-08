@@ -14,20 +14,6 @@ class UploadTest extends \PHPUnit_Framework_TestCase
 {
     protected function setUp()
     {
-        $this->prepareFiles();
-    }
-
-    protected function tearDown()
-    {
-        unset($_FILES);
-        File::deleteAll();
-        News::deleteAll();
-        FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirProtected);
-        FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirUnprotected);
-    }
-
-    protected function prepareFiles()
-    {
         $origFile = Yii::getAlias('@tests/data/files/300x300.png');
         $copyFile = Yii::getAlias('@tests/data/files/300x300_copy.png');
         copy($origFile, $copyFile);
@@ -41,6 +27,18 @@ class UploadTest extends \PHPUnit_Framework_TestCase
                 'error' => 0
             ]
         ];
+    }
+
+    protected function tearDown()
+    {
+        File::deleteAll();
+        News::deleteAll();
+
+        FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirProtected);
+        FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirUnprotected);
+
+        @unlink(Yii::getAlias('@tests/data/files/300x300_copy.png'));
+        unset($_FILES);
     }
 
     /**
@@ -274,7 +272,29 @@ class UploadTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $files);
     }
 
-    // @todo test ResizeAferUpload
-    // @todo test ProtectedUpload
-    // @todo test Resize
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage The "modelName" attribute must be set.
+     */
+    public function testEmptyModelName()
+    {
+        $response = $this->runAction($config = [
+            'attribute' => 'preview',
+            'inputName' => 'file',
+            'type' => 'image'
+        ]);
+    }
+
+    public function testWrongInputName()
+    {
+        $response = $this->runAction($config = [
+            'modelName' => News::className(),
+            'attribute' => 'preview',
+            'inputName' => 'fail',
+            'type' => 'image'
+        ]);
+
+        $this->assertCount(1, $response);
+        $this->assertTrue(isset($response['error']));
+    }
 }

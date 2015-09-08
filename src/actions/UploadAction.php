@@ -137,7 +137,7 @@ class UploadAction extends Action
                 return $this->response(['id' => $file->id, $this->resultName => $file->path()]);
             }
         } else {
-            return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]);
+            return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]); // @codeCoverageIgnore
         }
     }
 
@@ -149,7 +149,7 @@ class UploadAction extends Action
     public function response($data)
     {
         if (!Yii::$app instanceof \yii\console\Application) {
-            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON; // @codeCoverageIgnore
         }
         return $data;
     }
