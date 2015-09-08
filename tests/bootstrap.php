@@ -21,9 +21,9 @@ return new \yii\console\Application([
         ],
         'db' => [
             'class'             => 'yii\db\Connection',
-            'dsn'               => 'mysql:host=192.168.59.103;dbname=filemanager_yii2_tests',
+            'dsn'               => 'mysql:host=127.0.0.1;dbname=filemanager_yii2_tests',
             'username'          => 'root',
-            'password'          => 'gzkPrcnyMYAta6VADAoYxM9KojGryF',
+            'password'          => '',
             'emulatePrepare'    => true,
             'charset'           => 'utf8',
             'enableSchemaCache' => false
