@@ -1,12 +1,12 @@
 <?php
 
-namespace rkit\filemanager\tests;
+namespace tests;
 
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
-use rkit\filemanager\tests\data\Controller;
-use rkit\filemanager\tests\data\News;
+use tests\data\Controller;
+use tests\data\News;
 use rkit\filemanager\actions\UploadAction;
 use rkit\filemanager\models\File;
 

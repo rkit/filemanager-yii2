@@ -16,17 +16,17 @@ return new \yii\console\Application([
     'basePath' => __DIR__,
     'components' => [
         'user' => [
-            'class' => 'rkit\filemanager\tests\data\User',
+            'class' => 'tests\data\User',
             'id' => 0
         ],
         'db' => [
-            'class'                 => 'yii\db\Connection',
-            'dsn'                   => 'mysql:host=192.168.59.103;dbname=filemanager_yii2_tests',
-            'username'              => 'root',
-            'password'              => 'gzkPrcnyMYAta6VADAoYxM9KojGryF',
-            'emulatePrepare'        => true,
-            'charset'               => 'utf8',
-            'enableSchemaCache'     => false
+            'class'             => 'yii\db\Connection',
+            'dsn'               => 'mysql:host=192.168.59.103;dbname=filemanager_yii2_tests',
+            'username'          => 'root',
+            'password'          => 'gzkPrcnyMYAta6VADAoYxM9KojGryF',
+            'emulatePrepare'    => true,
+            'charset'           => 'utf8',
+            'enableSchemaCache' => false
         ],
         'fileManager' => [
             'class' => 'rkit\filemanager\FileManager',

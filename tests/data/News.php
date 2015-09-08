@@ -1,6 +1,6 @@
 <?php
 
-namespace rkit\filemanager\tests\data;
+namespace tests\data;
 
 use Yii;
 
