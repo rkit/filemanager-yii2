@@ -284,7 +284,7 @@ class File extends \yii\db\ActiveRecord
     public static function createFromUploader(
         $data,
         $ownerId = null,
-        $ownerType,
+        $ownerType = -1,
         $saveAfterUpload = false,
         $status = self::STATUS_UNPROTECTED
     ) {
@@ -300,7 +300,11 @@ class File extends \yii\db\ActiveRecord
             'status' => $status
         ]);
 
-        return $file->moveUploadedFile($data->tempName, $saveAfterUpload);
+        if (!Yii::$app instanceof \yii\console\Application) {
+            return $file->moveUploadedFile($data->tempName, $saveAfterUpload);
+        } else {
+            return $file->renameUploadedFile($data->tempName, $saveAfterUpload);
+        }
     }
 
     /**
@@ -315,7 +319,7 @@ class File extends \yii\db\ActiveRecord
     public static function createFromUrl(
         $url,
         $ownerId = null,
-        $ownerType,
+        $ownerType = -1,
         $saveAfterUpload = false,
         $status = self::STATUS_UNPROTECTED
     ) {
