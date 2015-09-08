@@ -22,5 +22,12 @@
         "psr-4": {
             "rkit\\filemanager\\": ""
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8",
+        "phpunit/dbunit": "^1.4"
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit"
     }
 }

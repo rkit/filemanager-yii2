@@ -7,7 +7,6 @@
     <exclude-pattern>*/migrations/*</exclude-pattern>
     <exclude-pattern>*/messages/*</exclude-pattern>
     <exclude-pattern>*/mail/*</exclude-pattern>
-    <exclude-pattern>*/tests/*</exclude-pattern>
 
     <rule ref="PSR2">
         <exclude name="PSR1.Classes.ClassDeclaration"/>
