@@ -10,7 +10,6 @@ namespace rkit\filemanager\behaviors;
 
 use Yii;
 use yii\base\Behavior;
-use yii\base\InvalidParamException;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 use rkit\filemanager\models\File;

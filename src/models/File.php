@@ -10,7 +10,6 @@ namespace rkit\filemanager\models;
 
 use Yii;
 use yii\behaviors\TimestampBehavior;
-use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 
 /**
@@ -27,6 +26,7 @@ use yii\helpers\FileHelper;
  * @property string $date_create
  * @property string $date_update
  * @property integer $ip
+ * @property integer $tmp
  * @property integer $position
  * @property integer $status
  */
@@ -113,7 +113,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * Get all statuses.
      *
-     * @return array
+     * @return string[]
      */
     public static function getStatuses()
     {
@@ -259,6 +259,7 @@ class File extends \yii\db\ActiveRecord
      * Create file from uploader (UploadedFile).
      *
      * @param UploadedFile $data
+     * @param int $ownerId
      * @param int $ownerType
      * @param bool $saveAfterUpload Save the file immediately after upload.
      * @param int $status Status a file. Unprotected or Protected.
@@ -294,6 +295,7 @@ class File extends \yii\db\ActiveRecord
      * Create file from Url
      *
      * @param string $url
+     * @param int $ownerId
      * @param int $ownerType
      * @param bool $saveAfterUpload Save the file immediately after upload.
      * @param int $status Status a file. Unprotected or Protected.
@@ -328,6 +330,10 @@ class File extends \yii\db\ActiveRecord
         return false;
     }
 
+    /**
+     * @param string $tempFile
+     * @param bool $saveAfterUpload
+     */
     private function moveUploadedFile($tempFile, $saveAfterUpload)
     {
         if (FileHelper::createDirectory($this->dir(true))) {
@@ -348,6 +354,10 @@ class File extends \yii\db\ActiveRecord
         return false;
     }
 
+    /**
+     * @param string $tempFile
+     * @param bool $saveAfterUpload
+     */
     private function renameUploadedFile($tempFile, $saveAfterUpload)
     {
         if (FileHelper::createDirectory($this->dir(true))) {

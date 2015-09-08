@@ -14,7 +14,6 @@ use yii\base\InvalidParamException;
 use yii\imagine;
 use Imagine\Image\Box;
 use Imagine\Image\ImageInterface;
-use Imagine\Image\ManipulatorInterface;
 use rkit\filemanager\models\File;
 
 /**
