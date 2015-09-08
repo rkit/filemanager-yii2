@@ -92,7 +92,7 @@ class UploadAction extends Action
         $file = UploadedFile::getInstanceByName($this->inputName);
 
         if (!$file) {
-            return $this->controller->response(
+            return $this->response(
                 ['error' => Yii::t('filemanager-yii2', 'An error occured, try again later…')]
             );
         }
@@ -101,7 +101,7 @@ class UploadAction extends Action
         $model->addRule('file', $this->type, $this->rules)->validate();
 
         if ($model->hasErrors()) {
-            return $this->controller->response(['error' => $model->getFirstError('file')]);
+            return $this->response(['error' => $model->getFirstError('file')]);
         } else {
             return $this->upload($file);
         }
@@ -126,18 +126,31 @@ class UploadAction extends Action
                 );
             }
             if ($this->multiple) {
-                return $this->controller->response(
-                    $this->controller->renderPartial($this->template, [
+                return $this->response(
+                    $this->controller->renderFile($this->template, [
                         'file' => $file,
                         'model' => $this->model,
                         'attribute' => $this->attribute
                     ])
                 );
             } else {
-                return $this->controller->response(['id' => $file->id, $this->resultName => $file->path()]);
+                return $this->response(['id' => $file->id, $this->resultName => $file->path()]);
             }
         } else {
-            return $this->controller->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]);
+            return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]);
         }
+    }
+
+    /**
+     * JSON Response.
+     *
+     * @param mixed $data
+     */
+    public function response($data)
+    {
+        if (!Yii::$app instanceof \yii\console\Application) {
+            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        }
+        return $data;
     }
 }
