@@ -75,7 +75,7 @@ class UploadTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($file->owner_type === $ownerType);
     }
 
-    public function testUpload()
+    protected function baseUpload()
     {
         $response = $this->runAction($config = [
             'modelName' => News::className(),
@@ -101,6 +101,56 @@ class UploadTest extends \PHPUnit_Framework_TestCase
         $file = File::find($file->id)->one();
         $this->checkUnprotectedNotTmpFile($file, $model->id, Yii::$app->fileManager->getOwnerType('news.preview'));
         $this->assertContains($model->preview, $file->path());
+
+        return ['file' => $file, 'model' => $model];
+    }
+
+    protected function baseGalleryUpload()
+    {
+        $response = $this->runAction($config = [
+            'modelName' => News::className(),
+            'attribute' => 'gallery',
+            'inputName' => 'file',
+            'type' => 'image',
+            'multiple' => true,
+            'template' => Yii::getAlias('@tests/data/templates/gallery-item.php')
+        ]);
+
+        preg_match('/News\[gallery\]\[id(.*?)\]/', $response, $matches);
+
+        $this->assertTrue(is_string($response));
+        $this->assertTrue(isset($matches[1]));
+        $this->assertTrue(is_numeric($matches[1]));
+
+        $file = File::find($matches[1])->one();
+        $this->checkUnprotectedTmpFile($file, -1, Yii::$app->fileManager->getOwnerType('news.gallery'));
+
+        $model = new News([
+            'title' => 'test',
+            'gallery' => ['id' . $file->id => 'test']
+        ]);
+
+        $this->assertTrue($model->save());
+
+        $files = $model->getFiles('gallery');
+
+        $this->assertCount(1, $files);
+
+        foreach ($files as $file) {
+            $this->checkUnprotectedNotTmpFile($file, $model->id, Yii::$app->fileManager->getOwnerType('news.gallery'));
+        }
+
+        return ['files' => $files, 'model' => $model];
+    }
+
+    public function testUpload()
+    {
+        $this->baseUpload();
+    }
+
+    public function testGalleryUpload()
+    {
+        $this->baseGalleryUpload();
     }
 
     public function testSaveAfterUpload()
@@ -183,40 +233,45 @@ class UploadTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($model->photo_id === $file->id);
     }
 
-    public function testGallery()
+    public function testDeleteFile()
     {
-        $response = $this->runAction($config = [
-            'modelName' => News::className(),
-            'attribute' => 'gallery',
-            'inputName' => 'file',
-            'type' => 'image',
-            'multiple' => true,
-            'template' => Yii::getAlias('@tests/data/templates/gallery-item.php')
-        ]);
+        extract($this->baseUpload());
 
-        preg_match('/News\[gallery\]\[id(.*?)\]/', $response, $matches);
+        $file->delete();
+        $this->assertFileNotExists($file->path(true));
+    }
 
-        $this->assertTrue(is_string($response));
-        $this->assertTrue(isset($matches[1]));
-        $this->assertTrue(is_numeric($matches[1]));
+    public function testDeleteModel()
+    {
+        extract($this->baseUpload());
 
-        $file = File::find($matches[1])->one();
-        $this->checkUnprotectedTmpFile($file, -1, Yii::$app->fileManager->getOwnerType('news.gallery'));
+        $model->delete();
+        $this->assertFileNotExists($file->path(true));
 
-        $model = new News([
-            'title' => 'test',
-            'gallery' => ['id' . $file->id => 'test']
-        ]);
+        $file = File::find($file->id)->one();
+        $this->assertNull($file);
+    }
 
-        $this->assertTrue($model->save());
+    public function testSetEmptyFile()
+    {
+        extract($this->baseUpload());
+
+        $model->preview = '';
+        $model->save();
+
+        $file = File::find($file->id)->one();
+        $this->assertNull($file);
+    }
+
+    public function testSetEmptyGallery()
+    {
+        extract($this->baseGalleryUpload());
+
+        $model->gallery = [];
+        $model->save();
 
         $files = $model->getFiles('gallery');
-
-        $this->assertCount(1, $files);
-
-        foreach ($files as $file) {
-            $this->checkUnprotectedNotTmpFile($file, $model->id, Yii::$app->fileManager->getOwnerType('news.gallery'));
-        }
+        $this->assertCount(0, $files);
     }
 
     // @todo test ResizeAferUpload
