@@ -9,7 +9,7 @@ install:
 
 before_script:
   - mysql -e 'create database filemanager_yii2_tests;'
-  - php ./tests/yii migrate --migrationPath=./migrations --interactive=0
+  - php ./tests/yii migrate --migrationPath=./src/migrations --interactive=0
   - php ./tests/yii migrate --migrationPath=./tests/migrations --interactive=0
 
 script:
