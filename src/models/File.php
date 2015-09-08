@@ -9,13 +9,9 @@
 namespace rkit\filemanager\models;
 
 use Yii;
-use yii\imagine;
 use yii\behaviors\TimestampBehavior;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
-use Imagine\Image\Box;
-use Imagine\Image\ImageInterface;
-use Imagine\Image\ManipulatorInterface;
 
 /**
  * This is the model class for table "file".
@@ -45,15 +41,6 @@ class File extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'file';
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function rules()
-    {
-        return [
-        ];
     }
 
     /**
@@ -168,7 +155,7 @@ class File extends \yii\db\ActiveRecord
     }
 
 
-    private function getTimestampOfFile()
+    public function getTimestampOfFile()
     {
         if ($this->isNewRecord || is_object($this->date_create)) {
             return date('Ym');
@@ -177,13 +164,10 @@ class File extends \yii\db\ActiveRecord
         }
     }
 
-    private static function getUploadDir($status)
+    public function getUploadDir()
     {
-        if ($status === self::STATUS_PROTECTED) {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
-        } else {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
-        }
+        $uploadDir = $this->isProtected() ? 'uploadDirProtected' : 'uploadDirUnprotected';
+        return Yii::getAlias(Yii::$app->fileManager->$uploadDir);
     }
 
     /**
@@ -194,10 +178,10 @@ class File extends \yii\db\ActiveRecord
      */
     public function dirTmp($full = false)
     {
-        $uploadDir = $full ? self::getUploadDir($this->status) : '';
         return
-            $uploadDir . '/' .
-            Yii::$app->fileManager->publicPath . '/tmp/' .
+            ($full ? $this->getUploadDir() : '') . '/' .
+            Yii::$app->fileManager->publicPath . '/' .
+            'tmp/' .
             $this->owner_type . '/' .
             $this->getTimestampOfFile();
     }
@@ -213,9 +197,8 @@ class File extends \yii\db\ActiveRecord
         if ($this->tmp) {
             return $this->dirTmp($full);
         } else {
-            $uploadDir = $full ? self::getUploadDir($this->status) : '';
             return
-                $uploadDir . '/' .
+                ($full ? $this->getUploadDir() : '') . '/' .
                 Yii::$app->fileManager->publicPath . '/' .
                 $this->owner_type . '/' .
                 $this->getTimestampOfFile() . '/' .
@@ -390,7 +373,7 @@ class File extends \yii\db\ActiveRecord
      *
      * @return bool
      */
-    private function saveFile()
+    public function saveFile()
     {
         if (file_exists($this->pathTmp(true)) && FileHelper::createDirectory($this->dir(true))) {
             if (rename($this->pathTmp(true), $this->path(true))) {
@@ -404,226 +387,19 @@ class File extends \yii\db\ActiveRecord
     /**
      * Check owner.
      *
-     * @param File $file
      * @param int $ownerId
      * @param int $ownerType
      * @return bool
      */
-    private static function checkOwner($file, $ownerId, $ownerType)
+    public function isOwner($ownerId, $ownerType)
     {
-        $ownerType = $file->owner_type === $ownerType;
-        $ownerId = $file->owner_id === $ownerId;
-        $user = $file->user_id === Yii::$app->user->id || $file->user_id === 0;
+        $ownerType = $this->owner_type === $ownerType;
+        $ownerId = $this->owner_id === $ownerId;
+        $user = $this->user_id === Yii::$app->user->id || $this->user_id === 0;
 
         return
-            (!$file->tmp && $ownerType && $ownerId) ||
-            ($file->tmp && $ownerType && $user);
-    }
-
-    /**
-     * Binding files with owner.
-     *
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param array|int $fileId
-     * @return File|bool|array
-     */
-    public static function bind($ownerId, $ownerType, $fileId)
-    {
-        if ($fileId === [] || $fileId === '') {
-            self::deleteByOwner($ownerId, $ownerType);
-            return true;
-        }
-
-        return is_array($fileId)
-            ? self::bindMultiple($ownerId, $ownerType, $fileId)
-            : self::bindSingle($ownerId, $ownerType, $fileId);
-    }
-
-    /**
-     * Binding file with owner.
-     *
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param int $fileId
-     * @return File|bool
-     */
-    private static function bindSingle($ownerId, $ownerType, $fileId)
-    {
-        $file = $fileId ? static::findOne($fileId) : false;
-
-        // check owner
-        if (!$file || !self::checkOwner($file, $ownerId, $ownerType)) {
-            return false;
-        }
-
-        // save a file
-        if ($file->tmp) {
-            $file->owner_id = $ownerId;
-            $file->tmp = false;
-            if ($file->saveFile()) {
-                $file->updateAttributes(['tmp' => $file->tmp, 'owner_id' => $file->owner_id]);
-            }
-        } else {
-            return false;
-        }
-
-        // delete unnecessary files
-        $currentFiles = self::getByOwner($ownerId, $ownerType);
-        foreach ($currentFiles as $currFile) {
-            if ($currFile->id !== $file->id) {
-                $currFile->delete();
-            }
-        }
-
-        return $file;
-    }
-
-    private static function bindMultiplePrepare($files)
-    {
-        $files = array_filter($files);
-        $files = array_combine(array_map(function ($a) {
-            return substr($a, 2);
-        }, array_keys($files)), $files);
-
-        return $files;
-    }
-
-    private static function bindMultipleFile($file, $ownerId, $files)
-    {
-        if ($file->tmp) {
-            $file->owner_id = $ownerId;
-            $file->tmp = false;
-            if (!$file->saveFile()) {
-                return false;
-            }
-        }
-
-        $file->updateAttributes([
-            'tmp'      => $file->tmp,
-            'owner_id' => $file->owner_id,
-            'title'    => @$files[$file->id],
-            'position' => @array_search($file->id, array_keys($files)) + 1
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Binding files with owner.
-     *
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param array $files
-     * @return array|bool
-     */
-    private static function bindMultiple($ownerId, $ownerType, $files)
-    {
-        $files = self::bindMultiplePrepare($files);
-        $newFiles = ArrayHelper::index(static::findAll(array_keys($files)), 'id');
-        $currentFiles = ArrayHelper::index(self::getByOwner($ownerId, $ownerType), 'id');
-
-        if (count($newFiles)) {
-            foreach ($newFiles as $file) {
-                // check owner
-                if (!self::checkOwner($file, $ownerId, $ownerType)) {
-                    unset($newFiles[$file->id]);
-                    continue;
-                }
-                // save a file
-                self::bindMultipleFile($file, $ownerId, $files, $newFiles);
-            }
-
-            // delete unnecessary files
-            foreach ($currentFiles as $currFile) {
-                if (!array_key_exists($currFile->id, $newFiles)) {
-                    $currFile->delete();
-                }
-            }
-
-        } else {
-            // if empty array — delete current files
-            foreach ($currentFiles as $currFile) {
-                $currFile->delete();
-            }
-        }
-
-        return $newFiles;
-    }
-
-    /**
-     * Resize.
-     *
-     * @param string $file
-     * @param int $width
-     * @param int $height
-     * @param bool $ratio
-     * @param bool $replace
-     * @param int $status Status a file. Unprotected or Protected.
-     * @return string
-     */
-    public static function resize(
-        $file,
-        $width,
-        $height,
-        $ratio = false,
-        $replace = false,
-        $status = self::STATUS_UNPROTECTED
-    ) {
-        $fullPathToDir = self::getUploadDir($status);
-
-        if (!file_exists($fullPathToDir . $file)) {
-            return $file;
-        }
-
-        if ($replace) {
-            $thumb = $file;
-        } else {
-            $thumb = self::generateThumbName($file, $width, $height);
-            if (file_exists($fullPathToDir . $thumb)) {
-                return $thumb;
-            }
-        }
-
-        $imagine = imagine\Image::getImagine();
-        $image = $imagine->open($fullPathToDir . $file);
-        $image = self::resizeMagic($image, $width, $height, $ratio);
-        $image->save($fullPathToDir . $thumb, ['jpeg_quality' => 100, 'png_compression_level' => 9]);
-
-        return $thumb;
-    }
-
-    /**
-     * Magick resizing method.
-     *
-     * @param imagine\Image $image
-     * @param int $width
-     * @param int $height
-     * @param bool $ratio
-     * @return imagine\Image
-     */
-    private static function resizeMagic($image, $width, $height, $ratio)
-    {
-        if ($width < 1 || $height < 1) {
-            if ($height < 1) {
-                $image = $image->resize($image->getSize()->widen($width));
-            } else {
-                $image = $image->resize($image->getSize()->heighten($height));
-            }
-
-        } else {
-            $size = new Box($width, $height);
-
-            if ($ratio) {
-                $mode = ImageInterface::THUMBNAIL_INSET;
-            } else {
-                $mode = ImageInterface::THUMBNAIL_OUTBOUND;
-            }
-
-            $image = $image->thumbnail($size, $mode);
-        }
-
-        return $image;
+            (!$this->tmp && $ownerType && $ownerId) ||
+            ($this->tmp && $ownerType && $user);
     }
 
     /**

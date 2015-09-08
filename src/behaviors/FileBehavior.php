@@ -14,7 +14,6 @@ use yii\base\InvalidParamException;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 use rkit\filemanager\models\File;
-use rkit\filemanager\FileManager;
 
 class FileBehavior extends Behavior
 {
@@ -26,7 +25,7 @@ class FileBehavior extends Behavior
     public function init()
     {
         parent::init();
-        FileManager::registerTranslations();
+        Yii::$app->fileManager->registerTranslations();
     }
 
     /**
@@ -64,7 +63,7 @@ class FileBehavior extends Behavior
             }
 
             $ownerType = Yii::$app->fileManager->getOwnerType($data['ownerType']);
-            $file = File::bind($this->owner->primaryKey, $ownerType, $fileId);
+            $file = $this->bind($this->owner->primaryKey, $ownerType, $fileId);
 
             if (isset($data['savePath']) && $data['savePath'] === true) {
                 $this->owner->updateAttributes([$attribute => $this->getFilePath($file, $data['oldValue'])]);
@@ -82,6 +81,140 @@ class FileBehavior extends Behavior
             $ownerType = Yii::$app->fileManager->getOwnerType($data['ownerType']);
             File::deleteByOwner($this->owner->primaryKey, $ownerType);
         }
+    }
+
+    /**
+     * Binding files with owner.
+     *
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param array|int $fileId
+     * @return File|bool|array
+     */
+    public function bind($ownerId, $ownerType, $fileId)
+    {
+        if ($fileId === [] || $fileId === '') {
+            File::deleteByOwner($ownerId, $ownerType);
+            return true;
+        }
+
+        return is_array($fileId)
+            ? $this->bindMultiple($ownerId, $ownerType, $fileId)
+            : $this->bindSingle($ownerId, $ownerType, $fileId);
+    }
+
+    /**
+     * Binding file with owner.
+     *
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param int $fileId
+     * @return File|bool
+     */
+    private function bindSingle($ownerId, $ownerType, $fileId)
+    {
+        $file = $fileId ? File::findOne($fileId) : false;
+
+        if ($file && $file->isOwner($ownerId, $ownerType)) {
+            if ($this->bindSingleFile($file, $ownerId)) {
+                // delete unnecessary files
+                $currentFiles = File::getByOwner($ownerId, $ownerType);
+                foreach ($currentFiles as $currFile) {
+                    if ($currFile->id !== $file->id) {
+                        $currFile->delete();
+                    }
+                }
+
+                return $file;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Binding files with owner.
+     *
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param array $files
+     * @return array|bool
+     */
+    private function bindMultiple($ownerId, $ownerType, $files)
+    {
+        $files = $this->bindMultiplePrepare($files);
+        $newFiles = ArrayHelper::index(File::findAll(array_keys($files)), 'id');
+        $currentFiles = ArrayHelper::index(File::getByOwner($ownerId, $ownerType), 'id');
+
+        if (count($newFiles)) {
+            foreach ($newFiles as $file) {
+                if (!$file->isOwner($ownerId, $ownerType)) {
+                    unset($newFiles[$file->id]);
+                    continue;
+                }
+                if (!$this->bindMultipleFile($file, $ownerId, $files, $newFiles)) {
+                    return false;
+                }
+            }
+
+            // delete unnecessary files
+            foreach ($currentFiles as $currFile) {
+                if (!array_key_exists($currFile->id, $newFiles)) {
+                    $currFile->delete();
+                }
+            }
+
+        } else {
+            // if empty array — delete current files
+            foreach ($currentFiles as $currFile) {
+                $currFile->delete();
+            }
+        }
+
+        return $newFiles;
+    }
+
+    private function bindSingleFile($file, $ownerId)
+    {
+        if ($file->tmp) {
+            $file->owner_id = $ownerId;
+            $file->tmp = false;
+            if ($file->saveFile()) {
+                $file->updateAttributes(['tmp' => $file->tmp, 'owner_id' => $file->owner_id]);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function bindMultiplePrepare($files)
+    {
+        $files = array_filter($files);
+        $files = array_combine(array_map(function ($a) {
+            return substr($a, 2);
+        }, array_keys($files)), $files);
+
+        return $files;
+    }
+
+    private function bindMultipleFile($file, $ownerId, $files)
+    {
+        if ($file->tmp) {
+            $file->owner_id = $ownerId;
+            $file->tmp = false;
+            if ($file->saveFile()) {
+                $file->updateAttributes([
+                    'tmp'      => $file->tmp,
+                    'owner_id' => $file->owner_id,
+                    'title'    => @$files[$file->id],
+                    'position' => @array_search($file->id, array_keys($files)) + 1
+                ]);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -8,8 +8,14 @@
 
 namespace rkit\filemanager;
 
+use Yii;
 use yii\base\Component;
 use yii\base\InvalidParamException;
+use yii\imagine;
+use Imagine\Image\Box;
+use Imagine\Image\ImageInterface;
+use Imagine\Image\ManipulatorInterface;
+use rkit\filemanager\models\File;
 
 /**
  * File Manager.
@@ -39,7 +45,7 @@ class FileManager extends Component
     public function init()
     {
         parent::init();
-        self::registerTranslations();
+        $this->registerTranslations();
     }
 
     public function getOwnerType($ownerType)
@@ -52,9 +58,79 @@ class FileManager extends Component
     }
 
     /**
+     * Resize.
+     *
+     * @param string $file
+     * @param int $width
+     * @param int $height
+     * @param bool $ratio
+     * @param bool $replace
+     * @param bool $isProtected Unprotected or Protected.
+     * @return string
+     */
+    public function resize(
+        $file,
+        $width,
+        $height,
+        $ratio = false,
+        $replace = false,
+        $isProtected = false
+    ) {
+        $uploadDir = $isProtected ? 'uploadDirProtected' : 'uploadDirUnprotected';
+        $uploadDir = Yii::getAlias(Yii::$app->fileManager->$uploadDir);
+
+        if (!file_exists($uploadDir . $file)) {
+            return $file;
+        }
+
+        if ($replace) {
+            $thumb = $file;
+        } else {
+            $thumb = File::generateThumbName($file, $width, $height);
+            if (file_exists($uploadDir . $thumb)) {
+                return $thumb;
+            }
+        }
+
+        $imagine = imagine\Image::getImagine();
+        $image = $imagine->open($uploadDir . $file);
+        $image = $this->resizeMagic($image, $width, $height, $ratio);
+        $image->save($uploadDir . $thumb, ['jpeg_quality' => 100, 'png_compression_level' => 9]);
+
+        return $thumb;
+    }
+
+    /**
+     * Magick resizing method.
+     *
+     * @param imagine\Image $image
+     * @param int $width
+     * @param int $height
+     * @param bool $ratio
+     * @return imagine\Image
+     */
+    private function resizeMagic($image, $width, $height, $ratio)
+    {
+        if ($width < 1 || $height < 1) {
+            if ($height < 1) {
+                $image = $image->resize($image->getSize()->widen($width));
+            } else {
+                $image = $image->resize($image->getSize()->heighten($height));
+            }
+
+        } else {
+            $size = new Box($width, $height);
+            $mode = $ratio ? ImageInterface::THUMBNAIL_INSET : ImageInterface::THUMBNAIL_OUTBOUND;
+            $image = $image->thumbnail($size, $mode);
+        }
+
+        return $image;
+    }
+
+    /**
      * Registers translator.
      */
-    public static function registerTranslations()
+    public function registerTranslations()
     {
         if (!isset(\Yii::$app->i18n->translations['filemanager-yii2'])) {
             \Yii::$app->i18n->translations['filemanager-yii2'] = [

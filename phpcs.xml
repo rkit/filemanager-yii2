@@ -6,6 +6,7 @@
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/migrations/*</exclude-pattern>
     <exclude-pattern>*/messages/*</exclude-pattern>
+    <exclude-pattern>*/templates/*</exclude-pattern>
     <exclude-pattern>*/mail/*</exclude-pattern>
 
     <rule ref="PSR2">

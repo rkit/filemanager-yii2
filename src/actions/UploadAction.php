@@ -117,7 +117,7 @@ class UploadAction extends Action
         $file = File::createFromUploader($file, $this->ownerId, $ownerType, $this->saveAfterUpload, $this->status);
         if ($file) {
             if (count($this->resizeRules)) {
-                File::resize(
+                Yii::$app->fileManager->resize(
                     $file->path(),
                     $this->resizeRules['width'],
                     $this->resizeRules['height'],
