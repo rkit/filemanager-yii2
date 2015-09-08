@@ -12,21 +12,27 @@ use rkit\filemanager\models\File;
 
 class UploadTest extends \PHPUnit_Framework_TestCase
 {
+    public $files = [
+        'file-small' => ['name' => '100x100', 'size' => 293, 'type' => 'image/png', 'ext' => 'png'],
+        'file' => ['name' => '300x300', 'size' => 1299, 'type' => 'image/png', 'ext' => 'png']
+    ];
+
     protected function setUp()
     {
-        $origFile = Yii::getAlias('@tests/data/files/300x300.png');
-        $copyFile = Yii::getAlias('@tests/data/files/300x300_copy.png');
-        copy($origFile, $copyFile);
+        $_FILES = [];
+        foreach ($this->files as $inputName => $fileInfo) {
+            $origFile = Yii::getAlias('@tests/data/files/' . $fileInfo['name'] . '.' . $fileInfo['ext']);
+            $copyFile = Yii::getAlias('@tests/data/files/' . $fileInfo['name'] . '_copy.' . $fileInfo['ext']);
+            copy($origFile, $copyFile);
 
-        $_FILES = [
-            'file' => [
-                'name' => '300x300.png',
-                'type' => 'image/png',
-                'size' => 1299,
+            $_FILES[$inputName] = [
+                'name' => $fileInfo['name'] . '.' . $fileInfo['ext'],
+                'type' => $fileInfo['type'],
+                'size' => $fileInfo['size'],
                 'tmp_name' => $copyFile,
                 'error' => 0
-            ]
-        ];
+            ];
+        }
     }
 
     protected function tearDown()
@@ -37,8 +43,10 @@ class UploadTest extends \PHPUnit_Framework_TestCase
         FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirProtected);
         FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirUnprotected);
 
-        @unlink(Yii::getAlias('@tests/data/files/300x300_copy.png'));
         unset($_FILES);
+        foreach ($this->files as $inputName => $fileInfo) {
+            @unlink(Yii::getAlias('@tests/data/files/' . $fileInfo['name'] . '_copy.' . $fileInfo['ext']));
+        }
     }
 
     /**
@@ -291,6 +299,19 @@ class UploadTest extends \PHPUnit_Framework_TestCase
             'modelName' => News::className(),
             'attribute' => 'preview',
             'inputName' => 'fail',
+            'type' => 'image'
+        ]);
+
+        $this->assertCount(1, $response);
+        $this->assertTrue(isset($response['error']));
+    }
+
+    public function testWrongImageSize()
+    {
+        $response = $this->runAction($config = [
+            'modelName' => News::className(),
+            'attribute' => 'preview',
+            'inputName' => 'file-small',
             'type' => 'image'
         ]);
 

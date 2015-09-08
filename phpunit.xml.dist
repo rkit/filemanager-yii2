@@ -8,10 +8,10 @@
     <filter>
         <whitelist>
             <directory suffix=".php">src</directory>
+            <exclude>
+              <directory suffix=".php">src/messages</directory>
+              <directory suffix=".php">src/migrations</directory>
+            </exclude>
         </whitelist>
-        <blacklist>
-            <directory suffix=".php">src/messages</directory>
-            <directory suffix=".php">src/migrations</directory>
-        </blacklist>
     </filter>
 </phpunit>

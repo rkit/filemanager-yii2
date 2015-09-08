@@ -148,9 +148,11 @@ class UploadAction extends Action
      */
     public function response($data)
     {
+        // @codeCoverageIgnoreStart
         if (!Yii::$app instanceof \yii\console\Application) {
-            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON; // @codeCoverageIgnore
+            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         }
+        // @codeCoverageIgnoreEnd
         return $data;
     }
 }
