@@ -13,7 +13,7 @@ use yii\behaviors\TimestampBehavior;
 use yii\helpers\FileHelper;
 
 /**
- * This is the model class for table "file".
+ * This is the model class for table "file"
  *
  * @property integer $id
  * @property integer $user_id
@@ -37,6 +37,7 @@ class File extends \yii\db\ActiveRecord
 
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
     public static function tableName()
     {
@@ -45,6 +46,7 @@ class File extends \yii\db\ActiveRecord
 
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
     public function attributeLabels()
     {
@@ -81,11 +83,12 @@ class File extends \yii\db\ActiveRecord
 
     /**
      * @inheritdoc
+     * @codeCoverageIgnore
      */
     public function events()
     {
         return [
-            ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
+            \yii\db\ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
         ];
     }
 
@@ -94,9 +97,9 @@ class File extends \yii\db\ActiveRecord
         if (parent::beforeSave($insert)) {
             if ($insert) {
                 if (!Yii::$app instanceof \yii\console\Application) {
-                    $this->user_id = Yii::$app->user->isGuest ? 0 : Yii::$app->user->id;
-                    $this->ip = ip2long(Yii::$app->request->getUserIP());
-                }
+                    $this->user_id = Yii::$app->user->isGuest ? 0 : Yii::$app->user->id; // @codeCoverageIgnore
+                    $this->ip = ip2long(Yii::$app->request->getUserIP()); // @codeCoverageIgnore
+                } // @codeCoverageIgnore
 
                 // To remove unused files
                 if ($this->owner_id === null) {
@@ -107,11 +110,11 @@ class File extends \yii\db\ActiveRecord
             return true;
         }
 
-        return false;
+        return false; // @codeCoverageIgnore
     }
 
     /**
-     * Get all statuses.
+     * Get all statuses
      *
      * @return string[]
      */
@@ -137,7 +140,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * Is it protected?
      *
-     * @param bool
+     * @return bool
      */
     public function isProtected()
     {
@@ -147,14 +150,28 @@ class File extends \yii\db\ActiveRecord
     /**
      * Is it unprotected?
      *
-     * @param bool
+     * @return bool
      */
     public function isUnprotected()
     {
         return $this->status == self::STATUS_UNPROTECTED;
     }
 
+    /**
+     * Is it tmp a file?
+     *
+     * @return bool
+     */
+    public function isTmp()
+    {
+        return (bool)$this->tmp;
+    }
 
+    /**
+     * Get date create of file in format `Ym`
+     *
+     * @return string
+     */
     public function getDateOfFile()
     {
         if ($this->isNewRecord || is_object($this->date_create)) {
@@ -164,6 +181,11 @@ class File extends \yii\db\ActiveRecord
         }
     }
 
+    /**
+     * Get upload dir
+     *
+     * @return string
+     */
     public function getUploadDir()
     {
         $uploadDir = $this->isProtected() ? 'uploadDirProtected' : 'uploadDirUnprotected';
@@ -171,7 +193,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Path to temporary directory of file.
+     * Path to temporary directory of file
      *
      * @param bool $full
      * @return string
@@ -186,7 +208,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Path to directory of file.
+     * Path to directory of file
      *
      * @param bool $full
      * @return string
@@ -207,7 +229,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Path to file.
+     * Path to file
      *
      * @param bool $full
      * @return string
@@ -218,7 +240,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Path to file.
+     * Path to file
      *
      * @param bool $full
      * @return string
@@ -229,7 +251,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Generate a name.
+     * Generate a name
      *
      * @param string $extension
      * @return string
@@ -241,27 +263,13 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Generate a thumb-name.
-     *
-     * @param string $file
-     * @param int $width
-     * @param int $height
-     * @return string
-     */
-    public static function generateThumbName($file, $width, $height)
-    {
-        $fileName = pathinfo($file, PATHINFO_FILENAME);
-        return str_replace($fileName, $width . 'x' . $height . '_' . $fileName, $file);
-    }
-
-    /**
-     * Create file from uploader (UploadedFile).
+     * Create file from uploader (UploadedFile)
      *
      * @param UploadedFile $data
      * @param int $ownerId
      * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload.
-     * @param int $status Status a file. Unprotected or Protected.
+     * @param bool $saveAfterUpload Save the file immediately after upload
+     * @param int $status Status a file. Unprotected or Protected
      * @return File|bool
      */
     public static function createFromUploader(
@@ -271,59 +279,52 @@ class File extends \yii\db\ActiveRecord
         $saveAfterUpload = false,
         $status = self::STATUS_UNPROTECTED
     ) {
-        $fileInfo = pathinfo($data->name);
+        $pathInfo = pathinfo($data->name);
         $file = new self([
             'tmp' => true,
             'owner_id' => $ownerId,
             'owner_type' => $ownerType,
             'size' => $data->size,
             'mime' => $data->type,
-            'title' => $fileInfo['filename'],
-            'name' => self::generateName($fileInfo['extension']),
+            'title' => $pathInfo['filename'],
+            'name' => self::generateName($pathInfo['extension']),
             'status' => $status
         ]);
 
-        if (!Yii::$app instanceof \yii\console\Application) {
-            return $file->moveUploadedFile($data->tempName, $saveAfterUpload);
-        } else {
-            return $file->renameUploadedFile($data->tempName, $saveAfterUpload);
-        }
+        return $file->saveToTmp($data->tempName, $saveAfterUpload);
     }
 
     /**
-     * Create file from Url
+     * Create file from path
      *
-     * @param string $url
+     * @param string $path
      * @param int $ownerId
      * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload.
-     * @param int $status Status a file. Unprotected or Protected.
+     * @param bool $saveAfterUpload Save the file immediately after upload
+     * @param int $status Status a file. Unprotected or Protected
      * @return File|bool
      */
-    public static function createFromUrl(
-        $url,
+    public static function createFromPath(
+        $path,
         $ownerId = null,
         $ownerType = -1,
         $saveAfterUpload = false,
         $status = self::STATUS_UNPROTECTED
     ) {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'file');
-        if ($tmpFileContent = @file_get_contents($url)) {
-            if (@file_put_contents($tmpFile, $tmpFileContent)) {
-                $fileInfo = pathinfo($url);
-                $file = new self([
-                    'tmp' => true,
-                    'owner_id' => $ownerId,
-                    'owner_type' => $ownerType,
-                    'size' => filesize($tmpFile),
-                    'mime' => FileHelper::getMimeType($tmpFile),
-                    'title' => $fileInfo['filename'],
-                    'name' => self::generateName($fileInfo['extension']),
-                    'status' => $status
-                ]);
+        if (file_exists($path)) {
+            $pathInfo = pathinfo($path);
+            $file = new self([
+                'tmp' => true,
+                'owner_id' => $ownerId,
+                'owner_type' => $ownerType,
+                'size' => filesize($path),
+                'mime' => FileHelper::getMimeType($path),
+                'title' => $pathInfo['filename'],
+                'name' => self::generateName($pathInfo['extension']),
+                'status' => $status
+            ]);
 
-                return $file->renameUploadedFile($tmpFile, $saveAfterUpload);
-            }
+            return $file->saveToTmp($path, $saveAfterUpload);
         }
 
         return false;
@@ -333,48 +334,23 @@ class File extends \yii\db\ActiveRecord
      * @param string $tempFile
      * @param bool $saveAfterUpload
      */
-    private function moveUploadedFile($tempFile, $saveAfterUpload)
+    private function saveToTmp($tempFile, $saveAfterUpload)
     {
         if (FileHelper::createDirectory($this->dir(true))) {
-            if (move_uploaded_file($tempFile, $this->path(true))) {
-                if ($saveAfterUpload) {
-                    $this->tmp = false;
-                    if ($this->save() && $this->saveFile()) {
-                        return $this;
-                    }
-                } else {
-                    if ($this->save()) {
-                        return $this;
-                    }
+            $processed = $this->moveUploadedFile($tempFile);
+            if ($processed && $saveAfterUpload) {
+                $this->tmp = false;
+                if ($this->save() && $this->saveFile()) {
+                    return $this;
                 }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $tempFile
-     * @param bool $saveAfterUpload
-     */
-    private function renameUploadedFile($tempFile, $saveAfterUpload)
-    {
-        if (FileHelper::createDirectory($this->dir(true))) {
-            if (rename($tempFile, $this->path(true))) {
-                if ($saveAfterUpload) {
-                    $this->tmp = false;
-                    if ($this->save() && $this->saveFile()) {
-                        return $this;
-                    }
-                } else {
-                    if ($this->save()) {
-                        return $this;
-                    }
+            } elseif ($processed) {
+                if ($this->save()) {
+                    return $this;
                 }
-            }
-        }
+            } // @codeCoverageIgnore
+        } // @codeCoverageIgnore
 
-        return false;
+        return false; // @codeCoverageIgnore
     }
 
     /**
@@ -388,13 +364,28 @@ class File extends \yii\db\ActiveRecord
             if (rename($this->pathTmp(true), $this->path(true))) {
                 return true;
             }
-        }
+        } // @codeCoverageIgnore
 
         return false;
     }
 
     /**
-     * Check owner.
+     * Save file
+     *
+     * @param string $tempFile
+     * @return bool
+     */
+    private function moveUploadedFile($tempFile)
+    {
+        if (Yii::$app instanceof \yii\console\Application) {
+            return rename($tempFile, $this->path(true));
+        } else {
+            return move_uploaded_file($tempFile, $this->path(true)); // @codeCoverageIgnore
+        }
+    }
+
+    /**
+     * Check owner
      *
      * @param int $ownerId
      * @param int $ownerType
@@ -410,7 +401,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Get by owner.
+     * Get by owner
      *
      * @param int $ownerId
      * @param int $ownerType
@@ -425,7 +416,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Delete by owner.
+     * Delete by owner
      *
      * @param int $ownerId
      * @param int $ownerType
@@ -440,7 +431,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Deleting a file from the db and from the file system.
+     * Deleting a file from the db and from the file system
      *
      * @return bool
      */

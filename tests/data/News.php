@@ -1,15 +1,42 @@
 <?php
 
+/**
+ * @link https://github.com/rkit/filemanager-yii2
+ * @copyright Copyright (c) 2015 Igor Romanov
+ * @license [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
+ */
+
 namespace tests\data;
 
 use Yii;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class News extends \yii\db\ActiveRecord
 {
     /**
      * @var array
      */
-    public $gallery;
+    public $image_gallery;
+    /**
+     * @var array
+     */
+    public $image_gallery_protected;
+    /**
+     * @var string
+     */
+    public $image_only_maxwidth;
+    /**
+     * @var string
+     */
+    public $image_only_maxheight;
+    /**
+     * @var string
+     */
+    public $image_only_minwidth;
+    /**
+     * @var string
+     */
+    public $image_only_minheight;
 
     /**
      * @inheritdoc
@@ -25,16 +52,7 @@ class News extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['title', 'preview', 'photo_id', 'gallery'], 'safe'],
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeHints()
-    {
-        return [
+            [['title', 'image_id', 'image_path', 'image_gallery'], 'safe'],
         ];
     }
 
@@ -47,38 +65,91 @@ class News extends \yii\db\ActiveRecord
             [
                 'class' => 'rkit\filemanager\behaviors\FileBehavior',
                 'attributes' => [
-                    'photo_id' => [
-                        'ownerType' => 'news.photo_id',
-                        'saveFileId' => true, // save 'file.id' in current model
+                    'image_id' => [
+                        'saveFileId' => true,
+                        'protected' => true,
                         'rules' => [
-                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
-                            'mimeTypes' => ['image/png', 'image/jpg', 'image/jpeg'],
-                            'extensions' => ['jpg', 'jpeg', 'png'],
-                            'maxSize' => 1024 * 1024 * 1, // 1 MB
-                            'tooBig' => Yii::t('app', 'File size must not exceed') . ' 1Mb'
+                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300]
                         ]
                     ],
-                    'preview' => [
-                        'ownerType' => 'news.preview',
-                        'savePath' => true, // save 'path' in current model
+                    'image_path' => [
+                        'saveFilePath' => true,
                         'rules' => [
                             'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
                             'mimeTypes' => ['image/png', 'image/jpg', 'image/jpeg'],
                             'extensions' => ['jpg', 'jpeg', 'png'],
                             'maxSize' => 1024 * 1024 * 1, // 1 MB
                             'tooBig' => Yii::t('app', 'File size must not exceed') . ' 1Mb'
+                        ],
+                        'preset' => [
+                            '200x200' => function ($realPath, $publicPath, $thumbPath) {
+                                Image::make($realPath . $publicPath)
+                                    ->fit(200, 200)
+                                    ->save($realPath . $thumbPath, 100);
+                            },
+                            '220x220' => function ($realPath, $publicPath, $thumbPath) {
+                                Image::make($realPath . $publicPath)
+                                    ->fit(220, 220)
+                                    ->save($realPath . $thumbPath, 100);
+                            },
+                            '400x400' => function ($realPath, $publicPath, $thumbPath) {
+                                Image::make($realPath . $publicPath)
+                                    ->fit(400, 400)
+                                    ->save(null, 100);
+                            },
+                        ],
+                        'applyPresetAfterUpload' => ['220x220']
+                    ],
+                    'image_gallery' => [
+                        'preset' => [
+                            '80x80' => function ($realPath, $publicPath, $thumbPath) {
+                                Image::make($realPath . $publicPath)
+                                    ->fit(80, 80)
+                                    ->save($realPath . $thumbPath, 100);
+                            },
+                        ],
+                    ],
+                    'image_gallery_protected' => [
+                        'protected' => true,
+                    ],
+                    'image_strict_size' => [
+                        'rules' => [
+                            'imageSize' => [
+                                'maxWidth'  => 300,
+                                'maxHeight' => 300,
+                                'minWidth'  => 300,
+                                'minHeight' => 300
+                            ],
                         ]
                     ],
-                    'gallery' => [
-                        'ownerType' => 'news.gallery',
+                    'image_min_max_size' => [
                         'rules' => [
-                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
-                            'mimeTypes' => ['image/png', 'image/jpg', 'image/jpeg'],
-                            'extensions' => ['jpg', 'jpeg', 'png'],
-                            'maxSize' => 1024 * 1024 * 1, // 1 MB
-                            'tooBig' => Yii::t('app', 'File size must not exceed') . ' 1Mb'
+                            'imageSize' => [
+                                'maxWidth'  => 300,
+                                'maxHeight' => 300,
+                                'minWidth'  => 290,
+                                'minHeight' => 290
+                            ],
                         ]
-                    ]
+                    ],
+                    'image_min_size' => [
+                        'rules' => ['imageSize' => ['minWidth' => 300, 'minHeight' => 300]]
+                    ],
+                    'image_max_size' => [
+                        'rules' => ['imageSize' => ['maxWidth' => 300, 'maxHeight' => 300]]
+                    ],
+                    'image_only_maxwidth' => [
+                        'rules' => ['imageSize' => ['maxWidth' => 300]]
+                    ],
+                    'image_only_maxheight' => [
+                        'rules' => ['imageSize' => ['maxHeight' => 300]]
+                    ],
+                    'image_only_minwidth' => [
+                        'rules' => ['imageSize' => ['minWidth' => 300]]
+                    ],
+                    'image_only_minheight' => [
+                        'rules' => ['imageSize' => ['minHeight' => 300]]
+                    ],
                 ]
             ]
         ];

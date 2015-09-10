@@ -17,8 +17,8 @@ class m141230_075229_create_news extends \yii\db\Migration
         $this->createTable('{{%news}}', [
             'id' => Schema::TYPE_PK,
             'title' => Schema::TYPE_STRING . " NOT NULL DEFAULT ''",
-            'photo_id' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
-            'preview' => Schema::TYPE_STRING . " NOT NULL DEFAULT ''",
+            'image_id' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
+            'image_path' => Schema::TYPE_STRING . " NOT NULL DEFAULT ''"
         ], $tableOptions);
     }
 

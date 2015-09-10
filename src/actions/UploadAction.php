@@ -30,7 +30,7 @@ class UploadAction extends Action
      */
     public $inputName;
     /**
-     * @var string $type Image Or File
+     * @var string $type `image` or `file`
      */
     public $type = 'image';
     /**
@@ -38,7 +38,7 @@ class UploadAction extends Action
      */
     public $multiple = false;
     /**
-     * @var string $template Path to template.
+     * @var string $template Path to template
      */
     public $template;
     /**
@@ -54,21 +54,13 @@ class UploadAction extends Action
      */
     public $saveAfterUpload = false;
     /**
-     * @var int $status Status a file. Unprotected or Protected.
-     */
-    public $status = File::STATUS_UNPROTECTED;
-    /**
-     * @var ActiveRecord $model
+     * @var string $model
      */
     private $model;
     /**
      * @var array $rules
      */
     private $rules;
-    /**
-     * @var array $resizeRules
-     */
-    private $resizeRules;
 
     public function init()
     {
@@ -77,9 +69,7 @@ class UploadAction extends Action
         }
 
         $this->model = new $this->modelName();
-
         $this->rules = $this->model->getFileRules($this->attribute);
-        $this->resizeRules = $this->model->getFileResizeRules($this->attribute);
 
         if (isset($this->rules['imageSize'])) {
             $this->rules = array_merge($this->rules, $this->rules['imageSize']);
@@ -103,27 +93,31 @@ class UploadAction extends Action
         if ($model->hasErrors()) {
             return $this->response(['error' => $model->getFirstError('file')]);
         } else {
-            return $this->upload($file);
+            $ownerId = $this->saveAfterUpload && $this->ownerId === null ? 0 : $this->ownerId;
+            $ownerType = $this->model->getFileOwnerType($this->attribute);
+            $status = $this->model->getFileStatus($this->attribute);
+            $presetAfterUpload = $this->model->getFilePresetAfterUpload($this->attribute);
+
+            return $this->upload($file, $ownerId, $ownerType, $status, $presetAfterUpload);
         }
     }
 
-    private function upload($file)
+    /**
+     * Upload
+     *
+     * @param yii\web\UploadedFile $file
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param int $status
+     * @param array $presetAfterUpload
+     * @return string JSON
+     */
+    private function upload($file, $ownerId, $ownerType, $status, $presetAfterUpload)
     {
-        $ownerType = $this->model->getFileOwnerType($this->attribute);
-        if ($this->saveAfterUpload && $this->ownerId === null) {
-            $this->ownerId = 0;
-        }
-
-        $file = File::createFromUploader($file, $this->ownerId, $ownerType, $this->saveAfterUpload, $this->status);
+        $file = File::createFromUploader($file, $ownerId, $ownerType, $this->saveAfterUpload, $status);
         if ($file) {
-            if (count($this->resizeRules)) {
-                Yii::$app->fileManager->resize(
-                    $file->path(),
-                    $this->resizeRules['width'],
-                    $this->resizeRules['height'],
-                    $this->resizeRules['ratio'],
-                    true
-                );
+            if (count($presetAfterUpload)) {
+                $this->applyPreset($file->path(true), $presetAfterUpload);
             }
             if ($this->multiple) {
                 return $this->response(
@@ -142,11 +136,26 @@ class UploadAction extends Action
     }
 
     /**
-     * JSON Response.
+     * Apply preset for file
+     *
+     * @param array $presetAfterUpload
+     * @param string $path
+     * @return void
+     */
+    private function applyPreset($path, $presetAfterUpload)
+    {
+        foreach ($presetAfterUpload as $preset) {
+            $this->model->thumb($this->attribute, $preset, $path);
+        }
+    }
+
+    /**
+     * JSON Response
      *
      * @param mixed $data
+     * @return string JSON Only for yii\web\Application, for console app returns `mixed`
      */
-    public function response($data)
+    private function response($data)
     {
         // @codeCoverageIgnoreStart
         if (!Yii::$app instanceof \yii\console\Application) {
