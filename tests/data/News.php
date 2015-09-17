@@ -24,6 +24,22 @@ class News extends \yii\db\ActiveRecord
     /**
      * @var string
      */
+    public $image_strict_size;
+    /**
+     * @var string
+     */
+    public $image_min_max_size;
+    /**
+     * @var string
+     */
+    public $image_min_size;
+    /**
+     * @var string
+     */
+    public $image_max_size;
+    /**
+     * @var string
+     */
     public $image_only_maxwidth;
     /**
      * @var string
