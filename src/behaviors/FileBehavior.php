@@ -183,7 +183,8 @@ class FileBehavior extends Behavior
     /**
      * Generate a thumb name
      *
-     * @param string $publicPath
+     * @param string $path
+     * @param string $preset
      * @return string
      */
     public function generateThumbName($path, $preset)
