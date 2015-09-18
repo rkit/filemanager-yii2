@@ -13,6 +13,7 @@ use yii\base\Behavior;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 use rkit\filemanager\models\File;
+use rkit\filemanager\helpers\FileRules;
 
 class FileBehavior extends Behavior
 {
@@ -92,6 +93,150 @@ class FileBehavior extends Behavior
     }
 
     /**
+     * Get ownerType
+     *
+     * @param string $attribute
+     * @return int
+     */
+    public function getFileOwnerType($attribute)
+    {
+        return Yii::$app->fileManager->getOwnerType($this->getOwnerType($attribute));
+    }
+
+    /**
+     * Get files
+     *
+     * @param string $attribute
+     * @return array
+     */
+    public function getFiles($attribute)
+    {
+        return File::getByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
+    }
+
+    /**
+     * Get file status (protected or unprotected)
+     *
+     * @param string $attribute
+     * @return int
+     */
+    public function getFileStatus($attribute)
+    {
+        return ArrayHelper::getValue($this->attributes[$attribute], 'protected', false);
+    }
+
+    /**
+     * Get real path to file
+     *
+     * @param string $attribute
+     * @return string
+     */
+    public function getRealPath($attribute)
+    {
+        if ($this->getFileStatus($attribute) === File::STATUS_PROTECTED) {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
+        } else {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
+        }
+    }
+
+    /**
+     * Get rules
+     *
+     * @param string $attribute
+     * @return array
+     */
+    public function getFileRules($attribute)
+    {
+        return ArrayHelper::getValue($this->attributes[$attribute], 'rules', []);
+    }
+
+    /**
+     * Get file preset
+     *
+     * @param string $attribute
+     * @return array
+     */
+    public function getFilePreset($attribute)
+    {
+        return array_keys(ArrayHelper::getValue($this->attributes[$attribute], 'preset', []));
+    }
+
+    /**
+     * Get preset file after upload
+     *
+     * @param string $attribute
+     * @return array
+     */
+    public function getFilePresetAfterUpload($attribute)
+    {
+        $preset = ArrayHelper::getValue($this->attributes[$attribute], 'applyPresetAfterUpload', false);
+        if (is_string($preset) && $preset === '*') {
+            return $this->getFilePreset($attribute);
+        } elseif (is_array($preset)) {
+            return $preset;
+        }
+
+        return [];
+    }
+
+    /**
+     * Resize image
+     *
+     * @param string $attribute
+     * @param string $preset
+     * @param string $forcePublicPath Use this path
+     * @param bool $returnRealPath
+     * @return string
+     */
+    public function thumb($attribute, $preset, $forcePublicPath = null, $returnRealPath = false)
+    {
+        $realPath = $this->getRealPath($attribute);
+        $publicPath = $forcePublicPath ? $forcePublicPath : $this->owner->$attribute;
+        $fileName = pathinfo($publicPath, PATHINFO_FILENAME);
+        $thumbPath = str_replace($fileName, $preset . '_' . $fileName, $publicPath);
+
+        if (!file_exists($realPath . $thumbPath)) {
+            if (file_exists($realPath . $publicPath)) {
+                $thumbInit = ArrayHelper::getValue($this->attributes[$attribute]['preset'], $preset);
+                if ($thumbInit) {
+                    $thumbInit($realPath, $publicPath, $thumbPath);
+                }
+            }
+        }
+
+        return $returnRealPath ? $realPath . $thumbPath : $thumbPath;
+    }
+
+    /**
+     * Get rules description
+     *
+     * @param string $attribute
+     * @return string
+     */
+    public function getFileRulesDescription($attribute)
+    {
+        $rules = $this->attributes[$attribute]['rules'];
+
+        $text = '';
+        if (isset($rules['imageSize'])) {
+            $text .= FileRules::prepareImageSizeDescription($rules['imageSize']);
+            $text = !empty($text) ? $text . '<br>' : $text;
+        }
+
+        if (isset($rules['extensions'])) {
+            $text .= FileRules::prepareExtensionDescription($rules['extensions']);
+            $text = isset($rules['maxSize']) ? $text . '<br>' : $text;
+        }
+
+        if (isset($rules['maxSize'])) {
+            $text .= FileRules::prepareMaxSizeDescription($rules['maxSize']);
+        }
+
+        return $text;
+    }
+
+    /**
      * Binding files with owner
      *
      * @param int $ownerId
@@ -99,7 +244,7 @@ class FileBehavior extends Behavior
      * @param array|int $fileId
      * @return File|bool|array
      */
-    public function bind($ownerId, $ownerType, $fileId)
+    private function bind($ownerId, $ownerType, $fileId)
     {
         if ($fileId === [] || $fileId === '') {
             File::deleteByOwner($ownerId, $ownerType);
@@ -280,296 +425,5 @@ class FileBehavior extends Behavior
         } else {
             return 0;
         }
-    }
-
-    /**
-     * Get ownerType
-     *
-     * @param string $attribute
-     * @return int
-     */
-    public function getFileOwnerType($attribute)
-    {
-        return Yii::$app->fileManager->getOwnerType($this->getOwnerType($attribute));
-    }
-
-    /**
-     * Get files
-     *
-     * @param string $attribute
-     * @return array
-     */
-    public function getFiles($attribute)
-    {
-        return File::getByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
-    }
-
-    /**
-     * Get file status (protected or unprotected)
-     *
-     * @param string $attribute
-     * @return int
-     */
-    public function getFileStatus($attribute)
-    {
-        return ArrayHelper::getValue($this->attributes[$attribute], 'protected', false);
-    }
-
-    /**
-     * Get real path to file
-     *
-     * @param string $attribute
-     * @return string
-     */
-    public function getRealPath($attribute)
-    {
-        if ($this->getFileStatus($attribute) === File::STATUS_PROTECTED) {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
-        } else {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
-        }
-    }
-
-    /**
-     * Get rules
-     *
-     * @param string $attribute
-     * @return array
-     */
-    public function getFileRules($attribute)
-    {
-        return ArrayHelper::getValue($this->attributes[$attribute], 'rules', []);
-    }
-
-    /**
-     * Get file preset
-     *
-     * @param string $attribute
-     * @return array
-     */
-    public function getFilePreset($attribute)
-    {
-        return array_keys(ArrayHelper::getValue($this->attributes[$attribute], 'preset', []));
-    }
-
-    /**
-     * Get preset file after upload
-     *
-     * @param string $attribute
-     * @return array
-     */
-    public function getFilePresetAfterUpload($attribute)
-    {
-        $preset = ArrayHelper::getValue($this->attributes[$attribute], 'applyPresetAfterUpload', false);
-        if (is_string($preset) && $preset === '*') {
-            return $this->getFilePreset($attribute);
-        } elseif (is_array($preset)) {
-            return $preset;
-        }
-
-        return [];
-    }
-
-    /**
-     * Resize image
-     *
-     * @param string $attribute
-     * @param string $preset
-     * @param string $forcePublicPath Use this path
-     * @param bool $returnRealPath
-     * @return string
-     */
-    public function thumb($attribute, $preset, $forcePublicPath = null, $returnRealPath = false)
-    {
-        $realPath = $this->getRealPath($attribute);
-        $publicPath = $forcePublicPath ? $forcePublicPath : $this->owner->$attribute;
-        $fileName = pathinfo($publicPath, PATHINFO_FILENAME);
-        $thumbPath = str_replace($fileName, $preset . '_' . $fileName, $publicPath);
-
-        if (!file_exists($realPath . $thumbPath)) {
-            if (file_exists($realPath . $publicPath)) {
-                $thumbInit = ArrayHelper::getValue($this->attributes[$attribute]['preset'], $preset);
-                if ($thumbInit) {
-                    $thumbInit($realPath, $publicPath, $thumbPath);
-                }
-            }
-        }
-
-        return $returnRealPath ? $realPath . $thumbPath : $thumbPath;
-    }
-
-    /**
-     * Get rules description
-     *
-     * @param string $attribute
-     * @return string
-     */
-    public function getFileRulesDescription($attribute)
-    {
-        $rules = $this->attributes[$attribute]['rules'];
-
-        $text = '';
-        if (isset($rules['imageSize'])) {
-            $text .= $this->prepareImageSizeDescription($rules['imageSize']);
-            $text = !empty($text) ? $text . '<br>' : $text;
-        }
-
-        if (isset($rules['extensions'])) {
-            $text .= $this->prepareExtensionDescription($rules['extensions']);
-            $text = isset($rules['maxSize']) ? $text . '<br>' : $text;
-        }
-
-        if (isset($rules['maxSize'])) {
-            $text .= $this->prepareMaxSizeDescription($rules['maxSize']);
-        }
-
-        return $text;
-    }
-
-    /**
-     * Prepare description for max size of file
-     *
-     * @param int $rules
-     * @return string
-     */
-    private function prepareMaxSizeDescription($rules)
-    {
-        $maxSize = Yii::$app->formatter->asShortSize($rules);
-        return Yii::t('filemanager-yii2', 'Max. file size') . ': ' . $maxSize . ' ';
-    }
-
-    /**
-     * Prepare description for extensions of file
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function prepareExtensionDescription($rules)
-    {
-        $extensions = strtoupper(implode(', ', $rules));
-        return Yii::t('filemanager-yii2', 'File types') . ': ' . $extensions . ' ';
-    }
-
-    /**
-     * Prepare description for size of image
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function prepareImageSizeDescription($rules)
-    {
-        $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
-        $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
-        $maxHeight = ArrayHelper::getValue($rules, 'maxHeight');
-        $minHeight = ArrayHelper::getValue($rules, 'minHeight');
-
-        $text = '';
-        if ($this->imageWithStrictSize($rules)) {
-            $text .= Yii::t('filemanager-yii2', 'Image size') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-        } elseif ($this->imageWithMinAndMaxSize($rules)) {
-            $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
-            $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-        } elseif ($this->imageWithMinSize($rules)) {
-            $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
-            $text .= $this->prepareImageFullSizeDescription($rules, ['minWidth', 'minHeight']);
-        } elseif ($this->imageWithMaxSize($rules)) {
-            $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-            $text .= $this->prepareImageFullSizeDescription($rules, ['maxWidth', 'maxHeight']);
-        } else {
-            $text .= $this->prepareImageFullSizeDescription($rules);
-        }
-
-        $text = mb_substr($text, 0, -1);
-        $text = str_replace(';', '<br>', $text);
-
-        return $text;
-    }
-
-    /**
-     * Prepare description for strict size of image
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function imageWithStrictSize($rules)
-    {
-        $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
-        $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
-        $maxHeight = ArrayHelper::getValue($rules, 'maxHeight');
-        $minHeight = ArrayHelper::getValue($rules, 'minHeight');
-
-        return count($rules) == 4 && ($maxWidth == $minWidth && $maxHeight == $minHeight);
-    }
-
-    /**
-     * Prepare description for min-max size of image
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function imageWithMinAndMaxSize($rules)
-    {
-        return count($rules) == 4;
-    }
-
-    /**
-     * Prepare description for min size of image
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function imageWithMinSize($rules)
-    {
-        $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
-        $minHeight = ArrayHelper::getValue($rules, 'minHeight');
-
-        return (count($rules) == 2 || count($rules) == 3) && $minWidth && $minHeight;
-    }
-
-    /**
-     * Prepare description for max size of image
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function imageWithMaxSize($rules)
-    {
-        $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
-        $maxHeight = ArrayHelper::getValue($rules, 'maxHeight');
-
-        return (count($rules) == 2 || count($rules) == 3) && $maxWidth && $maxHeight;
-    }
-
-    /**
-     * Prepare description for full size of image
-     *
-     * @param array $rules
-     * @return string
-     */
-    private function prepareImageFullSizeDescription($rules, $exclude = [])
-    {
-        foreach ($exclude as $item) {
-            unset($rules[$item]);
-        }
-
-        $text = '';
-        foreach ($rules as $rule => $value) {
-            switch ($rule) {
-                case 'minWidth':
-                    $text .= Yii::t('filemanager-yii2', 'Min. width') . ' ' . $value . 'px;';
-                    break;
-                case 'minHeight':
-                    $text .= Yii::t('filemanager-yii2', 'Min. height') . ' ' . $value . 'px;';
-                    break;
-                case 'maxWidth':
-                    $text .= Yii::t('filemanager-yii2', 'Max. width') . ' ' . $value . 'px;';
-                    break;
-                case 'maxHeight':
-                    $text .= Yii::t('filemanager-yii2', 'Max. height') . ' ' . $value . 'px;';
-                    break;
-            }
-        }
-
-        return $text;
     }
 }
