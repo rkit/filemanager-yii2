@@ -365,10 +365,10 @@ class File extends \yii\db\ActiveRecord
      */
     public function saveFile()
     {
-        if (file_exists($this->pathTmp(true)) && FileHelper::createDirectory($this->dir(true))) {
-            if (rename($this->dirTmp(true), $this->dir(true))) {
-                return true;
-            }
+        if (file_exists($this->pathTmp(true))) {
+            FileHelper::copyDirectory($this->dirTmp(true), $this->dir(true));
+            FileHelper::removeDirectory($this->dirTmp(true));
+            return true;
         } // @codeCoverageIgnore
 
         return false;
