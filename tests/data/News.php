@@ -86,7 +86,20 @@ class News extends \yii\db\ActiveRecord
                         'protected' => true,
                         'rules' => [
                             'imageSize' => ['minWidth' => 300, 'minHeight' => 300]
-                        ]
+                        ],
+                        'preset' => [
+                            '200x200' => function ($realPath, $publicPath, $thumbPath) {
+                                Image::make($realPath . $publicPath)
+                                    ->fit(200, 200)
+                                    ->save($realPath . $thumbPath, 100);
+                            },
+                            '220x220' => function ($realPath, $publicPath, $thumbPath) {
+                                Image::make($realPath . $publicPath)
+                                    ->fit(220, 220)
+                                    ->save($realPath . $thumbPath, 100);
+                            },
+                        ],
+                        'applyPresetAfterUpload' => '*'
                     ],
                     'image_path' => [
                         'saveFilePath' => true,

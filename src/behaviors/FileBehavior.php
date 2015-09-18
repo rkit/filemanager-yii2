@@ -126,14 +126,14 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get real path to file
+     * Get upload dir
      *
      * @param string $attribute
      * @return string
      */
-    public function getRealPath($attribute)
+    public function getUploadDir($attribute)
     {
-        if ($this->getFileStatus($attribute) === File::STATUS_PROTECTED) {
+        if ((int)$this->getFileStatus($attribute) === File::STATUS_PROTECTED) {
             return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
         } else {
             return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
@@ -181,6 +181,18 @@ class FileBehavior extends Behavior
     }
 
     /**
+     * Generate a thumb name
+     *
+     * @param string $publicPath
+     * @return string
+     */
+    public function generateThumbName($path, $preset)
+    {
+        $fileName = pathinfo($path, PATHINFO_FILENAME);
+        return str_replace($fileName, $preset . '_' . $fileName, $path);
+    }
+
+    /**
      * Resize image
      *
      * @param string $attribute
@@ -191,10 +203,9 @@ class FileBehavior extends Behavior
      */
     public function thumb($attribute, $preset, $forcePublicPath = null, $returnRealPath = false)
     {
-        $realPath = $this->getRealPath($attribute);
+        $realPath = $this->getUploadDir($attribute);
         $publicPath = $forcePublicPath ? $forcePublicPath : $this->owner->$attribute;
-        $fileName = pathinfo($publicPath, PATHINFO_FILENAME);
-        $thumbPath = str_replace($fileName, $preset . '_' . $fileName, $publicPath);
+        $thumbPath = $this->generateThumbName($publicPath, $preset);
 
         if (!file_exists($realPath . $thumbPath)) {
             if (file_exists($realPath . $publicPath)) {

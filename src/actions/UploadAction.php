@@ -117,7 +117,7 @@ class UploadAction extends Action
         $file = File::createFromUploader($file, $ownerId, $ownerType, $this->saveAfterUpload, $status);
         if ($file) {
             if (count($presetAfterUpload)) {
-                $this->applyPreset($file->path(true), $presetAfterUpload);
+                $this->applyPreset($file->path(), $presetAfterUpload);
             }
             if ($this->multiple) {
                 return $this->response(

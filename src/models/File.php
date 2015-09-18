@@ -188,8 +188,11 @@ class File extends \yii\db\ActiveRecord
      */
     public function getUploadDir()
     {
-        $uploadDir = $this->isProtected() ? 'uploadDirProtected' : 'uploadDirUnprotected';
-        return Yii::getAlias(Yii::$app->fileManager->$uploadDir);
+        if ($this->isProtected()) {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
+        } else {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
+        }
     }
 
     /**
@@ -203,8 +206,9 @@ class File extends \yii\db\ActiveRecord
         return
             ($full ? $this->getUploadDir() : '') . '/' .
             Yii::$app->fileManager->publicPath . '/tmp/' .
+            $this->getDateOfFile() . '/' .
             $this->owner_type . '/' .
-            $this->getDateOfFile();
+            $this->id;
     }
 
     /**
@@ -221,8 +225,8 @@ class File extends \yii\db\ActiveRecord
             return
                 ($full ? $this->getUploadDir() : '') . '/' .
                 Yii::$app->fileManager->publicPath . '/' .
-                $this->owner_type . '/' .
                 $this->getDateOfFile() . '/' .
+                $this->owner_type . '/' .
                 $this->owner_id . '/' .
                 $this->id;
         }
@@ -336,15 +340,16 @@ class File extends \yii\db\ActiveRecord
      */
     private function saveToTmp($tempFile, $saveAfterUpload)
     {
-        if (FileHelper::createDirectory($this->dir(true))) {
-            $processed = $this->moveUploadedFile($tempFile);
-            if ($processed && $saveAfterUpload) {
-                $this->tmp = false;
-                if ($this->save() && $this->saveFile()) {
-                    return $this;
-                }
-            } elseif ($processed) {
-                if ($this->save()) {
+        if ($this->save()) {
+            if (FileHelper::createDirectory($this->dirTmp(true))) {
+                $processed = $this->moveUploadedFile($tempFile);
+                if ($processed && $saveAfterUpload) {
+                    $this->tmp = false;
+                    $this->updateAttributes(['tmp' => $this->tmp]);
+                    if ($this->saveFile()) {
+                        return $this;
+                    }
+                } elseif ($processed) {
                     return $this;
                 }
             } // @codeCoverageIgnore
@@ -361,7 +366,7 @@ class File extends \yii\db\ActiveRecord
     public function saveFile()
     {
         if (file_exists($this->pathTmp(true)) && FileHelper::createDirectory($this->dir(true))) {
-            if (rename($this->pathTmp(true), $this->path(true))) {
+            if (rename($this->dirTmp(true), $this->dir(true))) {
                 return true;
             }
         } // @codeCoverageIgnore
@@ -378,9 +383,9 @@ class File extends \yii\db\ActiveRecord
     private function moveUploadedFile($tempFile)
     {
         if (Yii::$app instanceof \yii\console\Application) {
-            return rename($tempFile, $this->path(true));
+            return rename($tempFile, $this->pathTmp(true));
         } else {
-            return move_uploaded_file($tempFile, $this->path(true)); // @codeCoverageIgnore
+            return move_uploaded_file($tempFile, $this->pathTmp(true)); // @codeCoverageIgnore
         }
     }
 
