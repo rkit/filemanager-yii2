@@ -54,7 +54,7 @@ class UploadAction extends Action
      */
     public $saveAfterUpload = false;
     /**
-     * @var string $model
+     * @var ActiveRecord $model
      */
     private $model;
     /**
