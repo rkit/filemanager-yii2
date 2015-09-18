@@ -1,7 +1,7 @@
 # FileManager for Yii2
 
-[![Build Status](https://img.shields.io/travis/rkit/filemanager-yii2/master.svg?style=flat-square)](https://travis-ci.org/rkit/filemanager-yii2)
-[![Scrutinizer Coverage](https://img.shields.io/scrutinizer/coverage/g/rkit/filemanager-yii2.svg?style=flat-square)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/)
-[![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/rkit/filemanager-yii2/master.svg?style=flat-square)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
+[![Build Status](https://travis-ci.org/rkit/filemanager-yii2.svg?branch=master)](https://travis-ci.org/rkit/filemanager-yii2)
+[![Code Coverage](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
 
 ## IN PROCESS
