@@ -21,8 +21,8 @@ $config = [
         ],
         'fileManager' => [
             'class' => 'rkit\filemanager\FileManager',
-            'uploadDirProtected' => Yii::getAlias('@tests/tmp/private'),
-            'uploadDirUnprotected' => Yii::getAlias('@tests/tmp/public'),
+            'uploadDirProtected' => '@tests/tmp/private',
+            'uploadDirUnprotected' => '@tests/tmp/public',
             'publicPath' => 'uploads',
             'ownerTypes' => [
                 'news.image_path' => 1,

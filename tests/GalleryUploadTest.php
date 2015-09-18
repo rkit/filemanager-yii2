@@ -26,7 +26,7 @@ class GalleryUploadTest extends BaseTest
 
         foreach ($files as $file) {
             $this->assertTrue($file->isUnprotected());
-            $this->assertContains(Yii::$app->fileManager->uploadDirUnprotected, $file->path(true));
+            $this->assertContains(Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected), $file->path(true));
         }
     }
 
@@ -42,7 +42,7 @@ class GalleryUploadTest extends BaseTest
 
         foreach ($files as $file) {
             $this->assertTrue($file->isProtected());
-            $this->assertContains(Yii::$app->fileManager->uploadDirProtected, $file->path(true));
+            $this->assertContains(Yii::getAlias(Yii::$app->fileManager->uploadDirProtected), $file->path(true));
         }
     }
 

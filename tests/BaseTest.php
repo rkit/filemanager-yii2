@@ -42,8 +42,8 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
         File::deleteAll();
         News::deleteAll();
 
-        FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirProtected);
-        FileHelper::removeDirectory(Yii::$app->fileManager->uploadDirUnprotected);
+        FileHelper::removeDirectory(Yii::getAlias(Yii::$app->fileManager->uploadDirProtected));
+        FileHelper::removeDirectory(Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected));
 
         unset($_FILES);
         foreach ($this->files as $inputName => $fileInfo) {

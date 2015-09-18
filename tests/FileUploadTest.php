@@ -23,7 +23,7 @@ class FileUploadTest extends BaseTest
         ]));
 
         $this->assertTrue($file->isUnprotected());
-        $this->assertContains(Yii::$app->fileManager->uploadDirUnprotected, $file->path(true));
+        $this->assertContains(Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected), $file->path(true));
     }
 
     public function testUploadProtectedFile()
@@ -35,7 +35,7 @@ class FileUploadTest extends BaseTest
         ], false));
 
         $this->assertTrue($file->isProtected());
-        $this->assertContains(Yii::$app->fileManager->uploadDirProtected, $file->path(true));
+        $this->assertContains(Yii::getAlias(Yii::$app->fileManager->uploadDirProtected), $file->path(true));
     }
 
     public function testSaveAfterUpload()
