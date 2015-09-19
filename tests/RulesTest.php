@@ -19,7 +19,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
 
         $rules = $model->getFileRulesDescription('image_path');
         $this->assertContains('Min. size of image: 300x300px', $rules);
-        $this->assertContains('Max. file size: 1 MiB', $rules);
+        $this->assertContains('Max. file size: 1', $rules);
         $this->assertContains('File types: JPG, JPEG, PNG', $rules);
     }
 
