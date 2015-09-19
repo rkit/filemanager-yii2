@@ -19,6 +19,9 @@
         "intervention/image": "^2.3.2",
         "yiisoft/yii2": "^2.0"
     },
+    "scripts": {
+        "test": "php vendor/bin/phpunit --coverage-html=tests/tmp/coverage.html --colors=always"
+    },
     "autoload": {
         "psr-4": {
             "rkit\\filemanager\\": "src"
