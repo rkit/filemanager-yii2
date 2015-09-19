@@ -20,7 +20,7 @@
         "yiisoft/yii2": "^2.0"
     },
     "scripts": {
-        "test": "php vendor/bin/phpunit --coverage-html=tests/tmp/coverage.html --colors=always"
+        "test": "phpunit --coverage-html=tests/tmp/coverage.html --colors=always"
     },
     "autoload": {
         "psr-4": {
