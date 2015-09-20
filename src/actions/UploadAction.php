@@ -13,7 +13,6 @@ use yii\base\Action;
 use yii\base\DynamicModel;
 use yii\base\InvalidParamException;
 use yii\web\UploadedFile;
-use rkit\filemanager\models\File;
 
 class UploadAction extends Action
 {
