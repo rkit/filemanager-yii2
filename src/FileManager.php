@@ -85,7 +85,7 @@ class FileManager extends Component
      * @param bool $protected File is protected?
      * @return \rkit\filemanager\models\File|bool
      */
-    public function create($data, $ownerId, $ownerType, $saveAfterUpload, $protected)
+    public function create($data, $ownerId = -1, $ownerType = -1, $saveAfterUpload = false, $protected = false)
     {
         switch ($data) {
             case $this->isFromUploader($data):
