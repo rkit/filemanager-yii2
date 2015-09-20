@@ -44,7 +44,8 @@ class FileUploadTest extends BaseTest
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-300',
-            'saveAfterUpload' => true
+            'saveAfterUpload' => true,
+            'ownerId' => 0
         ]);
 
         $file = File::findOne($response['id']);

@@ -97,11 +97,6 @@ class File extends \yii\db\ActiveRecord
                     $this->user_id = Yii::$app->user->isGuest ? 0 : Yii::$app->user->id; // @codeCoverageIgnore
                     $this->ip = ip2long(Yii::$app->request->getUserIP()); // @codeCoverageIgnore
                 } // @codeCoverageIgnore
-
-                // To remove unused files
-                if ($this->owner_id === null) {
-                    $this->owner_id = -1;
-                }
             }
 
             return true;

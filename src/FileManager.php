@@ -66,7 +66,7 @@ class FileManager extends Component
      */
     public static function createFromUploader(
         $data,
-        $ownerId = null,
+        $ownerId = -1,
         $ownerType = -1,
         $saveAfterUpload = false,
         $protected = false
@@ -98,7 +98,7 @@ class FileManager extends Component
      */
     public static function createFromPath(
         $path,
-        $ownerId = null,
+        $ownerId = -1,
         $ownerType = -1,
         $saveAfterUpload = false,
         $protected = false

@@ -47,7 +47,7 @@ class UploadAction extends Action
     /**
      * @var int $ownerId Owner Id
      */
-    public $ownerId = null;
+    public $ownerId = -1;
     /**
      * @var bool $saveAfterUpload Save the file immediately after upload
      */
@@ -92,12 +92,7 @@ class UploadAction extends Action
         if ($model->hasErrors()) {
             return $this->response(['error' => $model->getFirstError('file')]);
         } else {
-            $ownerId = $this->saveAfterUpload && $this->ownerId === null ? 0 : $this->ownerId;
-            $ownerType = $this->model->getFileOwnerType($this->attribute);
-            $protected = $this->model->isProtected($this->attribute);
-            $presetAfterUpload = $this->model->getFilePresetAfterUpload($this->attribute);
-
-            return $this->upload($file, $ownerId, $ownerType, $protected, $presetAfterUpload);
+            return $this->upload($file);
         }
     }
 
@@ -105,22 +100,19 @@ class UploadAction extends Action
      * Upload
      *
      * @param yii\web\UploadedFile $file
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $protected
-     * @param array $presetAfterUpload
      * @return string JSON
      */
-    private function upload($file, $ownerId, $ownerType, $protected, $presetAfterUpload)
+    private function upload($file)
     {
         $file = Yii::$app->fileManager->createFromUploader(
             $file,
-            $ownerId,
-            $ownerType,
+            $this->ownerId,
+            $this->model->getFileOwnerType($this->attribute),
             $this->saveAfterUpload,
-            $protected
+            $this->model->isProtected($this->attribute)
         );
         if ($file) {
+            $presetAfterUpload = $this->model->getFilePresetAfterUpload($this->attribute);
             if (count($presetAfterUpload)) {
                 $this->applyPreset($file->path(), $presetAfterUpload);
             }
