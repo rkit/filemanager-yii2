@@ -11,8 +11,6 @@ namespace rkit\filemanager;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidParamException;
-use yii\helpers\FileHelper;
-use rkit\filemanager\models\File;
 
 /**
  * File Manager
@@ -38,13 +36,25 @@ class FileManager extends Component
      * @var array Type of owner in format: title:string => type:int
      */
     public $ownerTypes = [];
+    /**
+     * @var Decoder
+     */
+    public static $decoder = null;
 
     public function init()
     {
         parent::init();
+
+        $this->setDecoder();
         $this->registerTranslations();
     }
 
+    /**
+     * Get owner type
+     *
+     * @param string $ownerType
+     * @return void
+     */
     public function getOwnerType($ownerType)
     {
         if (!isset($this->ownerTypes[$ownerType])) {
@@ -55,75 +65,50 @@ class FileManager extends Component
     }
 
     /**
-     * Create file from uploader (UploadedFile)
+     * It is from uploader?
      *
-     * @param UploadedFile $data
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload
-     * @param bool $protected File is protected?
-     * @return File|bool
+     * @param mixed $data
+     * @return bool
      */
-    public static function createFromUploader(
-        $data,
-        $ownerId = -1,
-        $ownerType = -1,
-        $saveAfterUpload = false,
-        $protected = false
-    ) {
-        $pathInfo = pathinfo($data->name);
-        $file = new File([
-            'tmp' => true,
-            'owner_id' => $ownerId,
-            'owner_type' => $ownerType,
-            'size' => $data->size,
-            'mime' => $data->type,
-            'title' => $pathInfo['filename'],
-            'name' => File::generateName($pathInfo['extension']),
-            'protected' => $protected
-        ]);
-
-        return $file->saveToTmp($data->tempName, $saveAfterUpload);
+    private function isFromUploader($data)
+    {
+        return $data instanceof yii\web\UploadedFile;
     }
 
     /**
-     * Create file from path
+     * Create new file from mixed data
      *
-     * @param string $path
+     * @param mixed $data
      * @param int $ownerId
      * @param int $ownerType
      * @param bool $saveAfterUpload Save the file immediately after upload
      * @param bool $protected File is protected?
-     * @return File|bool
+     * @return \rkit\filemanager\models\File|bool
      */
-    public static function createFromPath(
-        $path,
-        $ownerId = -1,
-        $ownerType = -1,
-        $saveAfterUpload = false,
-        $protected = false
-    ) {
-        if (file_exists($path)) {
-            $pathInfo = pathinfo($path);
-            $file = new File([
-                'tmp' => true,
-                'owner_id' => $ownerId,
-                'owner_type' => $ownerType,
-                'size' => filesize($path),
-                'mime' => FileHelper::getMimeType($path),
-                'title' => $pathInfo['filename'],
-                'name' => File::generateName($pathInfo['extension']),
-                'protected' => $protected
-            ]);
-
-            return $file->saveToTmp($path, $saveAfterUpload);
+    public function create($data, $ownerId, $ownerType, $saveAfterUpload, $protected)
+    {
+        switch ($data) {
+            case $this->isFromUploader($data):
+                return $this->decoder->createFromUploader($data, $ownerId, $ownerType, $saveAfterUpload, $protected);
+            default:
+                return $this->decoder->createFromPath($data, $ownerId, $ownerType, $saveAfterUpload, $protected);
         }
+    }
 
-        return false;
+    /**
+     * Set Decoder
+     *
+     * @return void
+     */
+    public function setDecoder()
+    {
+        $this->decoder = new Decoder();
     }
 
     /**
      * Registers translator
+     *
+     * @return void
      */
     public function registerTranslations()
     {

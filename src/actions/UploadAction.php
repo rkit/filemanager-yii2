@@ -104,7 +104,7 @@ class UploadAction extends Action
      */
     private function upload($file)
     {
-        $file = Yii::$app->fileManager->createFromUploader(
+        $file = Yii::$app->fileManager->create(
             $file,
             $this->ownerId,
             $this->model->getFileOwnerType($this->attribute),

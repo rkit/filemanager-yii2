@@ -87,7 +87,7 @@ class FileBehavior extends Behavior
      * @param string $attribute
      * @return string
      */
-    public function getOwnerType($attribute)
+    private function getOwnerType($attribute)
     {
         return $this->owner->tableName() . '.' . $attribute;
     }

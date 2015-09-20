@@ -304,7 +304,7 @@ class FileUploadTest extends BaseTest
     public function testNotTmpUnprotectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, true, false);
+        $file = Yii::$app->fileManager->create($file, 100, 200, true, false);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -315,7 +315,7 @@ class FileUploadTest extends BaseTest
     public function testNotTmpProtectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, true, true);
+        $file = Yii::$app->fileManager->create($file, 100, 200, true, true);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -326,7 +326,7 @@ class FileUploadTest extends BaseTest
     public function testTmpUnprotectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, false, false);
+        $file = Yii::$app->fileManager->create($file, 100, 200, false, false);
 
         $this->assertTrue(is_object($file));
         $this->assertTrue($file->isTmp());
@@ -337,7 +337,7 @@ class FileUploadTest extends BaseTest
     public function testTmpProtectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, false, true);
+        $file = Yii::$app->fileManager->create($file, 100, 200, false, true);
 
         $this->assertTrue(is_object($file));
         $this->assertTrue($file->isTmp());
@@ -345,9 +345,12 @@ class FileUploadTest extends BaseTest
         $this->assertFileExists($file->path(true));
     }
 
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage Unable to create from `/test/fail.jpg`
+     */
     public function testFailCreateFromPath()
     {
-        $file = Yii::$app->fileManager->createFromPath('/test/test.jpg', 100, 200, true, false);
-        $this->assertFalse($file);
+        $file = Yii::$app->fileManager->create('/test/fail.jpg', 100, 200, true, false);
     }
 }

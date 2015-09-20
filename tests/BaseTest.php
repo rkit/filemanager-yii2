@@ -159,15 +159,14 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      */
     protected function uploadFile($config, $saveFilePath = true)
     {
-        $ownerType = Yii::$app->fileManager->getOwnerType('news.' . $config['attribute']);
-
         $response = $this->runAction($config);
         $response = $this->checkUploadFileResponse($response);
 
         $file = File::findOne($response['id']);
-        $this->checkTmpFile($file, -1, Yii::$app->fileManager->getOwnerType('news.' . $config['attribute']));
-
         $model = new News(['title' => 'test', $config['attribute'] => $file->id]);
+        $ownerType = $model->getFileOwnerType($config['attribute']);
+
+        $this->checkTmpFile($file, -1, $ownerType);
         $this->assertTrue($model->save());
 
         $file = File::findOne($file->id);
@@ -190,15 +189,14 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      */
     protected function uploadGallery($config)
     {
-        $ownerType = Yii::$app->fileManager->getOwnerType('news.' . $config['attribute']);
-
         $response = $this->runAction($config);
         $response = $this->checkUploadGalleryResponse($response);
 
         $file = File::findOne($response[1]);
-        $this->checkTmpFile($file, -1, $ownerType);
-
         $model = new News(['title' => 'test', $config['attribute'] => ['id' . $file->id => 'test']]);
+        $ownerType = $model->getFileOwnerType($config['attribute']);
+
+        $this->checkTmpFile($file, -1, $ownerType);
         $this->assertTrue($model->save());
 
         $files = $model->getFiles($config['attribute']);
