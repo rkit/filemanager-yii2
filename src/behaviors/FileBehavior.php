@@ -115,12 +115,12 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get file status (protected or unprotected)
+     * File is protected?
      *
      * @param string $attribute
-     * @return int
+     * @return bool
      */
-    public function getFileStatus($attribute)
+    public function isProtected($attribute)
     {
         return ArrayHelper::getValue($this->attributes[$attribute], 'protected', false);
     }
@@ -133,7 +133,7 @@ class FileBehavior extends Behavior
      */
     public function getUploadDir($attribute)
     {
-        if ((int)$this->getFileStatus($attribute) === File::STATUS_PROTECTED) {
+        if ($this->isProtected($attribute)) {
             return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
         } else {
             return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);

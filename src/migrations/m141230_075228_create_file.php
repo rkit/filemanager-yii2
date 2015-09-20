@@ -25,7 +25,7 @@ class m141230_075228_create_file extends \yii\db\Migration
             'ip' => Schema::TYPE_BIGINT . "(20) NOT NULL DEFAULT 0",
             'tmp' => "tinyint(1) NOT NULL DEFAULT 0",
             'position' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
-            'status' => "tinyint(1) NOT NULL DEFAULT 0"
+            'protected' => "tinyint(1) NOT NULL DEFAULT 0"
         ], $tableOptions);
 
         $this->createIndex('owner', '{{%file}}', 'owner_id, owner_type');

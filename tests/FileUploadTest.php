@@ -303,7 +303,7 @@ class FileUploadTest extends BaseTest
     public function testNotTmpUnprotectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = File::createFromPath($file, 100, 200, true, File::STATUS_UNPROTECTED);
+        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, true, false);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -314,7 +314,7 @@ class FileUploadTest extends BaseTest
     public function testNotTmpProtectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = File::createFromPath($file, 100, 200, true, File::STATUS_PROTECTED);
+        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, true, true);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -325,7 +325,7 @@ class FileUploadTest extends BaseTest
     public function testTmpUnprotectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = File::createFromPath($file, 100, 200, false, File::STATUS_UNPROTECTED);
+        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, false, false);
 
         $this->assertTrue(is_object($file));
         $this->assertTrue($file->isTmp());
@@ -336,7 +336,7 @@ class FileUploadTest extends BaseTest
     public function testTmpProtectedCreateFromPath()
     {
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = File::createFromPath($file, 100, 200, false, File::STATUS_PROTECTED);
+        $file = Yii::$app->fileManager->createFromPath($file, 100, 200, false, true);
 
         $this->assertTrue(is_object($file));
         $this->assertTrue($file->isTmp());
@@ -346,7 +346,7 @@ class FileUploadTest extends BaseTest
 
     public function testFailCreateFromPath()
     {
-        $file = File::createFromPath('/test/test.jpg', 100, 200, true, File::STATUS_UNPROTECTED);
+        $file = Yii::$app->fileManager->createFromPath('/test/test.jpg', 100, 200, true, false);
         $this->assertFalse($file);
     }
 }

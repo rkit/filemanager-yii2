@@ -22,14 +22,10 @@ class FileTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File();
 
-        $this->assertCount(2, $file->getStatuses());
-
-        $file->status = File::STATUS_UNPROTECTED;
+        $file->protected = false;
         $this->assertTrue($file->isUnprotected());
-        $this->assertContains('Unprotected, access from the web', $file->getStatusName());
 
-        $file->status = File::STATUS_PROTECTED;
+        $file->protected = true;
         $this->assertTrue($file->isProtected());
-        $this->assertContains('Protected', $file->getStatusName());
     }
 }

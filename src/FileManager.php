@@ -11,6 +11,8 @@ namespace rkit\filemanager;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidParamException;
+use yii\helpers\FileHelper;
+use rkit\filemanager\models\File;
 
 /**
  * File Manager
@@ -50,6 +52,74 @@ class FileManager extends Component
         }
 
         return $this->ownerTypes[$ownerType];
+    }
+
+    /**
+     * Create file from uploader (UploadedFile)
+     *
+     * @param UploadedFile $data
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param bool $saveAfterUpload Save the file immediately after upload
+     * @param bool $protected File is protected?
+     * @return File|bool
+     */
+    public static function createFromUploader(
+        $data,
+        $ownerId = null,
+        $ownerType = -1,
+        $saveAfterUpload = false,
+        $protected = false
+    ) {
+        $pathInfo = pathinfo($data->name);
+        $file = new File([
+            'tmp' => true,
+            'owner_id' => $ownerId,
+            'owner_type' => $ownerType,
+            'size' => $data->size,
+            'mime' => $data->type,
+            'title' => $pathInfo['filename'],
+            'name' => File::generateName($pathInfo['extension']),
+            'protected' => $protected
+        ]);
+
+        return $file->saveToTmp($data->tempName, $saveAfterUpload);
+    }
+
+    /**
+     * Create file from path
+     *
+     * @param string $path
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param bool $saveAfterUpload Save the file immediately after upload
+     * @param bool $protected File is protected?
+     * @return File|bool
+     */
+    public static function createFromPath(
+        $path,
+        $ownerId = null,
+        $ownerType = -1,
+        $saveAfterUpload = false,
+        $protected = false
+    ) {
+        if (file_exists($path)) {
+            $pathInfo = pathinfo($path);
+            $file = new File([
+                'tmp' => true,
+                'owner_id' => $ownerId,
+                'owner_type' => $ownerType,
+                'size' => filesize($path),
+                'mime' => FileHelper::getMimeType($path),
+                'title' => $pathInfo['filename'],
+                'name' => File::generateName($pathInfo['extension']),
+                'protected' => $protected
+            ]);
+
+            return $file->saveToTmp($path, $saveAfterUpload);
+        }
+
+        return false;
     }
 
     /**

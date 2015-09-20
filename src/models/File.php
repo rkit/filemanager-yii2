@@ -28,13 +28,10 @@ use yii\helpers\FileHelper;
  * @property integer $ip
  * @property integer $tmp
  * @property integer $position
- * @property integer $status
+ * @property integer $protected
  */
 class File extends \yii\db\ActiveRecord
 {
-    const STATUS_UNPROTECTED = 0;
-    const STATUS_PROTECTED = 1;
-
     /**
      * @inheritdoc
      * @codeCoverageIgnore
@@ -114,37 +111,13 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Get all statuses
-     *
-     * @return string[]
-     */
-    public static function getStatuses()
-    {
-        return [
-            self::STATUS_UNPROTECTED => Yii::t('filemanager-yii2', 'Unprotected, access from the web'),
-            self::STATUS_PROTECTED  => Yii::t('filemanager-yii2', 'Protected'),
-        ];
-    }
-
-    /**
-     * Get statuse name
-     *
-     * @return string
-     */
-    public function getStatusName()
-    {
-        $statuses = $this->getStatuses();
-        return isset($statuses[$this->status]) ? $statuses[$this->status] : '';
-    }
-
-    /**
      * Is it protected?
      *
      * @return bool
      */
     public function isProtected()
     {
-        return $this->status == self::STATUS_PROTECTED;
+        return (bool)$this->protected;
     }
 
     /**
@@ -154,7 +127,7 @@ class File extends \yii\db\ActiveRecord
      */
     public function isUnprotected()
     {
-        return $this->status == self::STATUS_UNPROTECTED;
+        return (bool)$this->protected === false;
     }
 
     /**
@@ -267,78 +240,10 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Create file from uploader (UploadedFile)
-     *
-     * @param UploadedFile $data
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload
-     * @param int $status Status a file. Unprotected or Protected
-     * @return File|bool
-     */
-    public static function createFromUploader(
-        $data,
-        $ownerId = null,
-        $ownerType = -1,
-        $saveAfterUpload = false,
-        $status = self::STATUS_UNPROTECTED
-    ) {
-        $pathInfo = pathinfo($data->name);
-        $file = new self([
-            'tmp' => true,
-            'owner_id' => $ownerId,
-            'owner_type' => $ownerType,
-            'size' => $data->size,
-            'mime' => $data->type,
-            'title' => $pathInfo['filename'],
-            'name' => self::generateName($pathInfo['extension']),
-            'status' => $status
-        ]);
-
-        return $file->saveToTmp($data->tempName, $saveAfterUpload);
-    }
-
-    /**
-     * Create file from path
-     *
-     * @param string $path
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload
-     * @param int $status Status a file. Unprotected or Protected
-     * @return File|bool
-     */
-    public static function createFromPath(
-        $path,
-        $ownerId = null,
-        $ownerType = -1,
-        $saveAfterUpload = false,
-        $status = self::STATUS_UNPROTECTED
-    ) {
-        if (file_exists($path)) {
-            $pathInfo = pathinfo($path);
-            $file = new self([
-                'tmp' => true,
-                'owner_id' => $ownerId,
-                'owner_type' => $ownerType,
-                'size' => filesize($path),
-                'mime' => FileHelper::getMimeType($path),
-                'title' => $pathInfo['filename'],
-                'name' => self::generateName($pathInfo['extension']),
-                'status' => $status
-            ]);
-
-            return $file->saveToTmp($path, $saveAfterUpload);
-        }
-
-        return false;
-    }
-
-    /**
      * @param string $tempFile
      * @param bool $saveAfterUpload
      */
-    private function saveToTmp($tempFile, $saveAfterUpload)
+    public function saveToTmp($tempFile, $saveAfterUpload)
     {
         if ($this->save()) {
             if (FileHelper::createDirectory($this->dirTmp(true))) {
