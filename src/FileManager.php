@@ -115,7 +115,7 @@ class FileManager extends Component
         if (!isset(\Yii::$app->i18n->translations['filemanager-yii2'])) {
             \Yii::$app->i18n->translations['filemanager-yii2'] = [
                 'class' => 'yii\i18n\PhpMessageSource',
-                'basePath' => '@vendor/rkit/filemanager-yii2/messages',
+                'basePath' => '@vendor/rkit/filemanager-yii2/src/messages',
                 'sourceLanguage' => 'en',
             ];
         }
