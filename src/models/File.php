@@ -235,11 +235,14 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
+     * Save file in tmp directory (if `saveAfterUpload` is true then save in the final directory)
+     *
      * @param string $tempFile
      * @param bool $saveAfterUpload
      * @param bool $uploaded File has been uploaded or manually created
+     * @return \rkit\filemanager\models\File|bool
      */
-    public function saveToTmp($tempFile, $saveAfterUpload, $uploaded = true)
+    public function saveToTmp($tempFile, $saveAfterUpload = false, $uploaded = true)
     {
         if ($this->save()) {
             if (FileHelper::createDirectory($this->dirTmp(true))) {

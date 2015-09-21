@@ -59,7 +59,7 @@ class Decoder
      * @param int $ownerType
      * @param bool $saveAfterUpload Save the file immediately after upload
      * @param bool $protected File is protected?
-     * @return \rkit\filemanager\models\File
+     * @return \rkit\filemanager\models\File|bool
      */
     public function createFromPath(
         $path,
