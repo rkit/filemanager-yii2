@@ -9,10 +9,10 @@
 
 ## Features
 
--
--
--
--
+- Upload with validations
+- Create thumbnails on the fly with cache or after upload
+- Easy setup presets for files
+- Check the Owner of file
 
 ## Installation
 
