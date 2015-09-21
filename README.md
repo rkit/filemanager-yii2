@@ -110,7 +110,7 @@
    }
    ```
 
-## Presets
+## Thumbnails
 
 - Apply a preset and return public path
 
