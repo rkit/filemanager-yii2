@@ -8,7 +8,6 @@
 
 namespace rkit\filemanager;
 
-use Yii;
 use yii\helpers\FileHelper;
 use yii\base\InvalidValueException;
 use rkit\filemanager\models\File;
@@ -60,7 +59,7 @@ class Decoder
      * @param int $ownerType
      * @param bool $saveAfterUpload Save the file immediately after upload
      * @param bool $protected File is protected?
-     * @return \rkit\filemanager\models\File|bool
+     * @return \rkit\filemanager\models\File
      */
     public function createFromPath(
         $path,
@@ -88,7 +87,5 @@ class Decoder
         } else {
             throw new InvalidValueException('Unable to create from `' . $path . '`');
         }
-
-        return false;
     }
 }

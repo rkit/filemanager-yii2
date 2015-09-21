@@ -25,6 +25,8 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
+        FileHelper::createDirectory(Yii::getAlias('@tests/data/files/tmp'));
+
         $_FILES = [];
         foreach ($this->files as $inputName => $fileInfo) {
             $_FILES[$inputName] = [
@@ -44,11 +46,9 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
 
         FileHelper::removeDirectory(Yii::getAlias(Yii::$app->fileManager->uploadDirProtected));
         FileHelper::removeDirectory(Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected));
+        FileHelper::removeDirectory(Yii::getAlias('@tests/data/files/tmp'));
 
         unset($_FILES);
-        foreach ($this->files as $inputName => $fileInfo) {
-            @unlink(Yii::getAlias('@tests/data/files/' . $fileInfo['name'] . '_copy.' . $fileInfo['ext']));
-        }
     }
 
     /**
@@ -74,7 +74,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
     {
         $file = $this->files[$fileIndex];
         $origFile = Yii::getAlias('@tests/data/files/' . $file['name'] . '.' . $file['ext']);
-        $copyFile = Yii::getAlias('@tests/data/files/' . $file['name'] . '_' . $prefix . '.' . $file['ext']);
+        $copyFile = Yii::getAlias('@tests/data/files/tmp/' . $file['name'] . '_' . $prefix . '.' . $file['ext']);
         copy($origFile, $copyFile);
 
         return $copyFile;
