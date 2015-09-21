@@ -15,5 +15,6 @@ npm-debug.log
 # bower
 bower_components
 
-# tmp folder for uploads
+# tmp folders for tests
 /tests/tmp
+/tests/data/files/tmp
