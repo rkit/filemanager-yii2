@@ -77,14 +77,14 @@ class Decoder
                 'tmp' => true,
                 'owner_id' => $ownerId,
                 'owner_type' => $ownerType,
-                'size' => filesize($path),
-                'mime' => FileHelper::getMimeType($path),
+                'size' => filesize($tempfile),
+                'mime' => FileHelper::getMimeType($tempfile),
                 'title' => $pathInfo['filename'],
                 'name' => File::generateName($pathInfo['extension']),
                 'protected' => $protected
             ]);
 
-            return $file->saveToTmp($path, $saveAfterUpload);
+            return $file->saveToTmp($tempfile, $saveAfterUpload, false);
         } else {
             throw new InvalidValueException('Unable to create from `' . $path . '`');
         }

@@ -237,12 +237,13 @@ class File extends \yii\db\ActiveRecord
     /**
      * @param string $tempFile
      * @param bool $saveAfterUpload
+     * @param bool $uploaded File has been uploaded or manually created
      */
-    public function saveToTmp($tempFile, $saveAfterUpload)
+    public function saveToTmp($tempFile, $saveAfterUpload, $uploaded = true)
     {
         if ($this->save()) {
             if (FileHelper::createDirectory($this->dirTmp(true))) {
-                $processed = $this->moveUploadedFile($tempFile);
+                $processed = $this->moveUploadedFile($tempFile, $uploaded);
                 if ($processed && $saveAfterUpload) {
                     $this->tmp = false;
                     $this->updateAttributes(['tmp' => $this->tmp]);
@@ -278,11 +279,12 @@ class File extends \yii\db\ActiveRecord
      * Save file
      *
      * @param string $tempFile
+     * @param bool $uploaded File has been uploaded or manually created
      * @return bool
      */
-    private function moveUploadedFile($tempFile)
+    private function moveUploadedFile($tempFile, $uploaded = true)
     {
-        if (Yii::$app instanceof \yii\console\Application) {
+        if (!$uploaded || Yii::$app instanceof \yii\console\Application) {
             return rename($tempFile, $this->pathTmp(true));
         } else {
             return move_uploaded_file($tempFile, $this->pathTmp(true)); // @codeCoverageIgnore
