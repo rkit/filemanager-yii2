@@ -81,7 +81,7 @@ class GalleryUploadTest extends BaseTest
             'saveAfterUpload' => true
         ]);
 
-        $model->image_gallery = ['id' . $response['id'] => 'test'];
+        $model->image_gallery = [$response['id'] => 'test'];
         $model->save();
 
         $file = File::findOne($response['id']);
@@ -118,7 +118,7 @@ class GalleryUploadTest extends BaseTest
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
         ]));
 
-        $model->image_gallery = ['id1000' => 'test'];
+        $model->image_gallery = ['1000' => 'test'];
         $model->save();
 
         $this->assertCount(0, $model->getFiles('image_gallery'));
@@ -144,7 +144,7 @@ class GalleryUploadTest extends BaseTest
             'saveAfterUpload' => true
         ]);
 
-        $model->image_gallery = ['id' . $response['id'] => 'test'];
+        $model->image_gallery = [$response['id'] => 'test'];
         $model->save();
 
         $this->assertCount(2, $model->getFiles('image_gallery'));
@@ -171,7 +171,7 @@ class GalleryUploadTest extends BaseTest
         $file = File::findOne($response['id']);
         unlink($file->path(true));
 
-        $model->image_gallery = ['id' . $response['id'] => 'test'];
+        $model->image_gallery = [$response['id'] => 'test'];
         $model->save();
 
         $files = $model->getFiles('image_gallery');

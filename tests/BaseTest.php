@@ -139,7 +139,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      */
     protected function checkUploadGalleryResponse($response)
     {
-        preg_match('/News\[(.*?)\]\[id(.*?)\]/', $response, $matches);
+        preg_match('/News\[(.*?)\]\[(.*?)\]/', $response, $matches);
 
         $this->assertTrue(is_string($response));
         $this->assertTrue(isset($matches[2]));
@@ -193,7 +193,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
         $response = $this->checkUploadGalleryResponse($response);
 
         $file = File::findOne($response[1]);
-        $model = new News(['title' => 'test', $config['attribute'] => ['id' . $file->id => 'test']]);
+        $model = new News(['title' => 'test', $config['attribute'] => [$file->id => 'test']]);
         $ownerType = $model->getFileOwnerType($config['attribute']);
 
         $this->checkTmpFile($file, -1, $ownerType);

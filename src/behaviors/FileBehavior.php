@@ -328,7 +328,6 @@ class FileBehavior extends Behavior
      */
     private function bindMultiple($ownerId, $ownerType, $files)
     {
-        $files = $this->bindMultiplePrepare($files);
         $newFiles = ArrayHelper::index(File::findAll(array_keys($files)), 'id');
         $currentFiles = ArrayHelper::index(File::getByOwner($ownerId, $ownerType), 'id');
 
@@ -358,22 +357,6 @@ class FileBehavior extends Behavior
         }
 
         return $newFiles;
-    }
-
-    /**
-     * Prepare files for bind
-     *
-     * @param array $files
-     * @return array
-     */
-    private function bindMultiplePrepare($files)
-    {
-        $files = array_filter($files);
-        $files = array_combine(array_map(function ($a) {
-            return substr($a, 2);
-        }, array_keys($files)), $files);
-
-        return $files;
     }
 
     /**

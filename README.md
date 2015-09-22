@@ -193,7 +193,7 @@ Add the following in your config, in section `components`
      <a href="<?= $file->path()?>" target="_blank">
        <img src="<?= $model->thumb('gallery', '80x80', $file->path())?>">
      </a>
-     <?= Html::textInput(Html::getInputName($model, $attribute) . '[id' . $file->id .']', $file->title, [
+     <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
          'class' => 'form-control',
      ])?>
    </li>
@@ -220,3 +220,7 @@ public function actions()
     ]
 }
 ```
+
+## Manually create a file
+
+…
