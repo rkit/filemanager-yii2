@@ -68,7 +68,8 @@ Add the following in your config, in section `components`
                'class'     => 'rkit\filemanager\actions\UploadAction',
                'modelName' => 'app\models\News',
                'attribute' => 'preview',
-               'inputName' => 'file',
+               'type'      => 'image', // `image` or `file` for non-images
+               'inputName' => 'file' // the name of the file input field
            ],
        ];
    }
@@ -176,9 +177,10 @@ Add the following in your config, in section `components`
                'class'     => 'rkit\filemanager\actions\UploadAction',
                'modelName' => 'app\models\News',
                'attribute' => 'gallery',
-               'inputName' => 'file',
-               'multiple'  => true,
-               'template'  => Yii::getAlias('@app/path/to/file'),
+               'type'      => 'image', // `image` or `file` for non-images
+               'inputName' => 'file', // the name of the file input field
+               'multiple'  => true, // for multiple files
+               'template'  => Yii::getAlias('@app/path/to/file') // path to template for uploaded a file
            ]
        ]
    }
@@ -210,9 +212,10 @@ public function actions()
             'class' => 'rkit\filemanager\actions\UploadAction',
             'modelName' => 'app\models\News',
             'attribute' => 'text',
-            'inputName' => 'file',
-            'saveAfterUpload' => true,
-            'ownerId' => 0
+            'type'      => 'image', // `image` or `file` for non-images
+            'inputName' => 'file', // the name of the file input field
+            'saveAfterUpload' => true, // save the file immediately after upload
+            'ownerId' => 0 // set owner id
         ]
     ]
 }
