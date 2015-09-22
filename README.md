@@ -180,7 +180,7 @@ Add the following in your config, in section `components`
                'multiple'  => true,
                'template'  => Yii::getAlias('@app/path/to/file'),
            ]
-       ]å
+       ]
    }
    ```
 
@@ -214,6 +214,6 @@ public function actions()
             'saveAfterUpload' => true,
             'ownerId' => 0
         ]
-    ]å
+    ]
 }
 ```
