@@ -46,7 +46,7 @@ Add the following in your config, in section `components`
 
 ## Basic usage
 
-1. Controller
+1. **Controller**
 
    ```php
    public function behaviors()
@@ -75,7 +75,7 @@ Add the following in your config, in section `components`
    }
    ```
 
-2. Model
+2. **Model**
 
    ```php
    // any component to resize/crop images
@@ -135,7 +135,7 @@ Add the following in your config, in section `components`
    }
    ```
 
-3. View
+3. **View**
 
    Any widget for ajax upload.  
    Use `$model->getFileRulesDescription($attribute)` for get a description of rules
@@ -167,7 +167,7 @@ Add the following in your config, in section `components`
 
 ## Gallery
 
-1. Controller
+1. **Controller**
 
    ```php
    public function actions()
@@ -186,7 +186,7 @@ Add the following in your config, in section `components`
    }
    ```
 
-2. Template for uploaded a file
+2. **Template for uploaded a file**
 
    ```php
    <li>
