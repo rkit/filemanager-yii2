@@ -21,7 +21,23 @@
    ```
    composer require rkit/filemanager-yii2
    ```
+## Configuration
 
+```php
+'fileManager' => [
+    'class' => 'rkit\filemanager\FileManager',
+    'uploadDirProtected' => '@app/runtime',
+    'uploadDirUnprotected' => '@app/web',
+    'publicPath' => 'uploads',
+    'ownerTypes' => [
+        'news.text' => 1,
+        'news.preview' => 2,
+        'news.gallery' => 3,
+        'user_profile.photo' => 4,
+    ]
+]
+```
+        
 ## Basic usage
 
 1. Controller
@@ -111,6 +127,16 @@
        ];
    }
    ```
+   
+3. View
+
+   Any widget for ajax upload.  
+   Use `$model->getFileRulesDescription($attribute)` for get a description of rules
+   ```
+   Min. size of image: 300x300px
+   File types: JPG, JPEG, PNG 
+   Max. file size: 1.049 MB
+   ```
 
 ## Thumbnails
 
@@ -131,3 +157,11 @@
    ```php
    $model->thumb('preview', '200x200', null, true);
    ```
+
+## Gallery
+
+…
+
+## Save after upload
+
+…
