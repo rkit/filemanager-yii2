@@ -28,10 +28,14 @@ Add the following in your config, in section `components`
 ```php
 'fileManager' => [
     'class' => 'rkit\filemanager\FileManager',
-    'uploadDirProtected' => '@app/runtime', // directory for files inaccessible from the web
-    'uploadDirUnprotected' => '@app/web', // directory for files available from the web
-    'publicPath' => 'uploads', // path in a directory of upload
-    'ownerTypes' => [ // an array of the types of owners, in the format of `table.attribute` => `unique value`
+    // directory for files inaccessible from the web
+    'uploadDirProtected' => '@app/runtime',
+    // directory for files available from the web
+    'uploadDirUnprotected' => '@app/web', 
+    // path in a directory of upload
+    'publicPath' => 'uploads',
+    // an array of the types of owners, in the format of `table.attribute` => `unique value`
+    'ownerTypes' => [
         'news.text' => 1,
         'news.preview' => 2,
         'news.gallery' => 3,
