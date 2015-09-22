@@ -126,6 +126,18 @@ class FileBehavior extends Behavior
     }
 
     /**
+     * Get real path to file
+     *
+     * @param string $attribute
+     * @return string
+     */
+    public function getFileRealPath($attribute)
+    {
+        $realPath = $this->getUploadDir($attribute);
+        return $realPath . $this->owner->$attribute;
+    }
+
+    /**
      * Get upload dir
      *
      * @param string $attribute

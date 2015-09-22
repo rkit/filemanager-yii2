@@ -353,4 +353,15 @@ class FileUploadTest extends BaseTest
     {
         $file = Yii::$app->fileManager->create('/test/fail.jpg', 100, 200, true, false);
     }
+
+    public function testRealPath()
+    {
+        extract($this->uploadFile([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-300'
+        ]));
+
+        $this->assertFileExists($model->getFileRealPath('image_path'));
+    }
 }
