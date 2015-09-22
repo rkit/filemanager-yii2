@@ -18,9 +18,16 @@
 
 ## Installation
 
+1. Installing using Composer
    ```
    composer require rkit/filemanager-yii2
    ```
+
+2. Run migrations
+   ```
+   php yii migrate --migrationPath=@vendor/rkit/filemanager-yii2/src/migrations/ --interactive=0
+   ```
+
 ## Configuration
 
 Add the following in your config, in section `components`
@@ -44,7 +51,9 @@ Add the following in your config, in section `components`
 ]
 ```
 
-## Basic usage
+## Usage
+
+### Basic usage
 
 1. **Controller**
 
@@ -96,6 +105,9 @@ Add the following in your config, in section `components`
                        // save file id in this table
                        // 'saveFileId' => true,
 
+                       // protected a file
+                       // 'protected' => true,
+
                        // @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
                        'rules' => [
                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
@@ -137,15 +149,9 @@ Add the following in your config, in section `components`
 
 3. **View**
 
-   Any widget for ajax upload.  
-   Use `$model->getFileRulesDescription($attribute)` for get a description of rules
-   ```
-   Min. size of image: 300x300px
-   File types: JPG, JPEG, PNG
-   Max. file size: 1.049 MB
-   ```
+   Any widget for ajax upload
 
-## Thumbnails
+### Thumbnails
 
 - Apply a preset and return public path
 
@@ -165,7 +171,7 @@ Add the following in your config, in section `components`
    $model->thumb('preview', '200x200', null, true);
    ```
 
-## Gallery
+### Gallery
 
 1. **Controller**
 
@@ -199,7 +205,7 @@ Add the following in your config, in section `components`
    </li>
    ```
 
-## Save after upload
+### Save after upload
 
 For example this could be a need for wysiwyg editor,
 when you need to immediately save the file after upload and assign the owner.
@@ -221,16 +227,52 @@ public function actions()
 }
 ```
 
-## Manually create a file
+### Manually create a file from path
 
-- From path
+```php
+object Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true);
+```
 
-   ```php
-   Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true)
-   ```
+### Manually create a file from URL
 
-- From URL
+```php
+object Yii::$app->fileManager->create('http://…/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true);
+```
 
-   ```php
-   Yii::$app->fileManager->create('http://…/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true)
-   ```
+### Manually create a **protected** file from path
+
+```php
+object Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true, true);
+```
+
+### Get files
+
+```php
+array $model->getFiles($attribute);
+```
+
+### Сheck whether a file is protected
+
+```php
+bool $model->isProtected($attribute);
+```
+
+### Get a description of rules
+
+```php
+string $model->getFileRulesDescription($attribute)
+```
+
+Output
+
+```
+Min. size of image: 300x300px
+File types: JPG, JPEG, PNG
+Max. file size: 1.049 MB
+```
+
+### Get real path to file
+
+```php
+string $model->getFileRealPath($attribute);
+```
