@@ -223,4 +223,14 @@ public function actions()
 
 ## Manually create a file
 
-…
+- From path
+
+   ```php
+   Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true)
+   ```
+
+- From URL
+
+   ```php
+   Yii::$app->fileManager->create('http://…/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true)
+   ```
