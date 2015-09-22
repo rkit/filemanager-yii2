@@ -31,7 +31,7 @@ Add the following in your config, in section `components`
     // directory for files inaccessible from the web
     'uploadDirProtected' => '@app/runtime',
     // directory for files available from the web
-    'uploadDirUnprotected' => '@app/web', 
+    'uploadDirUnprotected' => '@app/web',
     // path in a directory of upload
     'publicPath' => 'uploads',
     // an array of the types of owners, in the format of `table.attribute` => `unique value`
@@ -43,7 +43,7 @@ Add the following in your config, in section `components`
     ]
 ]
 ```
-        
+
 ## Basic usage
 
 1. Controller
@@ -133,14 +133,14 @@ Add the following in your config, in section `components`
        ];
    }
    ```
-   
+
 3. View
 
    Any widget for ajax upload.  
    Use `$model->getFileRulesDescription($attribute)` for get a description of rules
    ```
    Min. size of image: 300x300px
-   File types: JPG, JPEG, PNG 
+   File types: JPG, JPEG, PNG
    Max. file size: 1.049 MB
    ```
 
@@ -166,8 +166,54 @@ Add the following in your config, in section `components`
 
 ## Gallery
 
-…
+1. Controller
+
+   ```php
+   public function actions()
+   {
+       return [
+           'gallery-upload' => [
+               'class'     => 'rkit\filemanager\actions\UploadAction',
+               'modelName' => 'app\models\News',
+               'attribute' => 'gallery',
+               'inputName' => 'file',
+               'multiple'  => true,
+               'template'  => Yii::getAlias('@app/path/to/file'),
+           ]
+       ]å
+   }
+   ```
+
+2. Template for uploaded a file
+
+   ```php
+   <li>
+     <a href="<?= $file->path()?>" target="_blank">
+       <img src="<?= $model->thumb('gallery', '80x80', $file->path())?>">
+     </a>
+     <?= Html::textInput(Html::getInputName($model, $attribute) . '[id' . $file->id .']', $file->title, [
+         'class' => 'form-control',
+     ])?>
+   </li>
+   ```
 
 ## Save after upload
 
-…
+For example this could be a need for wysiwyg editor,
+when you need to immediately save the file after upload and assign the owner.
+
+```php
+public function actions()
+{
+    return [
+        'text-upload' => [
+            'class' => 'rkit\filemanager\actions\UploadAction',
+            'modelName' => 'app\models\News',
+            'attribute' => 'text',
+            'inputName' => 'file',
+            'saveAfterUpload' => true,
+            'ownerId' => 0
+        ]
+    ]å
+}
+```
