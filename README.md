@@ -23,13 +23,15 @@
    ```
 ## Configuration
 
+Add the following in your config, in section `components`
+
 ```php
 'fileManager' => [
     'class' => 'rkit\filemanager\FileManager',
-    'uploadDirProtected' => '@app/runtime',
-    'uploadDirUnprotected' => '@app/web',
-    'publicPath' => 'uploads',
-    'ownerTypes' => [
+    'uploadDirProtected' => '@app/runtime', // directory for files inaccessible from the web
+    'uploadDirUnprotected' => '@app/web', // directory for files available from the web
+    'publicPath' => 'uploads', // path in a directory of upload
+    'ownerTypes' => [ // an array of the types of owners, in the format of `table.attribute` => `unique value`
         'news.text' => 1,
         'news.preview' => 2,
         'news.gallery' => 3,
