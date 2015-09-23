@@ -81,7 +81,7 @@ class GalleryUploadTest extends BaseTest
             'saveAfterUpload' => true
         ]);
 
-        $model->image_gallery = [$response['id'] => 'test'];
+        $model->image_gallery = ['files' => [$response['id'] => 'test']];
         $model->save();
 
         $file = File::findOne($response['id']);
@@ -108,6 +108,34 @@ class GalleryUploadTest extends BaseTest
         $this->assertCount(0, $model->getFiles('image_gallery'));
     }
 
+    public function testRemoveFileFromGallery()
+    {
+        extract($this->uploadGallery([
+            'modelName' => News::className(),
+            'attribute' => 'image_gallery',
+            'inputName' => 'file-300',
+            'multiple' => true,
+            'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
+        ]));
+
+        $this->assertCount(1, $model->getFiles('image_gallery'));
+
+        $response = $this->runAction([
+            'modelName' => News::className(),
+            'attribute' => 'image_gallery',
+            'inputName' => 'file-500',
+            'saveAfterUpload' => true,
+            'ownerId' => $model->id
+        ]);
+
+        $this->assertCount(2, $model->getFiles('image_gallery'));
+
+        $model->image_gallery = ['files' => [$response['id'] => 'test']];
+        $model->save();
+
+        $this->assertCount(1, $model->getFiles('image_gallery'));
+    }
+
     public function testWrongGallery()
     {
         extract($this->uploadGallery([
@@ -118,7 +146,7 @@ class GalleryUploadTest extends BaseTest
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
         ]));
 
-        $model->image_gallery = ['1000' => 'test'];
+        $model->image_gallery = ['files' => ['1000' => 'test']];
         $model->save();
 
         $this->assertCount(0, $model->getFiles('image_gallery'));
@@ -144,7 +172,11 @@ class GalleryUploadTest extends BaseTest
             'saveAfterUpload' => true
         ]);
 
-        $model->image_gallery = [$response['id'] => 'test'];
+        $model->image_gallery = ['files' => [
+            $files[0]->id => 'test2',
+            $response['id'] => 'test'
+        ]];
+
         $model->save();
 
         $this->assertCount(2, $model->getFiles('image_gallery'));
@@ -171,12 +203,11 @@ class GalleryUploadTest extends BaseTest
         $file = File::findOne($response['id']);
         unlink($file->path(true));
 
-        $model->image_gallery = [$response['id'] => 'test'];
+        $model->image_gallery = ['files' => [$response['id'] => 'test']];
         $model->save();
 
         $files = $model->getFiles('image_gallery');
 
-        $this->assertCount(1, $files);
-        $this->assertTrue($files[0]->id === $oldFiles[0]->id);
+        $this->assertCount(0, $files);
     }
 }

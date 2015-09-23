@@ -105,7 +105,7 @@ Add the following in your config, in section `components`
                        // save file id in this table
                        // 'saveFileId' => true,
 
-                       // protected a file
+                       // inaccessible from the web
                        // 'protected' => true,
 
                        // @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
@@ -199,7 +199,7 @@ Add the following in your config, in section `components`
      <a href="<?= $file->path()?>" target="_blank">
        <img src="<?= $model->thumb('gallery', '80x80', $file->path())?>">
      </a>
-     <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
+     <?= Html::textInput(Html::getInputName($model, $attribute) . '[files][' . $file->id .']', $file->title, [
          'class' => 'form-control',
      ])?>
    </li>

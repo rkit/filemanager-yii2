@@ -340,6 +340,7 @@ class FileBehavior extends Behavior
      */
     private function bindMultiple($ownerId, $ownerType, $files)
     {
+        $files = ArrayHelper::getValue($files, 'files', []);
         $newFiles = ArrayHelper::index(File::findAll(array_keys($files)), 'id');
         $currentFiles = ArrayHelper::index(File::getByOwner($ownerId, $ownerType), 'id');
 
@@ -350,7 +351,7 @@ class FileBehavior extends Behavior
                     continue;
                 }
                 if (!$this->bindMultipleFile($file, $ownerId, $files)) {
-                    return false;
+                    continue;
                 }
             }
 
