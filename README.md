@@ -12,6 +12,7 @@
 - Upload with validations
 - Create thumbnails on the fly with cache or after upload
 - Easy setup presets for files
+- Ability to use any component for working with images
 - Support for multiple file uploads
 - Check the Owner of file
 - Storing information about a file in the database
