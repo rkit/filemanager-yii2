@@ -277,3 +277,9 @@ Max. file size: 1.049 MB
 ```php
 string $model->getFileRealPath($attribute);
 ```
+
+### Get validation rules file
+
+```php
+array $model->getFileRules($attribute)
+```
