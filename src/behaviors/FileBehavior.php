@@ -382,6 +382,7 @@ class FileBehavior extends Behavior
      */
     private function bindMultipleFile($file, $ownerId, $files)
     {
+        $position = @array_search($file->id, array_keys($files)) + 1;
         if ($file->tmp) {
             $file->owner_id = $ownerId;
             $file->tmp = false;
@@ -390,10 +391,15 @@ class FileBehavior extends Behavior
                     'tmp'      => $file->tmp,
                     'owner_id' => $file->owner_id,
                     'title'    => @$files[$file->id],
-                    'position' => @array_search($file->id, array_keys($files)) + 1
+                    'position' => $position
                 ]);
                 return true;
             }
+        } else {
+            $file->updateAttributes([
+                'title'    => @$files[$file->id],
+                'position' => $position
+            ]);
         }
 
         return false;
