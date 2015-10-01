@@ -270,7 +270,7 @@ string $model->getFileRulesDescription($attribute)
 
 Example
 
-```
+```php
 $form->field($model, $attribute)->hint($model->getFileRulesDescription($attribute)
 ```
 
