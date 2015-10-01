@@ -256,10 +256,22 @@ array $model->getFiles($attribute);
 bool $model->isProtected($attribute);
 ```
 
+### Get validation rules file
+
+```php
+array $model->getFileRules($attribute)
+```
+
 ### Get a description of rules
 
 ```php
 string $model->getFileRulesDescription($attribute)
+```
+
+Example
+
+```
+$form->field($model, $attribute)->hint($model->getFileRulesDescription($attribute)
 ```
 
 Output
@@ -274,10 +286,4 @@ Max. file size: 1.049 MB
 
 ```php
 string $model->getFileRealPath($attribute);
-```
-
-### Get validation rules file
-
-```php
-array $model->getFileRules($attribute)
 ```
