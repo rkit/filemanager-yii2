@@ -149,6 +149,7 @@ Add the following in your config, in section `components`
 3. **View**
 
    Any widget for ajax upload.  
+   Add file id from response to input for to bind to model.  
    You can use [widget for FileApi](https://github.com/rkit/fileapi-widget-yii2)
 
 ### Thumbnails
