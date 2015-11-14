@@ -12,7 +12,7 @@
 - Easy setup presets for files
 - Ability to use any component for working with images
 - Support for multiple file uploads
-- Check the Owner of file
+- Check the Owner of a file
 - Storing information about a file in the database
 
 ## Installation
@@ -149,8 +149,8 @@ Add the following in your config, in section `components`
 3. **View**
 
    Any widget for ajax upload.  
-   Add file id from response to input for to bind to model.  
-   You can use [widget for FileApi](https://github.com/rkit/fileapi-widget-yii2)
+   Add file id from a response to input for to bind to model.  
+   You can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2)
 
 ### Thumbnails
 
@@ -208,7 +208,7 @@ Add the following in your config, in section `components`
 
 ### Save after upload
 
-For example this could be a need for wysiwyg editor,
+For example, this could be a need for wysiwyg editor  
 when you need to immediately save the file after upload and assign the owner.
 
 ```php
@@ -228,7 +228,7 @@ public function actions()
 }
 ```
 
-### Manually create a file from path
+### Manually create a file from a path
 
 ```php
 object Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true);
