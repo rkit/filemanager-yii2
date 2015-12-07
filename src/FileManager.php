@@ -3,7 +3,7 @@
 /**
  * @link https://github.com/rkit/filemanager-yii2
  * @copyright Copyright (c) 2015 Igor Romanov
- * @license [New BSD License](http://www.opensource.org/licenses/bsd-license.php)
+ * @license [MIT](http://opensource.org/licenses/MIT)
  */
 
 namespace rkit\filemanager;

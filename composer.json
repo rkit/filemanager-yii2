@@ -4,7 +4,7 @@
     "keywords": ["yii2", "extension", "file manager", "manager", "upload", "resize", "files"],
     "homepage": "https://github.com/rkit/filemanager-yii2",
     "type": "yii2-extension",
-    "license": "BSD-3-Clause",
+    "license": "MIT",
     "authors": [
         {
             "name": "Igor Romanov",
