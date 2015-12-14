@@ -54,6 +54,8 @@ Add the following in your config, in section `components`
 
 ### Basic usage
 
+> The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.
+
 1. **Controller**
 
    ```php
