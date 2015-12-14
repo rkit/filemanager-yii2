@@ -54,8 +54,8 @@ Add the following in your config, in section `components`
 
 ### Basic usage
 
-> The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.
-> You can use any library for working with files
+> The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.  
+> You can use any library for working with files.
 
 1. **Controller**
 
