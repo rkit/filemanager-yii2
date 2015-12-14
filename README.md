@@ -54,9 +54,6 @@ Add the following in your config, in section `components`
 
 ### Basic usage
 
-> The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.  
-> You can use any library for working with files.
-
 1. **Controller**
 
    ```php
@@ -87,6 +84,8 @@ Add the following in your config, in section `components`
    ```
 
 2. **Model**
+   > The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.  
+   > You can use any library for working with files.
 
    ```php
    // any component to resize/crop images
