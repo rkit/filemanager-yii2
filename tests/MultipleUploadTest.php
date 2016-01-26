@@ -12,49 +12,55 @@ use Yii;
 use tests\data\News;
 use rkit\filemanager\models\File;
 
-class GalleryUploadTest extends BaseTest
+class MultipleUploadTest extends BaseTest
 {
     public function testUploadUnprotectedGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
         foreach ($files as $file) {
             $this->assertTrue($file->isUnprotected());
-            $this->assertContains(Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected), $file->path(true));
+            $this->assertContains(
+                Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected),
+                $file->getStorage()->path(true)
+            );
         }
     }
 
     public function testUploadProtectedGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery_protected',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php'),
-        ]));
+        ]);
 
         foreach ($files as $file) {
             $this->assertTrue($file->isProtected());
-            $this->assertContains(Yii::getAlias(Yii::$app->fileManager->uploadDirProtected), $file->path(true));
+            $this->assertContains(
+                Yii::getAlias(Yii::$app->fileManager->uploadDirProtected),
+                $file->getStorage()->path(true)
+            );
         }
     }
 
     public function testSetEmptyGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
         $model->image_gallery = [];
         $model->save();
@@ -65,26 +71,27 @@ class GalleryUploadTest extends BaseTest
 
     public function testAnotherOwnerGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
-        $response = $this->runAction([
+        $response = $this->runUploadAction([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-500',
             'ownerId'   => 100,
-            'saveAfterUpload' => true
+            'temporary' => false
         ]);
 
         $model->image_gallery = ['files' => [$response['id'] => 'test']];
         $model->save();
 
         $file = File::findOne($response['id']);
+        $file->setStorage($this->storage);
 
         $this->assertTrue(is_object($file));
         $this->assertCount(0, $model->getFiles('image_gallery'));
@@ -92,13 +99,13 @@ class GalleryUploadTest extends BaseTest
 
     public function testEmptyGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
         $this->assertCount(1, $model->getFiles('image_gallery'));
 
@@ -110,21 +117,21 @@ class GalleryUploadTest extends BaseTest
 
     public function testRemoveFileFromGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
         $this->assertCount(1, $model->getFiles('image_gallery'));
 
-        $response = $this->runAction([
+        $response = $this->runUploadAction([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-500',
-            'saveAfterUpload' => true,
+            'temporary' => true,
             'ownerId' => $model->id
         ]);
 
@@ -138,13 +145,13 @@ class GalleryUploadTest extends BaseTest
 
     public function testWrongGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
         $model->image_gallery = ['files' => ['1000' => 'test']];
         $model->save();
@@ -154,22 +161,22 @@ class GalleryUploadTest extends BaseTest
 
     public function testSaveNotTmpGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
         $this->assertCount(1, $model->getFiles('image_gallery'));
 
-        $response = $this->runAction([
+        $response = $this->runUploadAction([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-500',
             'ownerId' => $model->id,
-            'saveAfterUpload' => true
+            'temporary' => true
         ]);
 
         $model->image_gallery = ['files' => [
@@ -184,24 +191,24 @@ class GalleryUploadTest extends BaseTest
 
     public function testFailSaveGallery()
     {
-        extract($this->uploadGallery([
+        list($files, $model) = $this->uploadMultipleAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-300',
             'multiple' => true,
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]));
+        ]);
 
-        $oldFiles = $files;
-
-        $response = $this->runAction([
+        $response = $this->runUploadAction([
             'modelName' => News::className(),
             'attribute' => 'image_gallery',
             'inputName' => 'file-500'
         ]);
 
         $file = File::findOne($response['id']);
-        unlink($file->path(true));
+        $file->setStorage($this->storage);
+
+        unlink($file->getStorage()->path(true));
 
         $model->image_gallery = ['files' => [$response['id'] => 'test']];
         $model->save();

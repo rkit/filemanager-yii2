@@ -13,9 +13,14 @@ use rkit\filemanager\models\File;
 
 class FileTest extends \PHPUnit_Framework_TestCase
 {
-    protected function setUp()
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage The storage is not initialized
+     */
+    public function testFailGetStorage()
     {
-        Yii::$app->fileManager->registerTranslations();
+        $file = new File();
+        $file->getStorage();
     }
 
     public function testStatuses()

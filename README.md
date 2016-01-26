@@ -90,7 +90,6 @@ Add the following in your config, in section `components`
    ```php
    // any component to resize/crop images
    use Intervention\Image\ImageManagerStatic as Image;
-
    …
 
    public function behaviors()
@@ -100,14 +99,9 @@ Add the following in your config, in section `components`
                'class' => 'rkit\filemanager\behaviors\FileBehavior',
                'attributes' => [
                    'preview' => [
-                       // save file path in this table
-                       'saveFilePath' => true,
-
-                       // save file id in this table
-                       // 'saveFileId' => true,
-
-                       // inaccessible from the web
-                       // 'protected' => true,
+                       'saveFilePath' => true, // save file path in this table
+                       // 'saveFileId' => true, // save file id in this table
+                       // 'protected' => true, // inaccessible from the web
 
                        // @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
                        'rules' => [
@@ -154,26 +148,6 @@ Add the following in your config, in section `components`
    Add file id from a response to input for to bind to model.  
    You can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2)
 
-### Thumbnails
-
-- Apply a preset and return public path
-
-   ```php
-   $model->thumb('preview', '200x200');
-   ```
-
-- Apply a preset for a custom path to the file
-
-   ```php
-   $model->thumb('preview', '200x200', '/path/to/file');
-   ```
-
-- Apply a preset and return real path
-
-   ```php
-   $model->thumb('preview', '200x200', null, true);
-   ```
-
 ### Gallery
 
 1. **Controller**
@@ -210,7 +184,7 @@ Add the following in your config, in section `components`
 
 ### Save after upload
 
-For example, this could be a need for wysiwyg editor  
+For example, this could be a need for wysiwyg editor,  
 when you need to immediately save the file after upload and assign the owner.
 
 ```php
@@ -223,53 +197,55 @@ public function actions()
             'attribute' => 'text',
             'type'      => 'image', // `image` or `file` for non-images
             'inputName' => 'file', // the name of the file input field
-            'saveAfterUpload' => true, // save the file immediately after upload
+            'saveToStorage' => true, // save the file immediately after upload
             'ownerId' => 0 // set owner id
         ]
     ]
 }
 ```
 
-### Manually create a file from a path
+## API
 
-```php
-object Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true);
-```
+### Apply a preset and return public path
 
-### Manually create a file from URL
+   ```php
+   $model->thumb('preview', '200x200');
+   ```
 
-```php
-object Yii::$app->fileManager->create('http://…/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true);
-```
+### Apply a preset for a custom path to the file
 
-### Manually create a **protected** file from path
+   ```php
+   $model->thumb('preview', '200x200', '/path/to/file');
+   ```
 
-```php
-object Yii::$app->fileManager->create('/path/to/file', $ownerId, $model->getFileOwnerType($attribute), true, true);
-```
+### Apply a preset and return real path
+
+   ```php
+   $model->thumb('preview', '200x200', null, true);
+   ```
 
 ### Get files
 
 ```php
-array $model->getFiles($attribute);
+$model->getFiles(string $attribute): array
 ```
 
-### Сheck whether a file is protected
+### Check whether the file is protected
 
 ```php
-bool $model->isProtected($attribute);
+$model->isFileProtected(string $attribute): bool
 ```
 
-### Get validation rules file
+### Get the validation rules for a file
 
 ```php
-array $model->getFileRules($attribute)
+$model->getFileRules(string $attribute): array
 ```
 
-### Get a description of rules
+### Get the validation rules for a file as text
 
 ```php
-string $model->getFileRulesDescription($attribute)
+$model->getFileRulesDescription(string $attribute): string
 ```
 
 Example
@@ -286,8 +262,31 @@ File types: JPG, JPEG, PNG
 Max. file size: 1.049 MB
 ```
 
-### Get real path to file
+### Get public path to the file
 
 ```php
-string $model->getFileRealPath($attribute);
+$model->publicPath(string $attribute): string
 ```
+
+### Get real path to the file
+
+```php
+$model->realPath(string $attribute): string
+```
+
+### Manually create a file from path or URL
+
+```php
+Yii::$app->fileManager->decoder->create(string $path, int $ownerId, int $ownerType, bool $saveToStorage, bool $protected): object
+```
+
+Example
+
+```php
+Yii::$app->fileManager$fullPath'/path/to/file', $model->id, $model->getFileOwnerType($attribute), true);
+```
+
+$model->getFileOwnerType
+$model->getFileRealPath
+$model->getFilePreset
+$model->getFilePresetAfterUpload

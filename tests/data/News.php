@@ -82,6 +82,7 @@ class News extends \yii\db\ActiveRecord
                 'class' => 'rkit\filemanager\behaviors\FileBehavior',
                 'attributes' => [
                     'image_id' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'saveFileId' => true,
                         'protected' => true,
                         'rules' => [
@@ -102,6 +103,7 @@ class News extends \yii\db\ActiveRecord
                         'applyPresetAfterUpload' => '*'
                     ],
                     'image_path' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'saveFilePath' => true,
                         'rules' => [
                             'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
@@ -130,6 +132,7 @@ class News extends \yii\db\ActiveRecord
                         'applyPresetAfterUpload' => ['220x220']
                     ],
                     'image_gallery' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'preset' => [
                             '80x80' => function ($realPath, $publicPath, $thumbPath) {
                                 Image::make($realPath . $publicPath)
@@ -139,9 +142,11 @@ class News extends \yii\db\ActiveRecord
                         ],
                     ],
                     'image_gallery_protected' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'protected' => true,
                     ],
                     'image_strict_size' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => [
                             'imageSize' => [
                                 'maxWidth'  => 300,
@@ -152,6 +157,7 @@ class News extends \yii\db\ActiveRecord
                         ]
                     ],
                     'image_min_max_size' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => [
                             'imageSize' => [
                                 'maxWidth'  => 300,
@@ -162,21 +168,27 @@ class News extends \yii\db\ActiveRecord
                         ]
                     ],
                     'image_min_size' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => ['imageSize' => ['minWidth' => 300, 'minHeight' => 300]]
                     ],
                     'image_max_size' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => ['imageSize' => ['maxWidth' => 300, 'maxHeight' => 300]]
                     ],
                     'image_only_maxwidth' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => ['imageSize' => ['maxWidth' => 300]]
                     ],
                     'image_only_maxheight' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => ['imageSize' => ['maxHeight' => 300]]
                     ],
                     'image_only_minwidth' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => ['imageSize' => ['minWidth' => 300]]
                     ],
                     'image_only_minheight' => [
+                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                         'rules' => ['imageSize' => ['minHeight' => 300]]
                     ],
                 ]

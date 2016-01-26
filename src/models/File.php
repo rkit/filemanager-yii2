@@ -9,8 +9,10 @@
 namespace rkit\filemanager\models;
 
 use Yii;
+use yii\base\InvalidParamException;
 use yii\behaviors\TimestampBehavior;
 use yii\helpers\FileHelper;
+use rkit\filemanager\Storage;
 
 /**
  * This is the model class for table "file"
@@ -22,6 +24,7 @@ use yii\helpers\FileHelper;
  * @property string $title
  * @property string $name
  * @property integer $size
+ * @property string $extension
  * @property string $mime
  * @property string $date_create
  * @property string $date_update
@@ -32,6 +35,15 @@ use yii\helpers\FileHelper;
  */
 class File extends \yii\db\ActiveRecord
 {
+    /**
+     * @var string
+     */
+    public $path;
+    /**
+     * @var Storage
+     */
+    private $storage;
+
     /**
      * @inheritdoc
      * @codeCoverageIgnore
@@ -55,6 +67,7 @@ class File extends \yii\db\ActiveRecord
             'title' => Yii::t('filemanager-yii2', 'Title'),
             'name' => Yii::t('filemanager-yii2', 'Name'),
             'size' => Yii::t('filemanager-yii2', 'Size'),
+            'extension' => Yii::t('filemanager-yii2', 'Extension'),
             'mime' => Yii::t('filemanager-yii2', 'Mime'),
             'date_create' => Yii::t('filemanager-yii2', 'Date create'),
             'date_update' => Yii::t('filemanager-yii2', 'Date update'),
@@ -93,16 +106,55 @@ class File extends \yii\db\ActiveRecord
     {
         if (parent::beforeSave($insert)) {
             if ($insert) {
+                if (!file_exists($this->path)) {
+                    return false;
+                }
                 if (!Yii::$app instanceof \yii\console\Application) {
                     $this->user_id = Yii::$app->user->isGuest ? 0 : Yii::$app->user->id; // @codeCoverageIgnore
                     $this->ip = ip2long(Yii::$app->request->getUserIP()); // @codeCoverageIgnore
                 } // @codeCoverageIgnore
+
+                $pathInfo = pathinfo($this->path);
+
+                $this->size = filesize($this->path);
+                $this->mime = FileHelper::getMimeType($this->path);
+                $this->title = $pathInfo['filename'];
+                $this->extension = current(FileHelper::getExtensionsByMimeType($this->mime));
+                $this->name = $this->generateName();
             }
 
             return true;
         }
 
         return false; // @codeCoverageIgnore
+    }
+
+    public function setStorage(Storage $storage)
+    {
+        $this->storage = $storage;
+        $this->storage->setFile($this);
+
+        return $this;
+    }
+
+    public function getStorage()
+    {
+        if ($this->storage === null) {
+            throw new InvalidParamException('The storage is not initialized');
+        }
+
+        return $this->storage;
+    }
+
+    /**
+     * Generate a name
+     *
+     * @return string
+     */
+    public function generateName()
+    {
+        $name = date('YmdHis') . substr(md5(microtime() . uniqid()), 0, 10);
+        return $name . '.' . $this->extension;
     }
 
     /**
@@ -150,151 +202,6 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Get upload dir
-     *
-     * @return string
-     */
-    public function getUploadDir()
-    {
-        if ($this->isProtected()) {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
-        } else {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
-        }
-    }
-
-    /**
-     * Path to temporary directory of file
-     *
-     * @param bool $full
-     * @return string
-     */
-    public function dirTmp($full = false)
-    {
-        return
-            ($full ? $this->getUploadDir() : '') . '/' .
-            Yii::$app->fileManager->publicPath . '/tmp/' .
-            $this->getDateOfFile() . '/' .
-            $this->owner_type . '/' .
-            $this->id;
-    }
-
-    /**
-     * Path to directory of file
-     *
-     * @param bool $full
-     * @return string
-     */
-    public function dir($full = false)
-    {
-        if ($this->tmp) {
-            return $this->dirTmp($full);
-        } else {
-            return
-                ($full ? $this->getUploadDir() : '') . '/' .
-                Yii::$app->fileManager->publicPath . '/' .
-                $this->getDateOfFile() . '/' .
-                $this->owner_type . '/' .
-                $this->owner_id . '/' .
-                $this->id;
-        }
-    }
-
-    /**
-     * Path to file
-     *
-     * @param bool $full
-     * @return string
-     */
-    public function pathTmp($full = false)
-    {
-        return $this->dirTmp($full) . '/'. $this->name;
-    }
-
-    /**
-     * Path to file
-     *
-     * @param bool $full
-     * @return string
-     */
-    public function path($full = false)
-    {
-        return $this->dir($full) . '/'. $this->name;
-    }
-
-    /**
-     * Generate a name
-     *
-     * @param string $extension
-     * @return string
-     */
-    public static function generateName($extension = null)
-    {
-        $name = date('YmdHis') . substr(md5(microtime() . uniqid()), 0, 10);
-        return $extension ? $name . '.' . $extension : $name;
-    }
-
-    /**
-     * Save file in tmp directory (if `saveAfterUpload` is true then save in the final directory)
-     *
-     * @param string $tempFile
-     * @param bool $saveAfterUpload
-     * @param bool $uploaded File has been uploaded or manually created
-     * @return \rkit\filemanager\models\File|bool
-     */
-    public function saveToTmp($tempFile, $saveAfterUpload = false, $uploaded = true)
-    {
-        if ($this->save()) {
-            if (FileHelper::createDirectory($this->dirTmp(true))) {
-                $processed = $this->moveUploadedFile($tempFile, $uploaded);
-                if ($processed && $saveAfterUpload) {
-                    $this->tmp = false;
-                    $this->updateAttributes(['tmp' => $this->tmp]);
-                    if ($this->saveFile()) {
-                        return $this;
-                    }
-                } elseif ($processed) {
-                    return $this;
-                }
-            } // @codeCoverageIgnore
-        } // @codeCoverageIgnore
-
-        return false; // @codeCoverageIgnore
-    }
-
-    /**
-     * Save file.
-     *
-     * @return bool
-     */
-    public function saveFile()
-    {
-        if (file_exists($this->pathTmp(true))) {
-            FileHelper::copyDirectory($this->dirTmp(true), $this->dir(true));
-            FileHelper::removeDirectory($this->dirTmp(true));
-            return true;
-        } // @codeCoverageIgnore
-
-        return false;
-    }
-
-    /**
-     * Save file
-     *
-     * @param string $tempFile
-     * @param bool $uploaded File has been uploaded or manually created
-     * @return bool
-     */
-    private function moveUploadedFile($tempFile, $uploaded = true)
-    {
-        if (!$uploaded || Yii::$app instanceof \yii\console\Application) {
-            return rename($tempFile, $this->pathTmp(true));
-        } else {
-            return move_uploaded_file($tempFile, $this->pathTmp(true)); // @codeCoverageIgnore
-        }
-    }
-
-    /**
      * Check owner
      *
      * @param int $ownerId
@@ -311,13 +218,39 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Get by owner
+     * Create a file
+     *
+     * @param string $path
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param bool $temporary
+     * @param bool $protected
+     * @return File|bool
+     */
+    public static function create($path, $ownerId, $ownerType, $temporary, $protected)
+    {
+        $file = new File();
+        $file->path = $path;
+        $file->tmp = $temporary;
+        $file->owner_id = $ownerId;
+        $file->owner_type = $ownerType;
+        $file->protected = $protected;
+
+        if ($file->save()) {
+            return $file;
+        }
+
+        return false;
+    }
+
+    /**
+     * Find all by owner
      *
      * @param int $ownerId
      * @param int $ownerType
      * @return array
      */
-    public static function getByOwner($ownerId, $ownerType)
+    public static function findAllByOwner($ownerId, $ownerType)
     {
         return static::find()
             ->where(['owner_id' => $ownerId, 'owner_type' => $ownerType])
@@ -326,16 +259,32 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Delete by owner
+     * Find one by owner
      *
      * @param int $ownerId
      * @param int $ownerType
+     * @return File
      */
-    public static function deleteByOwner($ownerId, $ownerType)
+    public static function findOneByOwner($ownerId, $ownerType)
     {
-        $files = self::getByOwner($ownerId, $ownerType);
+        return static::find()
+            ->where(['owner_id' => $ownerId, 'owner_type' => $ownerType])
+            ->one();
+    }
+
+    /**
+     * Delete by owner
+     *
+     * @param Storage $storage
+     * @param int $ownerId
+     * @param int $ownerType
+     */
+    public function deleteByOwner($storage, $ownerId, $ownerType)
+    {
+        $files = self::findAllByOwner($ownerId, $ownerType);
 
         foreach ($files as $file) {
+            $file->setStorage($storage);
             $file->delete();
         }
     }
@@ -347,7 +296,7 @@ class File extends \yii\db\ActiveRecord
      */
     public function beforeDelete()
     {
-        FileHelper::removeDirectory($this->dir(true));
+        $this->getStorage()->delete();
         return true;
     }
 }

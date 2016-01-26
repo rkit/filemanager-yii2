@@ -17,14 +17,33 @@ use rkit\filemanager\models\File;
 
 abstract class BaseTest extends \PHPUnit_Framework_TestCase
 {
-    public $files = [
-        'file-100' => ['name' => '100x100', 'size' => 293, 'type' => 'image/png', 'ext' => 'png'],
-        'file-300' => ['name' => '300x300', 'size' => 1299, 'type' => 'image/png', 'ext' => 'png'],
-        'file-500' => ['name' => '500x500', 'size' => 1543, 'type' => 'image/png', 'ext' => 'png']
-    ];
+    protected $storage = 'rkit\filemanager\storages\LocalStorage';
+
+    public $files = [];
 
     protected function setUp()
     {
+        $this->storage = new $this->storage();
+        $this->prepareFiles();
+    }
+
+    protected function tearDown()
+    {
+        File::deleteAll();
+        News::deleteAll();
+
+        $fileManager = Yii::$app->fileManager;
+
+        FileHelper::removeDirectory(Yii::getAlias($fileManager->uploadDirProtected));
+        FileHelper::removeDirectory(Yii::getAlias($fileManager->uploadDirUnprotected));
+        FileHelper::removeDirectory(Yii::getAlias('@tests/data/files/tmp'));
+
+        unset($_FILES);
+    }
+
+    private function prepareFiles()
+    {
+        $this->files = require Yii::getAlias('@tests/data/files.php');
         FileHelper::createDirectory(Yii::getAlias('@tests/data/files/tmp'));
 
         $_FILES = [];
@@ -39,30 +58,6 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    protected function tearDown()
-    {
-        File::deleteAll();
-        News::deleteAll();
-
-        FileHelper::removeDirectory(Yii::getAlias(Yii::$app->fileManager->uploadDirProtected));
-        FileHelper::removeDirectory(Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected));
-        FileHelper::removeDirectory(Yii::getAlias('@tests/data/files/tmp'));
-
-        unset($_FILES);
-    }
-
-    /**
-     * Runs the action
-     *
-     * @param array $config
-     * @return mixed The result of the action
-     */
-    protected function runAction($config)
-    {
-        $action = new UploadAction('upload', new Controller('test', Yii::$app), $config);
-        return $action->run();
-    }
-
     /**
      * Prepare a file for test
      *
@@ -73,11 +68,28 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
     protected function prepareFile($fileIndex, $prefix = 'copy')
     {
         $file = $this->files[$fileIndex];
-        $origFile = Yii::getAlias('@tests/data/files/' . $file['name'] . '.' . $file['ext']);
-        $copyFile = Yii::getAlias('@tests/data/files/tmp/' . $file['name'] . '_' . $prefix . '.' . $file['ext']);
+        $origFile = Yii::getAlias(
+            '@tests/data/files/' . $file['name'] . '.' . $file['ext']
+        );
+        $copyFile = Yii::getAlias(
+            '@tests/data/files/tmp/' . $file['name'] . '_' . $prefix . '.' . $file['ext']
+        );
+
         copy($origFile, $copyFile);
 
         return $copyFile;
+    }
+
+    /**
+     * Runs the upload action
+     *
+     * @param array $config
+     * @return mixed The result of the action
+     */
+    protected function runUploadAction($config)
+    {
+        $action = new UploadAction('upload', new Controller('test', Yii::$app), $config);
+        return $action->run();
     }
 
     /**
@@ -91,7 +103,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
     protected function checkTmpFile($file, $ownerId, $ownerType)
     {
         $this->assertTrue(is_object($file));
-        $this->assertFileExists($file->path(true));
+        $this->assertFileExists($file->getStorage()->path(true));
         $this->assertTrue($file->isTmp());
         $this->assertTrue((bool)$file->tmp);
         $this->assertTrue($file->owner_id === $ownerId);
@@ -109,7 +121,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
     protected function checkNotTmpFile($file, $ownerId, $ownerType)
     {
         $this->assertTrue(is_object($file));
-        $this->assertFileExists($file->path(true));
+        $this->assertFileExists($file->getStorage()->path(true));
         $this->assertFalse($file->isTmp());
         $this->assertTrue(!(bool)$file->tmp);
         $this->assertTrue($file->owner_id === $ownerId);
@@ -157,28 +169,23 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      * @param bool $saveFilePath If save 'path' in current model
      * @return array $file and $model
      */
-    protected function uploadFile($config, $saveFilePath = true)
+    protected function uploadFileAndBindToModel($config, $saveFilePath = true)
     {
-        $response = $this->runAction($config);
+        $response = $this->runUploadAction($config);
         $response = $this->checkUploadFileResponse($response);
 
         $file = File::findOne($response['id']);
+        $file->setStorage($this->storage);
+
         $model = new News(['title' => 'test', $config['attribute'] => $file->id]);
         $ownerType = $model->getFileOwnerType($config['attribute']);
 
-        $this->checkTmpFile($file, -1, $ownerType);
         $this->assertTrue($model->save());
 
         $file = File::findOne($file->id);
-        $this->checkNotTmpFile($file, $model->id, $ownerType);
+        $file->setStorage($this->storage);
 
-        if ($saveFilePath) {
-            $this->assertContains($model->$config['attribute'], $file->path());
-        } else {
-            $this->assertTrue($model->$config['attribute'] === $file->id);
-        }
-
-        return ['file' => $file, 'model' => $model];
+        return [$file, $model];
     }
 
     /**
@@ -187,25 +194,29 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      * @param array $config see Properties UploadAction
      * @return array $files and $model
      */
-    protected function uploadGallery($config)
+    protected function uploadMultipleAndBindToModel($config)
     {
-        $response = $this->runAction($config);
+        $response = $this->runUploadAction($config);
         $response = $this->checkUploadGalleryResponse($response);
 
         $file = File::findOne($response[1]);
-        $model = new News(['title' => 'test', $config['attribute'] => ['files' => [$file->id => 'test']]]);
+        $file->setStorage($this->storage);
+
+        $model = new News([
+            'title' => 'test',
+            $config['attribute'] => ['files' => [$file->id => 'test']]
+        ]);
         $ownerType = $model->getFileOwnerType($config['attribute']);
 
-        $this->checkTmpFile($file, -1, $ownerType);
         $this->assertTrue($model->save());
 
         $files = $model->getFiles($config['attribute']);
         $this->assertCount(1, $files);
 
         foreach ($files as $file) {
-            $this->checkNotTmpFile($file, $model->id, $ownerType);
+            $file->setStorage($this->storage);
         }
 
-        return ['files' => $files, 'model' => $model];
+        return [$files, $model];
     }
 }

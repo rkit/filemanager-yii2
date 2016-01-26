@@ -14,36 +14,36 @@ use yii\helpers\ArrayHelper;
 class FileRules
 {
     /**
-     * Prepare description for max size of file
+     * Get description for max size of file
      *
      * @param int $rules
      * @return string
      */
-    public static function prepareMaxSizeDescription($rules)
+    private static function getMaxSizeDescription($rules)
     {
         $maxSize = Yii::$app->formatter->asShortSize($rules);
         return Yii::t('filemanager-yii2', 'Max. file size') . ': ' . $maxSize . ' ';
     }
 
     /**
-     * Prepare description for extensions of file
+     * Get description for extensions of file
      *
      * @param array $rules
      * @return string
      */
-    public static function prepareExtensionDescription($rules)
+    private static function getExtensionDescription($rules)
     {
         $extensions = strtoupper(implode(', ', $rules));
         return Yii::t('filemanager-yii2', 'File types') . ': ' . $extensions . ' ';
     }
 
     /**
-     * Prepare description for size of image
+     * Get description for size of image
      *
      * @param array $rules
      * @return string
      */
-    public static function prepareImageSizeDescription($rules)
+    private static function getImageSizeDescription($rules)
     {
         $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
         $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
@@ -51,19 +51,19 @@ class FileRules
         $minHeight = ArrayHelper::getValue($rules, 'minHeight');
 
         $text = '';
-        if (self::imageWithStrictSize($rules)) {
+        if (self::isImageWithStrictSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Image size') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-        } elseif (self::imageWithMinAndMaxSize($rules)) {
+        } elseif (self::isImageWithMinAndMaxSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
             $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-        } elseif (self::imageWithMinSize($rules)) {
+        } elseif (self::isImageWithMinSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Min. size of image') . ': ' . $minWidth . 'x' . $minHeight . 'px;';
-            $text .= self::prepareImageFullSizeDescription($rules, ['minWidth', 'minHeight']);
-        } elseif (self::imageWithMaxSize($rules)) {
+            $text .= self::prepareImageSizeDescription($rules, ['minWidth', 'minHeight']);
+        } elseif (self::isImageWithMaxSize($rules)) {
             $text .= Yii::t('filemanager-yii2', 'Max. size of image') . ': ' . $maxWidth . 'x' . $maxHeight . 'px;';
-            $text .= self::prepareImageFullSizeDescription($rules, ['maxWidth', 'maxHeight']);
+            $text .= self::prepareImageSizeDescription($rules, ['maxWidth', 'maxHeight']);
         } else {
-            $text .= self::prepareImageFullSizeDescription($rules);
+            $text .= self::prepareImageSizeDescription($rules);
         }
 
         $text = mb_substr($text, 0, -1);
@@ -73,12 +73,12 @@ class FileRules
     }
 
     /**
-     * Prepare description for strict size of image
+     * This rules for image with strict size
      *
      * @param array $rules
-     * @return string
+     * @return bool
      */
-    public static function imageWithStrictSize($rules)
+    private static function isImageWithStrictSize($rules)
     {
         $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
         $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
@@ -89,23 +89,23 @@ class FileRules
     }
 
     /**
-     * Prepare description for min-max size of image
+     * This rules for image with min and max size
      *
      * @param array $rules
-     * @return string
+     * @return bool
      */
-    public static function imageWithMinAndMaxSize($rules)
+    private static function isImageWithMinAndMaxSize($rules)
     {
         return count($rules) == 4;
     }
 
     /**
-     * Prepare description for min size of image
+     * This rules for image with min size
      *
      * @param array $rules
-     * @return string
+     * @return bool
      */
-    public static function imageWithMinSize($rules)
+    private static function isImageWithMinSize($rules)
     {
         $minWidth  = ArrayHelper::getValue($rules, 'minWidth');
         $minHeight = ArrayHelper::getValue($rules, 'minHeight');
@@ -114,12 +114,12 @@ class FileRules
     }
 
     /**
-     * Prepare description for max size of image
+     * This rules for image with max size
      *
      * @param array $rules
-     * @return string
+     * @return bool
      */
-    public static function imageWithMaxSize($rules)
+    private static function isImageWithMaxSize($rules)
     {
         $maxWidth  = ArrayHelper::getValue($rules, 'maxWidth');
         $maxHeight = ArrayHelper::getValue($rules, 'maxHeight');
@@ -128,12 +128,12 @@ class FileRules
     }
 
     /**
-     * Prepare description for full size of image
+     * Prepare description for size of image
      *
      * @param array $rules
      * @return string
      */
-    public static function prepareImageFullSizeDescription($rules, $exclude = [])
+    private static function prepareImageSizeDescription($rules, $exclude = [])
     {
         foreach ($exclude as $item) {
             unset($rules[$item]);
@@ -155,6 +155,32 @@ class FileRules
                     $text .= Yii::t('filemanager-yii2', 'Max. height') . ' ' . $value . 'px;';
                     break;
             }
+        }
+
+        return $text;
+    }
+
+    /**
+     * Get rules description
+     *
+     * @param array $rules
+     * @return string
+     */
+    public static function getDescription($rules)
+    {
+        $text = '';
+        if (isset($rules['imageSize'])) {
+            $text .= self::getImageSizeDescription($rules['imageSize']);
+            $text = !empty($text) ? $text . '<br>' : $text;
+        }
+
+        if (isset($rules['extensions'])) {
+            $text .= self::getExtensionDescription($rules['extensions']);
+            $text = isset($rules['maxSize']) ? $text . '<br>' : $text;
+        }
+
+        if (isset($rules['maxSize'])) {
+            $text .= self::getMaxSizeDescription($rules['maxSize']);
         }
 
         return $text;

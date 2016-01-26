@@ -30,11 +30,11 @@ class ResizeTest extends BaseTest
 
     public function testResize()
     {
-        extract($this->uploadFile([
+        list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-300'
-        ]));
+        ]);
 
         $thumb = $model->thumb('image_path', '200x200', null, true);
         $this->assertContains('200x200', $thumb);
@@ -47,66 +47,69 @@ class ResizeTest extends BaseTest
 
     public function testResizeProtected()
     {
-        extract($this->uploadFile([
+        list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_id',
             'inputName' => 'file-300'
-        ], false));
+        ], false);
 
-        $thumb = $model->thumb('image_id', '200x200', $file->path(), true);
+        $path = $file->getStorage()->path();
+        $thumb = $model->thumb('image_id', '200x200', $path, true);
         $this->assertTrue($model->image_id === $file->id);
         $this->assertContains('200x200', $thumb);
         $this->assertFileExists($thumb);
         $this->checkImageSize($thumb, 200, 200);
 
         // for check cache thumb
-        $model->thumb('image_id', '200x200', $file->path(), true);
+        $model->thumb('image_id', '200x200', $path, true);
     }
 
     public function testResizeAndApplyPresetAfterUpload()
     {
-        extract($this->uploadFile([
+        list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-300'
-        ]));
+        ]);
 
-        $thumb220 = $model->generateThumbName($file->path(true), '220x220');
+        $path = $file->getStorage()->path(true);
+        $thumb220 = $model->generateThumbName($path, '220x220');
         $this->assertFileExists($thumb220);
         $this->checkImageSize($thumb220, 220, 220);
 
-        $thumb200 = $model->generateThumbName($file->path(true), '200x200');
+        $thumb200 = $model->generateThumbName($path, '200x200');
         $this->assertFileNotExists($thumb200);
     }
 
     public function testResizeProtectedAndApplyPresetAfterUpload()
     {
-        extract($this->uploadFile([
+        list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_id',
             'inputName' => 'file-300'
-        ], false));
+        ], false);
 
-        $thumb220 = $model->generateThumbName($file->path(true), '220x220');
+        $path = $file->getStorage()->path(true);
+        $thumb220 = $model->generateThumbName($path, '220x220');
         $this->assertFileExists($thumb220);
         $this->checkImageSize($thumb220, 220, 220);
 
-        $thumb200 = $model->generateThumbName($file->path(true), '200x200');
+        $thumb200 = $model->generateThumbName($path, '200x200');
         $this->assertFileExists($thumb200);
         $this->checkImageSize($thumb200, 200, 200);
     }
 
     public function testResizeAndReplace()
     {
-        extract($this->uploadFile([
+        list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-500'
-        ]));
+        ]);
 
         $thumb = $model->thumb('image_path', '400x400', null, true);
         $this->assertContains('400x400', $thumb);
         $this->assertFileNotExists($thumb);
-        $this->checkImageSize($file->path(true), 400, 400);
+        $this->checkImageSize($file->getStorage()->path(true), 400, 400);
     }
 }

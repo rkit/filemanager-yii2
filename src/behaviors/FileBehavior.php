@@ -12,8 +12,10 @@ use Yii;
 use yii\base\Behavior;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
+use yii\base\InvalidParamException;
 use rkit\filemanager\models\File;
 use rkit\filemanager\helpers\FileRules;
+use rkit\filemanager\behaviors\FileBind;
 
 class FileBehavior extends Behavior
 {
@@ -21,11 +23,27 @@ class FileBehavior extends Behavior
      * @var array
      */
     public $attributes = [];
+    /**
+     * @var rkit\filemanager\behaviors\FileBind
+     */
+    private static $bind;
 
     public function init()
     {
         parent::init();
+
+        $this->setBind();
         Yii::$app->fileManager->registerTranslations();
+    }
+
+    /**
+     * Set Decoder
+     *
+     * @return void
+     */
+    public function setBind()
+    {
+        $this->bind = new FileBind();
     }
 
     /**
@@ -62,13 +80,21 @@ class FileBehavior extends Behavior
                 continue;
             }
 
-            $ownerType = Yii::$app->fileManager->getOwnerType($this->getOwnerType($attribute));
-            $file = $this->bind($this->owner->primaryKey, $ownerType, $fileId);
+            $file = $this->bind->setBind(
+                $this->getFileStorage($attribute),
+                $this->owner->primaryKey,
+                $this->getFileOwnerType($attribute),
+                $fileId
+            );
 
             if (isset($data['saveFilePath']) && $data['saveFilePath'] === true) {
-                $this->owner->updateAttributes([$attribute => $this->prepareFilePath($file, $data['oldValue'])]);
+                $value = $this->prepareFilePath($file, $data['oldValue']);
             } elseif (isset($data['saveFileId']) && $data['saveFileId'] === true) {
-                $this->owner->updateAttributes([$attribute => $this->prepareFileId($file, $data['oldValue'])]);
+                $value = $this->prepareFileId($file, $data['oldValue']);
+            }
+
+            if (isset($value)) {
+                $this->owner->updateAttributes([$attribute => $value]);
             }
         }
     }
@@ -76,31 +102,83 @@ class FileBehavior extends Behavior
     public function beforeDelete()
     {
         foreach ($this->attributes as $attribute => $data) {
-            $ownerType = Yii::$app->fileManager->getOwnerType($this->getOwnerType($attribute));
-            File::deleteByOwner($this->owner->primaryKey, $ownerType);
+            $ownerType = $this->getFileOwnerType($attribute);
+            $storage = $this->getFileStorage($attribute);
+            (new File())->deleteByOwner($storage, $this->owner->primaryKey, $ownerType);
         }
     }
 
     /**
-     * Get owner type
+     * Prepare the path of the file
+     *
+     * @param mixed $file
+     * @param mixed $oldValue
+     * @return string
+     */
+    private function prepareFilePath($file, $oldValue)
+    {
+        if (is_object($file)) {
+            return $file->getStorage()->path();
+        } elseif ($file === false && $oldValue !== null) {
+            return $oldValue;
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Prepare the id of the file
+     *
+     * @param mixed $file
+     * @param mixed $oldValue
+     * @return int
+     */
+    private function prepareFileId($file, $oldValue)
+    {
+        if (is_object($file)) {
+            return $file->id;
+        } elseif ($file === false && $oldValue !== null) {
+            return $oldValue;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Get the path to the upload directory
      *
      * @param string $attribute
      * @return string
      */
-    private function getOwnerType($attribute)
+    public function uploadDir($attribute)
+    {
+        if ($this->isFileProtected($attribute)) {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
+        } else {
+            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
+        }
+    }
+
+    /**
+     * Get the type of the owner in as string
+     *
+     * @param string $attribute
+     * @return string
+     */
+    private function getStringOwnerType($attribute)
     {
         return $this->owner->tableName() . '.' . $attribute;
     }
 
     /**
-     * Get ownerType
+     * Get the type of the owner
      *
      * @param string $attribute
      * @return int
      */
     public function getFileOwnerType($attribute)
     {
-        return Yii::$app->fileManager->getOwnerType($this->getOwnerType($attribute));
+        return Yii::$app->fileManager->getOwnerType($this->getStringOwnerType($attribute));
     }
 
     /**
@@ -111,45 +189,36 @@ class FileBehavior extends Behavior
      */
     public function getFiles($attribute)
     {
-        return File::getByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
+        $files = File::findAllByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
+        foreach ($files as $file) {
+            $file->setStorage($this->getFileStorage($attribute));
+        }
+
+        return $files;
     }
 
     /**
-     * File is protected?
+     * Get the file
+     *
+     * @param string $attribute
+     * @return rkit\filemanager\models\File[]
+     */
+    public function getFile($attribute)
+    {
+        $file = File::findOneByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
+        $file->setStorage($this->getFileStorage($attribute));
+        return $file;
+    }
+
+    /**
+     * The file is protected
      *
      * @param string $attribute
      * @return bool
      */
-    public function isProtected($attribute)
+    public function isFileProtected($attribute)
     {
         return ArrayHelper::getValue($this->attributes[$attribute], 'protected', false);
-    }
-
-    /**
-     * Get real path to file
-     *
-     * @param string $attribute
-     * @return string
-     */
-    public function getFileRealPath($attribute)
-    {
-        $realPath = $this->getUploadDir($attribute);
-        return $realPath . $this->owner->$attribute;
-    }
-
-    /**
-     * Get upload dir
-     *
-     * @param string $attribute
-     * @return string
-     */
-    public function getUploadDir($attribute)
-    {
-        if ($this->isProtected($attribute)) {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
-        } else {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
-        }
     }
 
     /**
@@ -164,7 +233,7 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get file preset
+     * Get the presets of the file
      *
      * @param string $attribute
      * @return array
@@ -175,7 +244,7 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get preset file after upload
+     * Get the presets of the file for apply after upload
      *
      * @param string $attribute
      * @return array
@@ -193,16 +262,32 @@ class FileBehavior extends Behavior
     }
 
     /**
+     * Get the storage of the file
+     *
+     * @param string $attribute
+     * @return Storage
+     */
+    public function getFileStorage($attribute)
+    {
+        $storage = ArrayHelper::getValue($this->attributes[$attribute], 'storage', null);
+        if ($storage) {
+            return new $storage();
+        }
+
+        throw new InvalidParamException('The storage is not defined'); // @codeCoverageIgnore
+    }
+
+    /**
      * Generate a thumb name
      *
      * @param string $path
-     * @param string $preset
+     * @param string $prefix
      * @return string
      */
-    public function generateThumbName($path, $preset)
+    public function generateThumbName($path, $prefix)
     {
         $fileName = pathinfo($path, PATHINFO_FILENAME);
-        return str_replace($fileName, $preset . '_' . $fileName, $path);
+        return str_replace($fileName, $prefix . '_' . $fileName, $path);
     }
 
     /**
@@ -210,14 +295,14 @@ class FileBehavior extends Behavior
      *
      * @param string $attribute
      * @param string $preset
-     * @param string $forcePublicPath Use this path
-     * @param bool $returnRealPath
+     * @param string $pathToFile Use this path to the file
+     * @param bool $returnRealPath Return the real path to the file
      * @return string
      */
-    public function thumb($attribute, $preset, $forcePublicPath = null, $returnRealPath = false)
+    public function thumb($attribute, $preset, $pathToFile = null, $returnRealPath = false)
     {
-        $realPath = $this->getUploadDir($attribute);
-        $publicPath = $forcePublicPath ? $forcePublicPath : $this->owner->$attribute;
+        $realPath = $this->uploadDir($attribute);
+        $publicPath = $pathToFile ? $pathToFile : $this->owner->$attribute;
         $thumbPath = $this->generateThumbName($publicPath, $preset);
 
         if (!file_exists($realPath . $thumbPath)) {
@@ -233,211 +318,13 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get rules description
+     * Get description the rules of the file in as text
      *
      * @param string $attribute
      * @return string
      */
     public function getFileRulesDescription($attribute)
     {
-        $rules = $this->attributes[$attribute]['rules'];
-
-        $text = '';
-        if (isset($rules['imageSize'])) {
-            $text .= FileRules::prepareImageSizeDescription($rules['imageSize']);
-            $text = !empty($text) ? $text . '<br>' : $text;
-        }
-
-        if (isset($rules['extensions'])) {
-            $text .= FileRules::prepareExtensionDescription($rules['extensions']);
-            $text = isset($rules['maxSize']) ? $text . '<br>' : $text;
-        }
-
-        if (isset($rules['maxSize'])) {
-            $text .= FileRules::prepareMaxSizeDescription($rules['maxSize']);
-        }
-
-        return $text;
-    }
-
-    /**
-     * Binding files with owner
-     *
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param array|int $fileId
-     * @return File|bool|array
-     */
-    private function bind($ownerId, $ownerType, $fileId)
-    {
-        if ($fileId === [] || $fileId === '') {
-            File::deleteByOwner($ownerId, $ownerType);
-            return true;
-        }
-
-        return is_array($fileId)
-            ? $this->bindMultiple($ownerId, $ownerType, $fileId)
-            : $this->bindSingle($ownerId, $ownerType, $fileId);
-    }
-
-    /**
-     * Binding file with owner
-     *
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param int $fileId
-     * @return File|bool
-     */
-    private function bindSingle($ownerId, $ownerType, $fileId)
-    {
-        $file = $fileId ? File::findOne($fileId) : false;
-
-        if ($file && $file->isOwner($ownerId, $ownerType)) {
-            if ($this->bindSingleFile($file, $ownerId)) {
-                // delete unnecessary files
-                $currentFiles = File::getByOwner($ownerId, $ownerType);
-                foreach ($currentFiles as $currFile) {
-                    if ($currFile->id !== $file->id) {
-                        $currFile->delete();
-                    }
-                }
-
-                return $file;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Bind single file
-     *
-     * @param File $file
-     * @param int $ownerId
-     * @return bool
-     */
-    private function bindSingleFile($file, $ownerId)
-    {
-        if ($file->tmp) {
-            $file->owner_id = $ownerId;
-            $file->tmp = false;
-            if ($file->saveFile()) {
-                $file->updateAttributes(['tmp' => $file->tmp, 'owner_id' => $file->owner_id]);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Binding files with owner
-     *
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param array $files
-     * @return array|bool
-     */
-    private function bindMultiple($ownerId, $ownerType, $files)
-    {
-        $files = ArrayHelper::getValue($files, 'files', []);
-        $newFiles = ArrayHelper::index(File::findAll(array_keys($files)), 'id');
-        $currentFiles = ArrayHelper::index(File::getByOwner($ownerId, $ownerType), 'id');
-
-        if (count($newFiles)) {
-            foreach ($newFiles as $file) {
-                if (!$file->isOwner($ownerId, $ownerType)) {
-                    unset($newFiles[$file->id]);
-                    continue;
-                }
-                if (!$this->bindMultipleFile($file, $ownerId, $files)) {
-                    continue;
-                }
-            }
-
-            // delete unnecessary files
-            foreach ($currentFiles as $currFile) {
-                if (!array_key_exists($currFile->id, $newFiles)) {
-                    $currFile->delete();
-                }
-            }
-
-        } else {
-            // if empty array — delete current files
-            foreach ($currentFiles as $currFile) {
-                $currFile->delete();
-            }
-        }
-
-        return $newFiles;
-    }
-
-    /**
-     * Bind files
-     *
-     * @param File $file
-     * @param int $ownerId
-     * @param array $files See `bindMultiple`
-     * @return bool
-     */
-    private function bindMultipleFile($file, $ownerId, $files)
-    {
-        $position = @array_search($file->id, array_keys($files)) + 1;
-        if ($file->tmp) {
-            $file->owner_id = $ownerId;
-            $file->tmp = false;
-            if ($file->saveFile()) {
-                $file->updateAttributes([
-                    'tmp'      => $file->tmp,
-                    'owner_id' => $file->owner_id,
-                    'title'    => @$files[$file->id],
-                    'position' => $position
-                ]);
-                return true;
-            }
-        } else {
-            $file->updateAttributes([
-                'title'    => @$files[$file->id],
-                'position' => $position
-            ]);
-        }
-
-        return false;
-    }
-
-    /**
-     * Prepare file path
-     *
-     * @param mixed $file
-     * @param mixed $oldValue
-     * @return string
-     */
-    private function prepareFilePath($file, $oldValue)
-    {
-        if (is_object($file)) {
-            return $file->path();
-        } elseif ($file === false && $oldValue !== null) {
-            return $oldValue;
-        } else {
-            return '';
-        }
-    }
-
-    /**
-     * Prepare file id
-     *
-     * @param mixed $file
-     * @param mixed $oldValue
-     * @return int
-     */
-    private function prepareFileId($file, $oldValue)
-    {
-        if (is_object($file)) {
-            return $file->id;
-        } elseif ($file === false && $oldValue !== null) {
-            return $oldValue;
-        } else {
-            return 0;
-        }
+        return FileRules::getDescription($this->attributes[$attribute]['rules']);
     }
 }

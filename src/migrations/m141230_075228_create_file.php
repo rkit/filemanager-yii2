@@ -19,6 +19,7 @@ class m141230_075228_create_file extends \yii\db\Migration
             'title' => Schema::TYPE_STRING . " NOT NULL DEFAULT ''",
             'name' => Schema::TYPE_STRING . " NOT NULL DEFAULT ''",
             'size' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
+            'extension' => "char(10) NOT NULL DEFAULT ''",
             'mime' => Schema::TYPE_STRING . "(100) NOT NULL DEFAULT ''",
             'date_create' => Schema::TYPE_TIMESTAMP . " NOT NULL DEFAULT '0000-00-00 00:00:00'",
             'date_update' => Schema::TYPE_TIMESTAMP . " NOT NULL DEFAULT '0000-00-00 00:00:00'",

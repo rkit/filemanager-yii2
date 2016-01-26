@@ -8,7 +8,6 @@
 
 namespace rkit\filemanager;
 
-use yii\helpers\FileHelper;
 use yii\base\InvalidValueException;
 use rkit\filemanager\models\File;
 
@@ -23,69 +22,60 @@ class Decoder
     /**
      * Create file from uploader (UploadedFile)
      *
-     * @param UploadedFile $data
+     * @param Storage $storage;
+     * @param string $path Path to the file
      * @param int $ownerId
      * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload
-     * @param bool $protected File is protected?
+     * @param bool $temporary The file is temporary
+     * @param bool $protected The file is protected, not available from the web
      * @return \rkit\filemanager\models\File|bool
      */
     public function createFromUploader(
-        $data,
-        $ownerId = -1,
-        $ownerType = -1,
-        $saveAfterUpload = false,
-        $protected = false
-    ) {
-        $pathInfo = pathinfo($data->name);
-        $file = new File([
-            'tmp' => true,
-            'owner_id' => $ownerId,
-            'owner_type' => $ownerType,
-            'size' => $data->size,
-            'mime' => $data->type,
-            'title' => $pathInfo['filename'],
-            'name' => File::generateName($pathInfo['extension']),
-            'protected' => $protected
-        ]);
-
-        return $file->saveToTmp($data->tempName, $saveAfterUpload);
-    }
-    /**
-     * Create file from path
-     *
-     * @param string $path Path in filesystem or URL
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload
-     * @param bool $protected File is protected?
-     * @return \rkit\filemanager\models\File|bool
-     */
-    public function createFromPath(
+        $storage,
         $path,
         $ownerId = -1,
         $ownerType = -1,
-        $saveAfterUpload = false,
+        $temporary = false,
         $protected = false
     ) {
-        $tempfile = tempnam(sys_get_temp_dir(), 'FMR');
-        if ($filecontent = @file_get_contents($path)) {
-            file_put_contents($tempfile, $filecontent);
-            $pathInfo = pathinfo($path);
-            $file = new File([
-                'tmp' => true,
-                'owner_id' => $ownerId,
-                'owner_type' => $ownerType,
-                'size' => filesize($tempfile),
-                'mime' => FileHelper::getMimeType($tempfile),
-                'title' => $pathInfo['filename'],
-                'name' => File::generateName($pathInfo['extension']),
-                'protected' => $protected
-            ]);
-
-            return $file->saveToTmp($tempfile, $saveAfterUpload, false);
-        } else {
-            throw new InvalidValueException('Unable to create from `' . $path . '`');
+        $file = File::create($path, $ownerId, $ownerType, $temporary, $protected);
+        if ($file) {
+            $file->setStorage($storage);
+            return $file->getStorage()->save($path);
         }
+
+        throw new InvalidValueException('Unable to create from `' . $path . '`');
+    }
+
+    /**
+     * Create file from path
+     *
+     * @param Storage $storage;
+     * @param string $path Path to the file or URL
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param bool $temporary The file is temporary
+     * @param bool $protected The file is protected, not available from the web
+     * @return \rkit\filemanager\models\File|bool
+     */
+    public function createFromPath(
+        $storage,
+        $path,
+        $ownerId = -1,
+        $ownerType = -1,
+        $temporary = false,
+        $protected = false
+    ) {
+        $filePath = tempnam(sys_get_temp_dir(), 'FMR');
+        if ($fileContent = @file_get_contents($path)) {
+            file_put_contents($filePath, $fileContent);
+            $file = File::create($filePath, $ownerId, $ownerType, $temporary, $protected);
+            if ($file) {
+                $file->setStorage($storage);
+                return $file->getStorage()->save($filePath, false);
+            }
+        } // @codeCoverageIgnore
+
+        throw new InvalidValueException('Unable to create from `' . $path . '`');
     }
 }

@@ -39,13 +39,13 @@ class FileManager extends Component
     /**
      * @var Decoder
      */
-    public static $decoder = null;
+    private $decoder;
 
     public function init()
     {
         parent::init();
 
-        $this->setDecoder();
+        $this->setDecoder(new Decoder());
         $this->registerTranslations();
     }
 
@@ -65,34 +65,13 @@ class FileManager extends Component
     }
 
     /**
-     * It is from uploader?
+     * Set Decoder
      *
-     * @param mixed $data
-     * @return bool
+     * @return void
      */
-    private function isFromUploader($data)
+    public function setDecoder($decoder)
     {
-        return $data instanceof yii\web\UploadedFile;
-    }
-
-    /**
-     * Create new file from mixed data
-     *
-     * @param mixed $data
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $saveAfterUpload Save the file immediately after upload
-     * @param bool $protected File is protected?
-     * @return \rkit\filemanager\models\File|bool
-     */
-    public function create($data, $ownerId = -1, $ownerType = -1, $saveAfterUpload = false, $protected = false)
-    {
-        switch ($data) {
-            case $this->isFromUploader($data):
-                return $this->decoder->createFromUploader($data, $ownerId, $ownerType, $saveAfterUpload, $protected);
-            default:
-                return $this->decoder->createFromPath($data, $ownerId, $ownerType, $saveAfterUpload, $protected);
-        }
+        $this->decoder = $decoder;
     }
 
     /**
@@ -100,9 +79,9 @@ class FileManager extends Component
      *
      * @return void
      */
-    public function setDecoder()
+    public function getDecoder()
     {
-        $this->decoder = new Decoder();
+        return $this->decoder;
     }
 
     /**

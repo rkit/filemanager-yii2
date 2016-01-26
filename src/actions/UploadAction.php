@@ -17,7 +17,7 @@ use yii\web\UploadedFile;
 class UploadAction extends Action
 {
     /**
-     * @var string $modelName
+     * @var string $modelName The name of model
      */
     public $modelName;
     /**
@@ -25,38 +25,43 @@ class UploadAction extends Action
      */
     public $attribute;
     /**
-     * @var string $inputName
+     * @var string $inputName The name of the file input field
      */
     public $inputName;
     /**
-     * @var string $type `image` or `file`
+     * @var string $type The type of the file (`image` or `file`)
      */
     public $type = 'image';
     /**
-     * @var string $multiple
+     * @var string $multiple Multiple files
      */
     public $multiple = false;
     /**
-     * @var string $template Path to template
+     * @var string $template Path to template for multiple files
      */
     public $template;
     /**
-     * @var string $resultName
+     * @var string $resultFieldId The name for field of the response, in which the id to the file
      */
-    public $resultName = 'path';
+    public $resultFieldId = 'id';
     /**
-     * @var int $ownerId Owner Id
+     * @var string $resultFieldPath The name for field of the response, in which the path to the file
+     */
+    public $resultFieldPath = 'path';
+    /**
+     * @var int $ownerId The id of the owner
      */
     public $ownerId = -1;
     /**
-     * @var bool $saveAfterUpload Save the file immediately after upload
+     * @var bool $temporary The file is temporary
      */
-    public $saveAfterUpload = false;
+    public $temporary = true;
     /**
      * @var ActiveRecord $model
      */
     private $model;
     /**
+     * @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
      * @var array $rules
      */
     private $rules;
@@ -104,17 +109,11 @@ class UploadAction extends Action
      */
     private function upload($file)
     {
-        $file = Yii::$app->fileManager->create(
-            $file,
-            $this->ownerId,
-            $this->model->getFileOwnerType($this->attribute),
-            $this->saveAfterUpload,
-            $this->model->isProtected($this->attribute)
-        );
+        $file = $this->createFile($file);
         if ($file) {
             $presetAfterUpload = $this->model->getFilePresetAfterUpload($this->attribute);
             if (count($presetAfterUpload)) {
-                $this->applyPreset($file->path(), $presetAfterUpload);
+                $this->applyPreset($file->getStorage()->path(), $presetAfterUpload);
             }
             if ($this->multiple) {
                 return $this->response(
@@ -125,7 +124,10 @@ class UploadAction extends Action
                     ])
                 );
             } else {
-                return $this->response(['id' => $file->id, $this->resultName => $file->path()]);
+                return $this->response([
+                    $this->resultFieldId => $file->id,
+                    $this->resultFieldPath => $file->getStorage()->path()
+                ]);
             }
         } else {
             return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]); // @codeCoverageIgnore
@@ -133,10 +135,30 @@ class UploadAction extends Action
     }
 
     /**
+     * Create a file
+     *
+     * @param yii\web\UploadedFile $file
+     * @return rkit\filemanager\models\File
+     */
+    private function createFile($file)
+    {
+        $file = Yii::$app->fileManager->getDecoder()->createFromUploader(
+            $this->model->getFileStorage($this->attribute),
+            $file->tempName,
+            $this->ownerId,
+            $this->model->getFileOwnerType($this->attribute),
+            $this->temporary,
+            $this->model->isFileProtected($this->attribute)
+        );
+
+        return $file;
+    }
+
+    /**
      * Apply preset for file
      *
-     * @param array $presetAfterUpload
      * @param string $path
+     * @param array $presetAfterUpload
      * @return void
      */
     private function applyPreset($path, $presetAfterUpload)
