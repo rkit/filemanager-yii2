@@ -104,7 +104,7 @@ class UploadAction extends Action
     /**
      * Upload
      *
-     * @param yii\web\UploadedFile $file
+     * @param UploadedFile $file
      * @return string JSON
      */
     private function upload($file)

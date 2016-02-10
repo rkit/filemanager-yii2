@@ -96,8 +96,7 @@ class LocalStorage extends Storage
     /**
      * Save the file to the storage or temporary directory
      *
-     * @param string $tempFile
-     * @param bool $temporary
+     * @param string $path
      * @param bool $isUploadedFile File has been uploaded or manually created
      * @return \rkit\filemanager\models\File|bool
      */

@@ -109,7 +109,7 @@ class FileBind
     /**
      * Save temporary directory to the storage
      *
-     * @param rkit\filemanager\models\File $file
+     * @param File $file
      * @param int $ownerId
      * @return rkit\filemanager\models\File|bool
      */

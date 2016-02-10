@@ -263,7 +263,7 @@ class File extends \yii\db\ActiveRecord
      *
      * @param int $ownerId
      * @param int $ownerType
-     * @return File
+     * @return File|null
      */
     public static function findOneByOwner($ownerId, $ownerType)
     {

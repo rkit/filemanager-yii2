@@ -201,7 +201,7 @@ class FileBehavior extends Behavior
      * Get the file
      *
      * @param string $attribute
-     * @return rkit\filemanager\models\File[]
+     * @return File|null
      */
     public function getFile($attribute)
     {
