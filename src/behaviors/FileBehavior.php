@@ -102,6 +102,17 @@ class FileBehavior extends Behavior
         }
     }
 
+    /**
+     * Prepare the path of the file
+     *
+     * @param array $data
+     * @param string $attribute
+     * @param Strorage $storage
+     * @param int $ownerId
+     * @param int $ownerType
+     * @param mixed $fileId
+     * @return void
+     */
     private function binding($data, $attribute, $storage, $ownerId, $ownerType, $fileId)
     {
         if ($this->isMultiple($attribute)) {
