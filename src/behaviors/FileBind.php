@@ -17,29 +17,6 @@ use rkit\filemanager\models\File;
 class FileBind
 {
     /**
-     * Bind files with owner
-     *
-     * @param Storage $storage
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param int|array $fileId
-     * @return File|File[]|bool
-     */
-    public function setBind($storage, $ownerId, $ownerType, $fileId)
-    {
-        if ($fileId === [] || $fileId === '') {
-            (new File())->deleteByOwner($storage, $ownerId, $ownerType);
-            return true;
-        }
-
-        if (is_array($fileId)) {
-            return $this->bindMultiple($storage, $ownerId, $ownerType, $fileId);
-        } else {
-            return $this->bindSingle($storage, $ownerId, $ownerType, $fileId);
-        }
-    }
-
-    /**
      * Bind the file to the with owner
      *
      * @param Storage $storage
@@ -48,10 +25,9 @@ class FileBind
      * @param int $fileId
      * @return rkit\filemanager\models\File|bool
      */
-    private function bindSingle($storage, $ownerId, $ownerType, $fileId)
+    public function bindSingle($storage, $ownerId, $ownerType, $fileId)
     {
-        $file = $fileId ? File::findOne($fileId) : false;
-
+        $file = File::findOne($fileId);
         if ($file && $file->isOwner($ownerId, $ownerType)) {
             $file->setStorage($storage);
             if ($file->tmp) {
@@ -76,9 +52,8 @@ class FileBind
      * @param array $files
      * @return rkit\filemanager\models\File[]|bool
      */
-    private function bindMultiple($storage, $ownerId, $ownerType, $files)
+    public function bindMultiple($storage, $ownerId, $ownerType, $files)
     {
-        $files = ArrayHelper::getValue($files, 'files', []);
         $newFiles = ArrayHelper::index(File::findAll(array_keys($files)), 'id');
 
         if (count($newFiles)) {

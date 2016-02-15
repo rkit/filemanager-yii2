@@ -305,7 +305,7 @@ class FileUploadTest extends BaseTest
         $this->assertTrue($file->getStorage()->path() === $model->image_path);
     }
 
-    public function testFailSaveFile()
+    public function testFailSaveWithUnlinkFile()
     {
         list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
@@ -328,6 +328,22 @@ class FileUploadTest extends BaseTest
         $model->save();
 
         $this->assertFalse($file->getStorage()->path() === $model->image_path);
+    }
+
+    public function testFailSaveWithWrongFileId()
+    {
+        $model = new News();
+
+        $response = $this->runUploadAction([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-500'
+        ]);
+
+        $model->image_path = 0123123;
+        $model->save();
+
+        $this->assertEmpty($model->image_path);
     }
 
     public function testNotTmpUnprotectedCreateFromPath()

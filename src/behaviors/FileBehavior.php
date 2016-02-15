@@ -80,12 +80,34 @@ class FileBehavior extends Behavior
                 continue;
             }
 
-            $file = $this->bind->setBind(
-                $this->getFileStorage($attribute),
-                $this->owner->primaryKey,
-                $this->getFileOwnerType($attribute),
-                $fileId
-            );
+            $storage = $this->getFileStorage($attribute);
+            $ownerId = $this->owner->primaryKey;
+            $ownerType = $this->getFileOwnerType($attribute);
+
+            if ($fileId === [] || $fileId === '') {
+                (new File())->deleteByOwner($storage, $ownerId, $ownerType);
+                continue;
+            }
+
+            $this->binding($data, $attribute, $storage, $ownerId, $ownerType, $fileId);
+        }
+    }
+
+    public function beforeDelete()
+    {
+        foreach ($this->attributes as $attribute => $data) {
+            $ownerType = $this->getFileOwnerType($attribute);
+            $storage = $this->getFileStorage($attribute);
+            (new File())->deleteByOwner($storage, $this->owner->primaryKey, $ownerType);
+        }
+    }
+
+    private function binding($data, $attribute, $storage, $ownerId, $ownerType, $fileId)
+    {
+        if ($this->isMultiple($attribute)) {
+            $this->bind->bindMultiple($storage, $ownerId, $ownerType, $fileId);
+        } else {
+            $file = $this->bind->bindSingle($storage, $ownerId, $ownerType, $fileId);
 
             if (isset($data['saveFilePath']) && $data['saveFilePath'] === true) {
                 $value = $this->prepareFilePath($file, $data['oldValue']);
@@ -96,15 +118,6 @@ class FileBehavior extends Behavior
             if (isset($value)) {
                 $this->owner->updateAttributes([$attribute => $value]);
             }
-        }
-    }
-
-    public function beforeDelete()
-    {
-        foreach ($this->attributes as $attribute => $data) {
-            $ownerType = $this->getFileOwnerType($attribute);
-            $storage = $this->getFileStorage($attribute);
-            (new File())->deleteByOwner($storage, $this->owner->primaryKey, $ownerType);
         }
     }
 
@@ -121,9 +134,9 @@ class FileBehavior extends Behavior
             return $file->getStorage()->path();
         } elseif ($file === false && $oldValue !== null) {
             return $oldValue;
-        } else {
-            return '';
         }
+
+        return '';
     }
 
     /**
@@ -139,9 +152,9 @@ class FileBehavior extends Behavior
             return $file->id;
         } elseif ($file === false && $oldValue !== null) {
             return $oldValue;
-        } else {
-            return 0;
         }
+
+        return 0;
     }
 
     /**
@@ -208,6 +221,17 @@ class FileBehavior extends Behavior
         $file = File::findOneByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
         $file->setStorage($this->getFileStorage($attribute));
         return $file;
+    }
+
+    /**
+     * Multiple files
+     *
+     * @param string $attribute
+     * @return bool
+     */
+    public function isMultiple($attribute)
+    {
+        return ArrayHelper::getValue($this->attributes[$attribute], 'multiple', false);
     }
 
     /**

@@ -21,7 +21,8 @@ interface StorageInterface
     public function path();
 
     /**
-     * Save the file to the storage or temporary directory
+     * Save the file to the storage
+     * If the file is temporary, then in the temporary directory
      *
      * @return \rkit\filemanager\models\File|bool
      */

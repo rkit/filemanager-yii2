@@ -94,7 +94,8 @@ class LocalStorage extends Storage
     }
 
     /**
-     * Save the file to the storage or temporary directory
+     * Save the file to the storage
+     * If the file is temporary, then in the temporary directory
      *
      * @param string $path
      * @param bool $isUploadedFile File has been uploaded or manually created
@@ -102,7 +103,6 @@ class LocalStorage extends Storage
      */
     public function save($path, $isUploadedFile = true)
     {
-        $file = $this->getFile();
         if (file_exists($path)) {
             if (FileHelper::createDirectory($this->dir(true))) {
                 $isConsole = Yii::$app instanceof \yii\console\Application;
@@ -113,7 +113,7 @@ class LocalStorage extends Storage
                 }
 
                 if ($saved) {
-                    return $file;
+                    return $this->getFile();
                 }
             } // @codeCoverageIgnore
         } // @codeCoverageIgnore

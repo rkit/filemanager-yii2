@@ -133,6 +133,7 @@ class News extends \yii\db\ActiveRecord
                     ],
                     'image_gallery' => [
                         'storage' => 'rkit\filemanager\storages\LocalStorage',
+                        'multiple' => true,
                         'preset' => [
                             '80x80' => function ($realPath, $publicPath, $thumbPath) {
                                 Image::make($realPath . $publicPath)
@@ -143,6 +144,7 @@ class News extends \yii\db\ActiveRecord
                     ],
                     'image_gallery_protected' => [
                         'storage' => 'rkit\filemanager\storages\LocalStorage',
+                        'multiple' => true,
                         'protected' => true,
                     ],
                     'image_strict_size' => [

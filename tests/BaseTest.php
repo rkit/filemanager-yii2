@@ -151,7 +151,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      */
     protected function checkUploadGalleryResponse($response)
     {
-        preg_match('/News\[(.*?)\]\[files\]\[(.*?)\]/', $response, $matches);
+        preg_match('/News\[(.*?)\]\[(.*?)\]/', $response, $matches);
 
         $this->assertTrue(is_string($response));
         $this->assertTrue(isset($matches[2]));
@@ -204,7 +204,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
 
         $model = new News([
             'title' => 'test',
-            $config['attribute'] => ['files' => [$file->id => 'test']]
+            $config['attribute'] => [$file->id => 'test']
         ]);
         $ownerType = $model->getFileOwnerType($config['attribute']);
 
@@ -215,6 +215,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
 
         foreach ($files as $file) {
             $file->setStorage($this->storage);
+            $this->assertContains('test', $file->title);
         }
 
         return [$files, $model];

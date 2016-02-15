@@ -16,7 +16,7 @@ use rkit\filemanager\StorageInterface;
  */
 abstract class Storage implements StorageInterface
 {
-    protected $file;
+    private $file;
 
     public function setFile(\rkit\filemanager\models\File $file)
     {

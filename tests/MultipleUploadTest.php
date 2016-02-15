@@ -87,7 +87,7 @@ class MultipleUploadTest extends BaseTest
             'temporary' => false
         ]);
 
-        $model->image_gallery = ['files' => [$response['id'] => 'test']];
+        $model->image_gallery = [$response['id'] => 'test'];
         $model->save();
 
         $file = File::findOne($response['id']);
@@ -137,7 +137,7 @@ class MultipleUploadTest extends BaseTest
 
         $this->assertCount(2, $model->getFiles('image_gallery'));
 
-        $model->image_gallery = ['files' => [$response['id'] => 'test']];
+        $model->image_gallery = [$response['id'] => 'test'];
         $model->save();
 
         $this->assertCount(1, $model->getFiles('image_gallery'));
@@ -153,7 +153,7 @@ class MultipleUploadTest extends BaseTest
             'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
         ]);
 
-        $model->image_gallery = ['files' => ['1000' => 'test']];
+        $model->image_gallery = ['1000' => 'test'];
         $model->save();
 
         $this->assertCount(0, $model->getFiles('image_gallery'));
@@ -179,10 +179,10 @@ class MultipleUploadTest extends BaseTest
             'temporary' => true
         ]);
 
-        $model->image_gallery = ['files' => [
+        $model->image_gallery = [
             $files[0]->id => 'test2',
             $response['id'] => 'test'
-        ]];
+        ];
 
         $model->save();
 
@@ -210,7 +210,7 @@ class MultipleUploadTest extends BaseTest
 
         unlink($file->getStorage()->path(true));
 
-        $model->image_gallery = ['files' => [$response['id'] => 'test']];
+        $model->image_gallery = [$response['id'] => 'test'];
         $model->save();
 
         $files = $model->getFiles('image_gallery');
