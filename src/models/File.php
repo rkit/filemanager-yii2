@@ -129,6 +129,12 @@ class File extends \yii\db\ActiveRecord
         return false; // @codeCoverageIgnore
     }
 
+    /**
+     * Set a storage
+     *
+     * @param Storage $storage
+     * @return string
+     */
     public function setStorage(Storage $storage)
     {
         $this->storage = $storage;
@@ -137,6 +143,12 @@ class File extends \yii\db\ActiveRecord
         return $this;
     }
 
+    /**
+     * Get a storage
+     *
+     * @return string
+     * @throws InvalidParamException
+     */
     public function getStorage()
     {
         if ($this->storage === null) {

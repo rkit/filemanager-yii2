@@ -29,6 +29,7 @@ class Decoder
      * @param bool $temporary The file is temporary
      * @param bool $protected The file is protected, not available from the web
      * @return \rkit\filemanager\models\File|bool
+     * @throws InvalidValueException
      */
     public function createFromUploader(
         $storage,
@@ -57,6 +58,7 @@ class Decoder
      * @param bool $temporary The file is temporary
      * @param bool $protected The file is protected, not available from the web
      * @return \rkit\filemanager\models\File|bool
+     * @throws InvalidValueException
      */
     public function createFromPath(
         $storage,

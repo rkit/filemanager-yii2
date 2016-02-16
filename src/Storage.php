@@ -16,13 +16,28 @@ use rkit\filemanager\StorageInterface;
  */
 abstract class Storage implements StorageInterface
 {
+    /**
+     * @var File
+     */
     private $file;
 
+    /**
+     * Set a file
+     *
+     * @param File $file
+     * @return string
+     */
     public function setFile(\rkit\filemanager\models\File $file)
     {
         $this->file = $file;
     }
 
+    /**
+     * Get a file
+     *
+     * @return File
+     * @throws InvalidParamException
+     */
     public function getFile()
     {
         if ($this->file === null) {

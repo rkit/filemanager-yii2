@@ -301,6 +301,7 @@ class FileBehavior extends Behavior
      *
      * @param string $attribute
      * @return Storage
+     * @throws InvalidParamException
      */
     public function getFileStorage($attribute)
     {

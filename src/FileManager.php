@@ -54,6 +54,7 @@ class FileManager extends Component
      *
      * @param string $ownerType
      * @return void
+     * @throws InvalidParamException
      */
     public function getOwnerType($ownerType)
     {
