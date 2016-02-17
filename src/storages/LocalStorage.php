@@ -122,11 +122,11 @@ class LocalStorage extends Storage
     }
 
     /**
-     * Save temporary directory to the storage
+     * Save the temporary file to the storage
      *
      * @return bool
      */
-    public function saveTmpDirToStorage()
+    public function saveTemporaryFileToStorage()
     {
         if (file_exists($this->pathTmp(true))) {
             FileHelper::copyDirectory($this->dirTmp(true), $this->dir(true));

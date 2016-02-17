@@ -29,11 +29,11 @@ interface StorageInterface
     public function save($path);
 
     /**
-     * Save temporary directory to the storage
+     * Save the temporary file to the storage
      *
      * @return bool
      */
-    public function saveTmpDirToStorage();
+    public function saveTemporaryFileToStorage();
 
     /**
      * Deletes the file from the storage

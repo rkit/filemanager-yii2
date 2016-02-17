@@ -82,7 +82,7 @@ class FileBind
     }
 
     /**
-     * Save temporary directory to the storage
+     * Save the temporary file to the storage
      *
      * @param File $file
      * @param int $ownerId
@@ -92,7 +92,7 @@ class FileBind
     {
         $file->owner_id = $ownerId;
         $file->tmp = false;
-        if ($file->getStorage()->saveTmpDirToStorage()) {
+        if ($file->getStorage()->saveTemporaryFileToStorage()) {
             return $file;
         }
 
