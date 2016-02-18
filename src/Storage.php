@@ -12,7 +12,10 @@ use yii\base\InvalidParamException;
 use rkit\filemanager\StorageInterface;
 
 /**
- * This is the base storage
+ * The base storage for all storages
+ *
+ * @author Igor Romanov <rkit.ru@gmail.com>
+ * @since 1.0
  */
 abstract class Storage implements StorageInterface
 {
@@ -24,7 +27,7 @@ abstract class Storage implements StorageInterface
     /**
      * Set a file
      *
-     * @param File $file
+     * @param File $file File
      * @return string
      */
     public function setFile(\rkit\filemanager\models\File $file)

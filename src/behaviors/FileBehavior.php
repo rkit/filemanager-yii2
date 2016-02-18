@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidParamException;
 use rkit\filemanager\models\File;
-use rkit\filemanager\helpers\FileRules;
+use rkit\filemanager\helpers\FormatValidation;
 use rkit\filemanager\behaviors\FileBind;
 
 class FileBehavior extends Behavior
@@ -28,6 +28,9 @@ class FileBehavior extends Behavior
      */
     private static $bind;
 
+    /**
+     * @internal
+     */
     public function init()
     {
         parent::init();
@@ -39,6 +42,7 @@ class FileBehavior extends Behavior
     /**
      * Set Decoder
      *
+     * @internal
      * @return void
      */
     public function setBind()
@@ -48,6 +52,7 @@ class FileBehavior extends Behavior
 
     /**
      * @inheritdoc
+     * @internal
      */
     public function events()
     {
@@ -60,6 +65,9 @@ class FileBehavior extends Behavior
         ];
     }
 
+    /**
+     * @internal
+     */
     public function beforeSave($insert)
     {
         foreach ($this->attributes as $attribute => $data) {
@@ -71,6 +79,9 @@ class FileBehavior extends Behavior
         }
     }
 
+    /**
+     * @internal
+     */
     public function afterSave()
     {
         foreach ($this->attributes as $attribute => $data) {
@@ -93,6 +104,9 @@ class FileBehavior extends Behavior
         }
     }
 
+    /**
+     * @internal
+     */
     public function beforeDelete()
     {
         foreach ($this->attributes as $attribute => $data) {
@@ -171,7 +185,7 @@ class FileBehavior extends Behavior
     /**
      * Get the path to the upload directory
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return string
      */
     public function uploadDir($attribute)
@@ -186,7 +200,7 @@ class FileBehavior extends Behavior
     /**
      * Get the type of the owner in as string
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return string
      */
     private function getStringOwnerType($attribute)
@@ -197,7 +211,7 @@ class FileBehavior extends Behavior
     /**
      * Get the type of the owner
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return int
      */
     public function getFileOwnerType($attribute)
@@ -208,7 +222,7 @@ class FileBehavior extends Behavior
     /**
      * Get files
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return array
      */
     public function getFiles($attribute)
@@ -224,7 +238,7 @@ class FileBehavior extends Behavior
     /**
      * Get the file
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return File|null
      */
     public function getFile($attribute)
@@ -235,9 +249,9 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Multiple files
+     * Check whether the upload of multiple files
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return bool
      */
     public function isMultiple($attribute)
@@ -246,9 +260,9 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * The file is protected
+     * Checks whether the file is protected
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return bool
      */
     public function isFileProtected($attribute)
@@ -259,7 +273,7 @@ class FileBehavior extends Behavior
     /**
      * Get rules
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return array
      */
     public function getFileRules($attribute)
@@ -270,7 +284,7 @@ class FileBehavior extends Behavior
     /**
      * Get the presets of the file
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return array
      */
     public function getFilePreset($attribute)
@@ -281,7 +295,7 @@ class FileBehavior extends Behavior
     /**
      * Get the presets of the file for apply after upload
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return array
      */
     public function getFilePresetAfterUpload($attribute)
@@ -299,7 +313,7 @@ class FileBehavior extends Behavior
     /**
      * Get the storage of the file
      *
-     * @param string $attribute
+     * @param string $attribute Attribute of a model
      * @return Storage
      * @throws InvalidParamException
      */
@@ -316,8 +330,8 @@ class FileBehavior extends Behavior
     /**
      * Generate a thumb name
      *
-     * @param string $path
-     * @param string $prefix
+     * @param string $path The path of the file
+     * @param string $prefix Prefix for name of the file
      * @return string
      */
     public function generateThumbName($path, $prefix)
@@ -329,8 +343,8 @@ class FileBehavior extends Behavior
     /**
      * Resize image
      *
-     * @param string $attribute
-     * @param string $preset
+     * @param string $attribute Attribute of a model
+     * @param string $preset The name of the preset
      * @param string $pathToFile Use this path to the file
      * @param bool $returnRealPath Return the real path to the file
      * @return string
@@ -356,11 +370,25 @@ class FileBehavior extends Behavior
     /**
      * Get description the rules of the file in as text
      *
-     * @param string $attribute
+     * Example
+     *
+     * ```php
+     * $form->field($model, $attribute)->hint($model->getFileRulesDescription($attribute)
+     * ```
+     *
+     * Output
+     *
+     * ```
+     * Min. size of image: 300x300px
+     * File types: JPG, JPEG, PNG
+     * Max. file size: 1.049 MB
+     * ```
+     *
+     * @param string $attribute Attribute of a model
      * @return string
      */
     public function getFileRulesDescription($attribute)
     {
-        return FileRules::getDescription($this->attributes[$attribute]['rules']);
+        return FormatValidation::getDescription($this->attributes[$attribute]['rules']);
     }
 }

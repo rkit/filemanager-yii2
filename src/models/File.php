@@ -15,7 +15,7 @@ use yii\helpers\FileHelper;
 use rkit\filemanager\Storage;
 
 /**
- * This is the model class for table "file"
+ * ActiveRecord for table "file"
  *
  * @property integer $id
  * @property integer $user_id
@@ -47,6 +47,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      * @codeCoverageIgnore
+     * @internal
      */
     public static function tableName()
     {
@@ -56,6 +57,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      * @codeCoverageIgnore
+     * @internal
      */
     public function attributeLabels()
     {
@@ -78,6 +80,7 @@ class File extends \yii\db\ActiveRecord
 
     /**
      * @inheritdoc
+     * @internal
      */
     public function behaviors()
     {
@@ -94,6 +97,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      * @codeCoverageIgnore
+     * @internal
      */
     public function events()
     {
@@ -102,6 +106,9 @@ class File extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * @internal
+     */
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
@@ -132,7 +139,7 @@ class File extends \yii\db\ActiveRecord
     /**
      * Set a storage
      *
-     * @param Storage $storage
+     * @param Storage $storage The Strorage for the file
      * @return string
      */
     public function setStorage(Storage $storage)
@@ -170,7 +177,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Is it protected?
+     * Checks whether the file is protected
      *
      * @return bool
      */
@@ -180,7 +187,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Is it unprotected?
+     * Checks whether the file is unprotected
      *
      * @return bool
      */
@@ -190,7 +197,7 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Is it tmp a file?
+     * Checks whether the file is temp
      *
      * @return bool
      */
@@ -214,10 +221,10 @@ class File extends \yii\db\ActiveRecord
     }
 
     /**
-     * Check owner
+     * Checks whether the owner of the file
      *
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      * @return bool
      */
     public function isOwner($ownerId, $ownerType)
@@ -232,11 +239,11 @@ class File extends \yii\db\ActiveRecord
     /**
      * Create a file
      *
-     * @param string $path
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param bool $temporary
-     * @param bool $protected
+     * @param string $path The path of the file
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
+     * @param bool $temporary The file is temporary
+     * @param bool $protected The file is protected
      * @return File|bool
      */
     public static function create($path, $ownerId, $ownerType, $temporary, $protected)
@@ -258,8 +265,8 @@ class File extends \yii\db\ActiveRecord
     /**
      * Find all by owner
      *
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      * @return array
      */
     public static function findAllByOwner($ownerId, $ownerType)
@@ -273,8 +280,8 @@ class File extends \yii\db\ActiveRecord
     /**
      * Find one by owner
      *
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      * @return File|null
      */
     public static function findOneByOwner($ownerId, $ownerType)
@@ -287,9 +294,9 @@ class File extends \yii\db\ActiveRecord
     /**
      * Delete by owner
      *
-     * @param Storage $storage
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param Storage $storage The storage of the file
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      */
     public function deleteByOwner($storage, $ownerId, $ownerType)
     {
@@ -303,6 +310,7 @@ class File extends \yii\db\ActiveRecord
 
     /**
      * Deleting a file from the db and from the file system
+     * @internal
      *
      * @return bool
      */

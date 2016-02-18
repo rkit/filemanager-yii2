@@ -346,12 +346,12 @@ class FileUploadTest extends BaseTest
         $this->assertEmpty($model->image_path);
     }
 
-    public function testNotTmpUnprotectedCreateFromPath()
+    public function testNotTmpUnprotectedcreateFromRemotePath()
     {
         $decoder = Yii::$app->fileManager->getDecoder();
 
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromPath($this->storage, $file, 100, 200, false, false);
+        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, false);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -359,12 +359,12 @@ class FileUploadTest extends BaseTest
         $this->assertFileExists($file->getStorage()->path(true));
     }
 
-    public function testNotTmpProtectedCreateFromPath()
+    public function testNotTmpProtectedcreateFromRemotePath()
     {
         $decoder = Yii::$app->fileManager->getDecoder();
 
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromPath($this->storage, $file, 100, 200, false, true);
+        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, true);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -372,12 +372,12 @@ class FileUploadTest extends BaseTest
         $this->assertFileExists($file->getStorage()->path(true));
     }
 
-    public function testTmpUnprotectedCreateFromPath()
+    public function testTmpUnprotectedcreateFromRemotePath()
     {
         $decoder = Yii::$app->fileManager->getDecoder();
 
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromPath($this->storage, $file, 100, 200, false, false);
+        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, false);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -385,12 +385,12 @@ class FileUploadTest extends BaseTest
         $this->assertFileExists($file->getStorage()->path(true));
     }
 
-    public function testTmpProtectedCreateFromPath()
+    public function testTmpProtectedcreateFromRemotePath()
     {
         $decoder = Yii::$app->fileManager->getDecoder();
 
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromPath($this->storage, $file, 100, 200, false, true);
+        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, true);
 
         $this->assertTrue(is_object($file));
         $this->assertFalse($file->isTmp());
@@ -402,20 +402,20 @@ class FileUploadTest extends BaseTest
      * @expectedException Exception
      * @expectedExceptionMessage Unable to create from `/test/fail.jpg`
      */
-    public function testFailCreateFromPath()
+    public function testFailcreateFromRemotePath()
+    {
+        $decoder = Yii::$app->fileManager->getDecoder();
+        $file = $decoder->createFromRemotePath($this->storage, '/test/fail.jpg', 100, 200, true, false);
+    }
+
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage Unable to create from `/test/fail.jpg`
+     */
+    public function testFailcreateFromPath()
     {
         $decoder = Yii::$app->fileManager->getDecoder();
         $file = $decoder->createFromPath($this->storage, '/test/fail.jpg', 100, 200, true, false);
-    }
-
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Unable to create from `/test/fail.jpg`
-     */
-    public function testFailCreateFromUploader()
-    {
-        $decoder = Yii::$app->fileManager->getDecoder();
-        $file = $decoder->createFromUploader($this->storage, '/test/fail.jpg', 100, 200, true, false);
     }
 
     public function testFailSaveToStorage()

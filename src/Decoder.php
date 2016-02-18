@@ -12,7 +12,7 @@ use yii\base\InvalidValueException;
 use rkit\filemanager\models\File;
 
 /**
- * File Manager
+ * The Decoder for creating files
  *
  * @author Igor Romanov <rkit.ru@gmail.com>
  * @since 1.0
@@ -20,18 +20,18 @@ use rkit\filemanager\models\File;
 class Decoder
 {
     /**
-     * Create file from uploader (UploadedFile)
+     * Create a file from the path
      *
      * @param Storage $storage;
      * @param string $path Path to the file
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      * @param bool $temporary The file is temporary
      * @param bool $protected The file is protected, not available from the web
      * @return \rkit\filemanager\models\File|bool
      * @throws InvalidValueException
      */
-    public function createFromUploader(
+    public function createFromPath(
         $storage,
         $path,
         $ownerId = -1,
@@ -49,18 +49,18 @@ class Decoder
     }
 
     /**
-     * Create file from path
+     * Create a file from the remote path
      *
      * @param Storage $storage;
      * @param string $path Path to the file or URL
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      * @param bool $temporary The file is temporary
      * @param bool $protected The file is protected, not available from the web
      * @return \rkit\filemanager\models\File|bool
      * @throws InvalidValueException
      */
-    public function createFromPath(
+    public function createFromRemotePath(
         $storage,
         $path,
         $ownerId = -1,

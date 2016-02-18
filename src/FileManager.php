@@ -13,7 +13,7 @@ use yii\base\Component;
 use yii\base\InvalidParamException;
 
 /**
- * File Manager
+ * Component of FileManager
  *
  * @author Igor Romanov <rkit.ru@gmail.com>
  * @since 1.0
@@ -41,6 +41,9 @@ class FileManager extends Component
      */
     private $decoder;
 
+    /**
+     * @internal
+     */
     public function init()
     {
         parent::init();
@@ -52,7 +55,7 @@ class FileManager extends Component
     /**
      * Get owner type
      *
-     * @param string $ownerType
+     * @param string $ownerType The type of the owner
      * @return void
      * @throws InvalidParamException
      */
@@ -66,8 +69,9 @@ class FileManager extends Component
     }
 
     /**
-     * Set Decoder
+     * Set a Decoder
      *
+     * @param object $decoder The Decoder for creating files
      * @return void
      */
     public function setDecoder($decoder)
@@ -76,7 +80,7 @@ class FileManager extends Component
     }
 
     /**
-     * Set Decoder
+     * Set a Decoder
      *
      * @return void
      */
@@ -87,6 +91,7 @@ class FileManager extends Component
 
     /**
      * Registers translator
+     * @internal
      *
      * @return void
      */

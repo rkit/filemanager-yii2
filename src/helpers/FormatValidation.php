@@ -11,7 +11,10 @@ namespace rkit\filemanager\helpers;
 use Yii;
 use yii\helpers\ArrayHelper;
 
-class FileRules
+/**
+ * Formatting of validation rules
+ */
+class FormatValidation
 {
     /**
      * Get description for max size of file
@@ -163,7 +166,7 @@ class FileRules
     /**
      * Get rules description
      *
-     * @param array $rules
+     * @param array $rules Validation rules
      * @return string
      */
     public static function getDescription($rules)

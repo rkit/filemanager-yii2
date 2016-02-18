@@ -12,17 +12,18 @@ use yii\helpers\ArrayHelper;
 use rkit\filemanager\models\File;
 
 /**
- * This is the bind class for FileBehavior
+ * The bind class for FileBehavior
  */
 class FileBind
 {
     /**
      * Bind the file to the with owner
+     * @internal
      *
-     * @param Storage $storage
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param int $fileId
+     * @param Storage $storage The storage for the file
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
+     * @param int $fileId The id of the file
      * @return rkit\filemanager\models\File|bool
      */
     public function bindSingle($storage, $ownerId, $ownerType, $fileId)
@@ -46,10 +47,10 @@ class FileBind
     /**
      * Bind files to the with owner
      *
-     * @param Storage $storage
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param array $files
+     * @param Storage $storage The storage for the files
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
+     * @param array $files Array of ids
      * @return rkit\filemanager\models\File[]|bool
      */
     public function bindMultiple($storage, $ownerId, $ownerType, $files)
@@ -85,7 +86,7 @@ class FileBind
      * Save the temporary file to the storage
      *
      * @param File $file
-     * @param int $ownerId
+     * @param int $ownerId The id of the owner
      * @return rkit\filemanager\models\File|bool
      */
     private function saveTmpDirToStorage(File $file, $ownerId)
@@ -103,8 +104,8 @@ class FileBind
      * Delete current files
      *
      * @param Storage $storage
-     * @param int $ownerId
-     * @param int $ownerType
+     * @param int $ownerId The id of the owner
+     * @param int $ownerType The type of the owner
      * @param rkit\filemanager\models\File $exceptFile
      * @param rkit\filemanager\models\File[] $exceptFiles
      * @return void

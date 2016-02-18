@@ -1,5 +1,7 @@
 # FileManager for Yii2
 
+**ATTENTION: Documentation in process…**
+
 [![Build Status](https://travis-ci.org/rkit/filemanager-yii2.svg?branch=master)](https://travis-ci.org/rkit/filemanager-yii2)
 [![Code Coverage](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
 [![codecov.io](http://codecov.io/github/rkit/filemanager-yii2/coverage.svg?branch=master)](http://codecov.io/github/rkit/filemanager-yii2?branch=master)
@@ -7,31 +9,38 @@
 
 ## Features
 
-- Upload with validations
-- Create thumbnails on the fly with cache or after upload
-- Easy setup presets for files
-- Ability to use any component for working with images
-- Support for multiple file uploads
-- Check the Owner of a file
+- AJAX upload
+- Support multiple file uploads
+- Validations of file
+- Create thumbnails (easy setup presets) on the fly with cache or after upload
+- Check the owner of a file
 - Storing information about a file in the database
+- Ability to use any component for working with images
+- Ability to change the way of storing files
 
 ## Installation
 
 1. Installing using Composer
+
    ```
    composer require rkit/filemanager-yii2
    ```
 
 2. Run migrations
+
    ```
    php yii migrate --migrationPath=@vendor/rkit/filemanager-yii2/src/migrations/ --interactive=0
    ```
+
+### Documentation
+
+[API Reference](/docs)
 
 ## Configuration
 
 Add the following in your config, in section `components`
 
-```php
+``` php
 'fileManager' => [
     'class' => 'rkit\filemanager\FileManager',
     // directory for files inaccessible from the web
@@ -40,7 +49,8 @@ Add the following in your config, in section `components`
     'uploadDirUnprotected' => '@app/web',
     // path in a directory of upload
     'publicPath' => 'uploads',
-    // an array of the types of owners, in the format of `table.attribute` => `unique value`
+    // an array of the types of owners
+	// in the format of `table.attribute` => `unique value`
     'ownerTypes' => [
         'news.text' => 1,
         'news.preview' => 2,
@@ -56,7 +66,7 @@ Add the following in your config, in section `components`
 
 1. **Controller**
 
-   ```php
+   ``` php
    public function behaviors()
    {
        return [
@@ -73,21 +83,25 @@ Add the following in your config, in section `components`
    {
        return [
            'preview-upload' => [
-               'class'     => 'rkit\filemanager\actions\UploadAction',
+               'class' => 'rkit\filemanager\actions\UploadAction',
                'modelName' => 'app\models\News',
                'attribute' => 'preview',
-               'type'      => 'image', // `image` or `file` for non-images
-               'inputName' => 'file' // the name of the file input field
+               // the type of the file (`image` or `file`)
+               'type' => 'image',
+               // the name of the file input field
+               'inputName' => 'file',
            ],
        ];
    }
    ```
 
 2. **Model**
+
    > The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.  
+   >
    > You can use any library for working with files.
 
-   ```php
+   ``` php
    // any component to resize/crop images
    use Intervention\Image\ImageManagerStatic as Image;
    …
@@ -99,10 +113,10 @@ Add the following in your config, in section `components`
                'class' => 'rkit\filemanager\behaviors\FileBehavior',
                'attributes' => [
                    'preview' => [
-                       'saveFilePath' => true, // save file path in this table
-                       // 'saveFileId' => true, // save file id in this table
-                       // 'protected' => true, // inaccessible from the web
-
+                       // local storages
+                       'storage' => 'rkit\filemanager\storages\LocalStorage',
+                       // save path of the file in this table
+                       'saveFilePath' => true,
                        // @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
                        'rules' => [
                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
@@ -112,28 +126,25 @@ Add the following in your config, in section `components`
                            'tooBig' => Yii::t('app', 'File size must not exceed') . ' 1Mb'
                        ],
 
-                       // presets for the files, can be used on the fly or you can to apply after upload
-                       // after applying a preset — the file is saved in the file system
+                       // presets for the files, can be used on the fly
+   					// or you can to apply after upload
                        'preset' => [
-                           '200x200' => function ($realPath, $publicPath, $thumbPath) {
-                              // any manipulation on the file
-                              Image::make($realPath . $publicPath)
+   						'200x200' => function ($realPath, $publicPath, $thumbPath) {
+                               // any manipulation on the file
+                               Image::make($realPath . $publicPath)
                                    ->fit(200, 200)
                                    ->save($realPath . $thumbPath, 100);
                            },
-
-                           '1000x1000' => function ($realPath, $publicPath, $thumbPath) {
-                              // any manipulation on the file
-                              Image::make($realPath . $publicPath)
-                                   ->resize(1000, 1000, function ($constraint) {
-                                       $constraint->aspectRatio();
-                                       $constraint->upsize();
-                                   })
-                                   ->save(null, 100);
+   						'220x220' => function ($realPath, $publicPath, $thumbPath) {
+    							// any manipulation on the file
+                               Image::make($realPath . $publicPath)
+                                   ->fit(220, 220)
+                                   ->save($realPath . $thumbPath, 100);
                            },
                        ],
 
-                       // * — to apply all presets after upload (or an array with the names[] of presets)
+                       // * — to apply all presets after upload
+                       // or an array with the names[] of presets
                        'applyPresetAfterUpload' => '*'
                    ]
                ]
@@ -144,50 +155,85 @@ Add the following in your config, in section `components`
 
 3. **View**
 
-   Any widget for ajax upload.  
-   Add file id from a response to input for to bind to model.  
-   You can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2)
+   Any widget for ajax upload (you can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2))
+
+   **IMPORTANT**: In the value of input should be the id of a file or an array of ids.
 
 ### Gallery
 
 1. **Controller**
 
-   ```php
+   ``` php
    public function actions()
    {
        return [
            'gallery-upload' => [
-               'class'     => 'rkit\filemanager\actions\UploadAction',
+   			'class' => 'rkit\filemanager\actions\UploadAction',
                'modelName' => 'app\models\News',
                'attribute' => 'gallery',
-               'type'      => 'image', // `image` or `file` for non-images
-               'inputName' => 'file', // the name of the file input field
-               'multiple'  => true, // for multiple files
-               'template'  => Yii::getAlias('@app/path/to/file') // path to template for uploaded a file
+               // the type of the file (`image` or `file`)
+               'type' => 'image',
+               // the name of the file input field
+               'inputName' => 'file',
+               // multiple files
+               'multiple'  => true,
+               // path to the template for uploaded a file
+               'template'  => Yii::getAlias('@app/path/to/file')
            ]
        ]
    }
    ```
 
-2. **Template for uploaded a file**
+2. **Model**
 
-   ```php
-   <li>
-     <a href="<?= $file->path()?>" target="_blank">
-       <img src="<?= $model->thumb('gallery', '80x80', $file->path())?>">
-     </a>
-     <?= Html::textInput(Html::getInputName($model, $attribute) . '[files][' . $file->id .']', $file->title, [
-         'class' => 'form-control',
-     ])?>
-   </li>
-   ```
+``` php
+public function behaviors()
+{
+    return [
+        [
+            'class' => 'rkit\filemanager\behaviors\FileBehavior',
+            'attributes' => [
+                'gallery' => [
+ 					// local storages
+                    'storage' => 'rkit\filemanager\storages\LocalStorage',
+                    // multiple files
+                    'multiple' => true,
+                    'preset' => [
+                        '80x80' => function ($realPath, $publicPath, $thumbPath) {
+                            // any manipulation on the file
+                            Image::make($realPath . $publicPath)
+                                ->fit(80, 80)
+                                ->save($realPath . $thumbPath, 100);
+                        },
+                    ],
+                ]
+            ]
+        ]
+    ];
+}
+```
 
-### Save after upload
+1. **Template** for uploaded a file
+
+``` php
+<li>
+  <a href="<?= $file->getStorage()->path()?>" target="_blank">
+    <img src="<?= $model->thumb('image_gallery', '80x80', $file->getStorage()->path())?>">
+  </a>
+  <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
+      'class' => 'form-control',
+  ])?>
+</li>
+
+```
+
+### Save a file in a storage immediately after upload
 
 For example, this could be a need for wysiwyg editor,  
+
 when you need to immediately save the file after upload and assign the owner.
 
-```php
+``` php
 public function actions()
 {
     return [
@@ -195,98 +241,11 @@ public function actions()
             'class' => 'rkit\filemanager\actions\UploadAction',
             'modelName' => 'app\models\News',
             'attribute' => 'text',
-            'type'      => 'image', // `image` or `file` for non-images
-            'inputName' => 'file', // the name of the file input field
-            'saveToStorage' => true, // save the file immediately after upload
-            'ownerId' => 0 // set owner id
+            'type' => 'image',
+            'inputName' => 'file',
+            'temporary' => false,
+            'ownerId' => 0,
         ]
     ]
 }
 ```
-
-## API
-
-### Apply a preset and return public path
-
-   ```php
-   $model->thumb('preview', '200x200');
-   ```
-
-### Apply a preset for a custom path to the file
-
-   ```php
-   $model->thumb('preview', '200x200', '/path/to/file');
-   ```
-
-### Apply a preset and return real path
-
-   ```php
-   $model->thumb('preview', '200x200', null, true);
-   ```
-
-### Get files
-
-```php
-$model->getFiles(string $attribute): array
-```
-
-### Check whether the file is protected
-
-```php
-$model->isFileProtected(string $attribute): bool
-```
-
-### Get the validation rules for a file
-
-```php
-$model->getFileRules(string $attribute): array
-```
-
-### Get the validation rules for a file as text
-
-```php
-$model->getFileRulesDescription(string $attribute): string
-```
-
-Example
-
-```php
-$form->field($model, $attribute)->hint($model->getFileRulesDescription($attribute)
-```
-
-Output
-
-```
-Min. size of image: 300x300px
-File types: JPG, JPEG, PNG
-Max. file size: 1.049 MB
-```
-
-### Get public path to the file
-
-```php
-$model->publicPath(string $attribute): string
-```
-
-### Get real path to the file
-
-```php
-$model->realPath(string $attribute): string
-```
-
-### Manually create a file from path or URL
-
-```php
-Yii::$app->fileManager->decoder->create(string $path, int $ownerId, int $ownerType, bool $saveToStorage, bool $protected): object
-```
-
-Example
-
-```php
-Yii::$app->fileManager$fullPath'/path/to/file', $model->id, $model->getFileOwnerType($attribute), true);
-```
-
-$model->getFileOwnerType
-$model->getFileRealPath
-$model->getFilePreset
-$model->getFilePresetAfterUpload

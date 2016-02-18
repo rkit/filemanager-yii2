@@ -13,7 +13,10 @@ use yii\helpers\FileHelper;
 use rkit\filemanager\Storage;
 
 /**
- * This is the local storage for files
+ * The local storage for files
+ *
+ * @author Igor Romanov <rkit.ru@gmail.com>
+ * @since 1.0
  */
 class LocalStorage extends Storage
 {
@@ -34,7 +37,7 @@ class LocalStorage extends Storage
     /**
      * Path to the temporary directory of the file
      *
-     * @param bool $realPath
+     * @param bool $realPath The real path of the directory
      * @return string
      */
     private function dirTmp($realPath = false)
@@ -52,7 +55,7 @@ class LocalStorage extends Storage
     /**
      * Path to the directory of the file
      *
-     * @param bool $realPath
+     * @param bool $realPath The real path of the directory
      * @return string
      */
     private function dir($realPath = false)
@@ -74,7 +77,7 @@ class LocalStorage extends Storage
     /**
      * Path to the temporary file
      *
-     * @param bool $realPath
+     * @param bool $realPath The real path of the file
      * @return string
      */
     private function pathTmp($realPath = false)
@@ -85,7 +88,7 @@ class LocalStorage extends Storage
     /**
      * Path to the file
      *
-     * @param bool $realPath
+     * @param bool $realPath The real path of the file
      * @return string
      */
     public function path($realPath = false)
@@ -97,7 +100,7 @@ class LocalStorage extends Storage
      * Save the file to the storage
      * If the file is temporary, then in the temporary directory
      *
-     * @param string $path
+     * @param string $path The path of the file
      * @param bool $isUploadedFile File has been uploaded or manually created
      * @return \rkit\filemanager\models\File|bool
      */

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+    <title>FileManager for Yii2</title>
+    <parser>
+        <target>build-docs</target>
+    </parser>
+    <transformer>
+        <target>docs</target>
+    </transformer>
+    <transformations>
+        <template name="vendor/cvuorinen/phpdoc-markdown-public/data/templates/markdown-public" />
+    </transformations>
+    <files>
+        <directory>src</directory>
+        <ignore>tests/*</ignore>
+        <ignore>migrations/*</ignore>
+        <ignore>actions/*</ignore>
+    </files>
+</phpdoc>

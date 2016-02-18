@@ -41,11 +41,11 @@ class UploadAction extends Action
      */
     public $template;
     /**
-     * @var string $resultFieldId The name for field of the response, in which the id to the file
+     * @var string $resultFieldId The name of the field that contains the id of the file in the response
      */
     public $resultFieldId = 'id';
     /**
-     * @var string $resultFieldPath The name for field of the response, in which the path to the file
+     * @var string $resultFieldPath The name of the field that contains the path of the file in the response
      */
     public $resultFieldPath = 'path';
     /**
@@ -142,7 +142,7 @@ class UploadAction extends Action
      */
     private function createFile($file)
     {
-        $file = Yii::$app->fileManager->getDecoder()->createFromUploader(
+        $file = Yii::$app->fileManager->getDecoder()->createFromPath(
             $this->model->getFileStorage($this->attribute),
             $file->tempName,
             $this->ownerId,

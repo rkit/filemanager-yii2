@@ -33,6 +33,8 @@
     "require-dev": {
         "intervention/image": "^2.3.2",
         "phpunit/phpunit": "^4.8",
-        "phpunit/dbunit": "^1.4"
+        "phpunit/dbunit": "^1.4",
+        "phpdocumentor/phpdocumentor": "2.*",
+        "cvuorinen/phpdoc-markdown-public": "^0.1.2"
     }
 }
