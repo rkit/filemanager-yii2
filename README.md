@@ -1,6 +1,6 @@
 # FileManager for Yii2
 
-**ATTENTION: Documentation in process…**
+**ATTENTION: Documentation in process!**
 
 [![Build Status](https://travis-ci.org/rkit/filemanager-yii2.svg?branch=master)](https://travis-ci.org/rkit/filemanager-yii2)
 [![Code Coverage](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
@@ -98,7 +98,6 @@ Add the following in your config, in section `components`
 2. **Model**
 
    > The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.  
-   >
    > You can use any library for working with files.
 
    ``` php
@@ -155,8 +154,7 @@ Add the following in your config, in section `components`
 
 3. **View**
 
-   Any widget for ajax upload (you can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2))
-
+   Any widget for ajax upload (you can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2))  
    **IMPORTANT**: In the value of input should be the id of a file or an array of ids.
 
 ### Gallery
@@ -186,46 +184,46 @@ Add the following in your config, in section `components`
 
 2. **Model**
 
-``` php
-public function behaviors()
-{
-    return [
-        [
-            'class' => 'rkit\filemanager\behaviors\FileBehavior',
-            'attributes' => [
-                'gallery' => [
- 					// local storages
-                    'storage' => 'rkit\filemanager\storages\LocalStorage',
-                    // multiple files
-                    'multiple' => true,
-                    'preset' => [
-                        '80x80' => function ($realPath, $publicPath, $thumbPath) {
-                            // any manipulation on the file
-                            Image::make($realPath . $publicPath)
-                                ->fit(80, 80)
-                                ->save($realPath . $thumbPath, 100);
-                        },
-                    ],
-                ]
-            ]
-        ]
-    ];
-}
-```
+	``` php
+	public function behaviors()
+	{
+	    return [
+	        [
+	            'class' => 'rkit\filemanager\behaviors\FileBehavior',
+	            'attributes' => [
+	                'gallery' => [
+	 					// local storages
+	                    'storage' => 'rkit\filemanager\storages\LocalStorage',
+	                    // multiple files
+	                    'multiple' => true,
+	                    'preset' => [
+	                        '80x80' => function ($realPath, $publicPath, $thumbPath) {
+	                            // any manipulation on the file
+	                            Image::make($realPath . $publicPath)
+	                                ->fit(80, 80)
+	                                ->save($realPath . $thumbPath, 100);
+	                        },
+	                    ],
+	                ]
+	            ]
+	        ]
+	    ];
+	}
+	```
 
-1. **Template** for uploaded a file
+3. **Template** for uploaded a file
 
-``` php
-<li>
-  <a href="<?= $file->getStorage()->path()?>" target="_blank">
-    <img src="<?= $model->thumb('image_gallery', '80x80', $file->getStorage()->path())?>">
-  </a>
-  <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
-      'class' => 'form-control',
-  ])?>
-</li>
-
-```
+	``` php
+	<li>
+	  <a href="<?= $file->getStorage()->path()?>" target="_blank">
+	    <img src="<?= $model->thumb('image_gallery', '80x80', $file->getStorage()->path())?>">
+	  </a>
+	  <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
+	      'class' => 'form-control',
+	  ])?>
+	</li>
+	
+	```
 
 ### Save a file in a storage immediately after upload
 
