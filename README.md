@@ -50,7 +50,7 @@ Add the following in your config, in section `components`
     // path in a directory of upload
     'publicPath' => 'uploads',
     // an array of the types of owners
-	// in the format of `table.attribute` => `unique value`
+    // in the format of `table.attribute` => `unique value`
     'ownerTypes' => [
         'news.text' => 1,
         'news.preview' => 2,
@@ -126,16 +126,16 @@ Add the following in your config, in section `components`
                        ],
 
                        // presets for the files, can be used on the fly
-   					// or you can to apply after upload
+                       // or you can to apply after upload
                        'preset' => [
-   						'200x200' => function ($realPath, $publicPath, $thumbPath) {
+                           '200x200' => function ($realPath, $publicPath, $thumbPath) {
                                // any manipulation on the file
                                Image::make($realPath . $publicPath)
                                    ->fit(200, 200)
                                    ->save($realPath . $thumbPath, 100);
                            },
-   						'220x220' => function ($realPath, $publicPath, $thumbPath) {
-    							// any manipulation on the file
+                           '220x220' => function ($realPath, $publicPath, $thumbPath) {
+                               // any manipulation on the file
                                Image::make($realPath . $publicPath)
                                    ->fit(220, 220)
                                    ->save($realPath . $thumbPath, 100);
@@ -166,7 +166,7 @@ Add the following in your config, in section `components`
    {
        return [
            'gallery-upload' => [
-   			'class' => 'rkit\filemanager\actions\UploadAction',
+               'class' => 'rkit\filemanager\actions\UploadAction',
                'modelName' => 'app\models\News',
                'attribute' => 'gallery',
                // the type of the file (`image` or `file`)
@@ -184,46 +184,47 @@ Add the following in your config, in section `components`
 
 2. **Model**
 
-	``` php
-	public function behaviors()
-	{
-	    return [
-	        [
-	            'class' => 'rkit\filemanager\behaviors\FileBehavior',
-	            'attributes' => [
-	                'gallery' => [
-	 					// local storages
-	                    'storage' => 'rkit\filemanager\storages\LocalStorage',
-	                    // multiple files
-	                    'multiple' => true,
-	                    'preset' => [
-	                        '80x80' => function ($realPath, $publicPath, $thumbPath) {
-	                            // any manipulation on the file
-	                            Image::make($realPath . $publicPath)
-	                                ->fit(80, 80)
-	                                ->save($realPath . $thumbPath, 100);
-	                        },
-	                    ],
-	                ]
-	            ]
-	        ]
-	    ];
-	}
-	```
+   ``` php
+   public function behaviors()
+   {
+       return [
+           [
+               'class' => 'rkit\filemanager\behaviors\FileBehavior',
+               'attributes' => [
+                   'gallery' => [
+                   // local storages
+                       'storage' => 'rkit\filemanager\storages\LocalStorage',
+                       // multiple files
+                       'multiple' => true,
+                       'preset' => [
+                           '80x80' => function ($realPath, $publicPath, $thumbPath) {
+                               // any manipulation on the file
+                               Image::make($realPath . $publicPath)
+                                   ->fit(80, 80)
+                                   ->save($realPath . $thumbPath, 100);
+                           },
+                       ],
+                       'applyPresetAfterUpload' => ['80x80']
+                   ]
+               ]
+           ]
+       ];
+   }
+   ```
 
 3. **Template** for uploaded a file
 
-	``` php
-	<li>
-	  <a href="<?= $file->getStorage()->path()?>" target="_blank">
-	    <img src="<?= $model->thumb('gallery', '80x80', $file->getStorage()->path())?>">
-	  </a>
-	  <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
-	      'class' => 'form-control',
-	  ])?>
-	</li>
-	
-	```
+   ``` php
+   <li>
+     <a href="<?= $file->getStorage()->path()?>" target="_blank">
+       <img src="<?= $model->thumb('gallery', '80x80', $file->getStorage()->path())?>">
+     </a>
+     <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
+         'class' => 'form-control',
+     ])?>
+   </li>
+
+   ```
 
 ### Save a file in a storage immediately after upload
 
