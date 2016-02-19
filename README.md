@@ -7,7 +7,7 @@
 [![codecov.io](http://codecov.io/github/rkit/filemanager-yii2/coverage.svg?branch=master)](http://codecov.io/github/rkit/filemanager-yii2?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
 
-## Features
+## Featuresgallery
 
 - AJAX upload
 - Support multiple file uploads
@@ -216,7 +216,7 @@ Add the following in your config, in section `components`
 	``` php
 	<li>
 	  <a href="<?= $file->getStorage()->path()?>" target="_blank">
-	    <img src="<?= $model->thumb('image_gallery', '80x80', $file->getStorage()->path())?>">
+	    <img src="<?= $model->thumb('gallery', '80x80', $file->getStorage()->path())?>">
 	  </a>
 	  <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
 	      'class' => 'form-control',
