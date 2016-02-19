@@ -228,7 +228,6 @@ Add the following in your config, in section `components`
 ### Save a file in a storage immediately after upload
 
 For example, this could be a need for wysiwyg editor,  
-
 when you need to immediately save the file after upload and assign the owner.
 
 ``` php
