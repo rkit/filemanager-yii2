@@ -15,7 +15,7 @@ use rkit\filemanager\models\File;
  * The Decoder for creating files
  *
  * @author Igor Romanov <rkit.ru@gmail.com>
- * @since 1.0
+ * @since 2.0
  */
 class Decoder
 {

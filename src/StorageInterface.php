@@ -12,7 +12,7 @@ namespace rkit\filemanager;
  * The interface for storages
  *
  * @author Igor Romanov <rkit.ru@gmail.com>
- * @since 1.0
+ * @since 2.0
  */
 interface StorageInterface
 {

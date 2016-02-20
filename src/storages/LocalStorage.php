@@ -16,7 +16,7 @@ use rkit\filemanager\Storage;
  * The local storage for files
  *
  * @author Igor Romanov <rkit.ru@gmail.com>
- * @since 1.0
+ * @since 2.0
  */
 class LocalStorage extends Storage
 {

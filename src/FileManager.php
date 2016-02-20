@@ -16,7 +16,6 @@ use yii\base\InvalidParamException;
  * Component of FileManager
  *
  * @author Igor Romanov <rkit.ru@gmail.com>
- * @since 1.0
  */
 class FileManager extends Component
 {
