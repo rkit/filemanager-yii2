@@ -164,7 +164,7 @@ class FormatValidation
     }
 
     /**
-     * Get rules description
+     * Get a description of the validation rules in as text
      *
      * @param array $rules Validation rules
      * @return string

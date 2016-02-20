@@ -118,7 +118,7 @@ ActiveRecord for table "file"
 
 
 * Full name: \rkit\filemanager\models\File
-* Parent class: 
+* Parent class:
 
 
 ### setStorage
@@ -365,7 +365,7 @@ File::deleteByOwner( \rkit\filemanager\Storage $storage, integer $ownerId, integ
 
 
 * Full name: \rkit\filemanager\behaviors\FileBehavior
-* Parent class: 
+* Parent class:
 
 
 ### uploadDir
@@ -638,7 +638,7 @@ FileBehavior::thumb( string $attribute, string $preset, string $pathToFile = nul
 
 ### getFileRulesDescription
 
-Get description the rules of the file in as text
+Get a description of the validation rules in as text
 
 ```php
 FileBehavior::getFileRulesDescription( string $attribute ): string
@@ -711,7 +711,7 @@ Component of FileManager
 
 
 * Full name: \rkit\filemanager\FileManager
-* Parent class: 
+* Parent class:
 
 
 ### getOwnerType

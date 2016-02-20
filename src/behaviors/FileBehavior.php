@@ -368,7 +368,7 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get description the rules of the file in as text
+     * Get a description of the validation rules in as text
      *
      * Example
      *

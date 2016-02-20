@@ -1,6 +1,6 @@
 # FileManager for Yii2
 
-**ATTENTION: Documentation in process!**
+**ATTENTION: Documentation for version 2, in process!**
 
 [![Build Status](https://travis-ci.org/rkit/filemanager-yii2.svg?branch=master)](https://travis-ci.org/rkit/filemanager-yii2)
 [![Code Coverage](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
@@ -12,11 +12,16 @@
 - AJAX upload
 - Support multiple file uploads
 - Validations of file
-- Create thumbnails (easy setup presets) on the fly with cache or after upload
+- Presets for files
+- Create thumbnails on the fly or after upload
 - Check the owner of a file
 - Storing information about a file in the database
 - Ability to use any component for working with images
 - Ability to change the way of storing files
+
+## Introduction
+
+…
 
 ## Installation
 
@@ -114,7 +119,7 @@ Add the following in your config, in section `components`
                    'preview' => [
                        // local storages
                        'storage' => 'rkit\filemanager\storages\LocalStorage',
-                       // save path of the file in this table
+                       // save path of the file in this attribute
                        'saveFilePath' => true,
                        // @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
                        'rules' => [
@@ -126,7 +131,7 @@ Add the following in your config, in section `components`
                        ],
 
                        // presets for the files, can be used on the fly
-                       // or you can to apply after upload
+                       // or you can to apply them after upload
                        'preset' => [
                            '200x200' => function ($realPath, $publicPath, $thumbPath) {
                                // any manipulation on the file
@@ -228,8 +233,7 @@ Add the following in your config, in section `components`
 
 ### Save a file in a storage immediately after upload
 
-For example, this could be a need for wysiwyg editor,  
-when you need to immediately save the file after upload and assign the owner.
+For example, it could be a need for wysiwyg editor, when you need to immediately save the file after upload and assign the owner.
 
 ``` php
 public function actions()
@@ -247,3 +251,64 @@ public function actions()
     ]
 }
 ```
+
+### Save path (or id) of the file in field of a model
+
+For example, you can save the file path in the model, then use `$model->attribute`, to get quickly the path to the file
+
+```php
+public function behaviors()
+{
+    return [
+        [
+            'class' => 'rkit\filemanager\behaviors\FileBehavior',
+            'attributes' => [
+                'preview' => [
+                    …
+                    // save path of the file in this attribute
+                    'saveFilePath' => true,
+                    // or save id of the file in this attribute
+                    'saveFileId' => true,
+                    …
+```
+
+### Get files
+
+If one file
+
+```php
+$model->getFile('preview');
+```
+
+If multiple files
+
+```php
+$model->getFiles('gallery');
+```
+
+> [See API](/docs#filebehavior)
+
+### Get a description of the validation rules in as text
+
+It could be a need for render a form.  
+
+```php
+$model->getFileRulesDescription('preview')
+```
+
+> [See API and example](/docs#getfilerulesdescription)
+
+### Presets
+
+Presets can be used on the fly or you can to apply them after upload.
+Presets are cached.
+
+```php
+// Apply a preset and return public path
+$model->thumb('preview', '200x200');
+
+// Apply a preset for a custom path to the file
+$model->thumb('preview', '200x200', '/path/to/file');
+```
+
+> [See API](/docs#thumb)
