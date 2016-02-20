@@ -1,6 +1,6 @@
 # FileManager for Yii2
 
-**ATTENTION: Documentation for version 2, in process!**
+**Documentation for version 2! In process!**
 
 [![Build Status](https://travis-ci.org/rkit/filemanager-yii2.svg?branch=master)](https://travis-ci.org/rkit/filemanager-yii2)
 [![Code Coverage](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
@@ -254,7 +254,7 @@ public function actions()
 
 ### Save path (or id) of the file in field of a model
 
-For example, you can save the file path in the model, then use `$model->attribute`, to get quickly the path to the file
+You can save the file path in the model, then use `$model->attribute`, to get quickly the path to the file
 
 ```php
 public function behaviors()
@@ -300,7 +300,7 @@ $model->getFileRulesDescription('preview')
 
 ### Presets
 
-Presets can be used on the fly or you can to apply them after upload.
+Presets can be used on the fly or you can to apply them after upload.  
 Presets are cached.
 
 ```php
