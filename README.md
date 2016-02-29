@@ -19,7 +19,7 @@
 
 ## Introduction
 
-The basic idea is that each file has an owner (model).
+The basic idea is that each file has an owner (model).  
 After saving the model is verified that the file (or files) have link to the current model.
 
 ## Installation
@@ -314,5 +314,5 @@ $model->thumb('preview', '200x200', '/path/to/file');
 
 ### Storages
 
-Already have a local storage, but you can to create an another storage.
+Already have a local storage, but you can to create an another storage.  
 All storages should be inherited from `rkit\filemanager\Storage`.
