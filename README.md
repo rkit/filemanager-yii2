@@ -1,7 +1,5 @@
 # FileManager for Yii2
 
-**Documentation for version 2! In process!**
-
 [![Build Status](https://travis-ci.org/rkit/filemanager-yii2.svg?branch=master)](https://travis-ci.org/rkit/filemanager-yii2)
 [![Code Coverage](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rkit/filemanager-yii2/?branch=master)
 [![codecov.io](http://codecov.io/github/rkit/filemanager-yii2/coverage.svg?branch=master)](http://codecov.io/github/rkit/filemanager-yii2?branch=master)
@@ -16,12 +14,13 @@
 - Create thumbnails on the fly or after upload
 - Check the owner of a file
 - Storing information about a file in the database
-- Ability to use any component for working with images
+- Ability to use any component for working with files (resize, crop, etc)
 - Ability to change the way of storing files
 
 ## Introduction
 
-…
+The basic idea is that each file has an owner (model).
+After saving the model is verified that the file (or files) have link to the current model.
 
 ## Installation
 
@@ -197,7 +196,7 @@ Add the following in your config, in section `components`
                'class' => 'rkit\filemanager\behaviors\FileBehavior',
                'attributes' => [
                    'gallery' => [
-                   // local storages
+                       // local storages
                        'storage' => 'rkit\filemanager\storages\LocalStorage',
                        // multiple files
                        'multiple' => true,
@@ -312,3 +311,8 @@ $model->thumb('preview', '200x200', '/path/to/file');
 ```
 
 > [See API](/docs#thumb)
+
+### Storages
+
+Already have a local storage, but you can to create an another storage.
+All storages should be inherited from `rkit\filemanager\Storage`.
