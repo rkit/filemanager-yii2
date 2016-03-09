@@ -35,10 +35,6 @@ class FileManager extends Component
      * @var array Type of owner in format: title:string => type:int
      */
     public $ownerTypes = [];
-    /**
-     * @var Decoder
-     */
-    private $decoder;
 
     /**
      * @internal
@@ -47,7 +43,6 @@ class FileManager extends Component
     {
         parent::init();
 
-        $this->setDecoder(new Decoder());
         $this->registerTranslations();
     }
 
@@ -65,27 +60,6 @@ class FileManager extends Component
         }
 
         return $this->ownerTypes[$ownerType];
-    }
-
-    /**
-     * Set a Decoder
-     *
-     * @param object $decoder The Decoder for creating files
-     * @return void
-     */
-    public function setDecoder($decoder)
-    {
-        $this->decoder = $decoder;
-    }
-
-    /**
-     * Set a Decoder
-     *
-     * @return void
-     */
-    public function getDecoder()
-    {
-        return $this->decoder;
     }
 
     /**

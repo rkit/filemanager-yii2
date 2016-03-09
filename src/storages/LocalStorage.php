@@ -101,15 +101,14 @@ class LocalStorage extends Storage
      * If the file is temporary, then in the temporary directory
      *
      * @param string $path The path of the file
-     * @param bool $isUploadedFile File has been uploaded or manually created
      * @return \rkit\filemanager\models\File|bool
      */
-    public function save($path, $isUploadedFile = true)
+    public function save($path)
     {
         if (file_exists($path)) {
             if (FileHelper::createDirectory($this->dir(true))) {
                 $isConsole = Yii::$app instanceof \yii\console\Application;
-                if (!$isUploadedFile || $isConsole) {
+                if (!is_uploaded_file($path) ||$isConsole) {
                     $saved = rename($path, $this->path(true));
                 } else {
                     $saved = move_uploaded_file($path, $this->path(true)); // @codeCoverageIgnore

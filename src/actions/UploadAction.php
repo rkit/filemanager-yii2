@@ -49,10 +49,6 @@ class UploadAction extends Action
      */
     public $resultFieldPath = 'path';
     /**
-     * @var int $ownerId The id of the owner
-     */
-    public $ownerId = -1;
-    /**
      * @var bool $temporary The file is temporary
      */
     public $temporary = true;
@@ -109,7 +105,13 @@ class UploadAction extends Action
      */
     private function upload($file)
     {
-        $file = $this->createFile($file);
+        $file = $this->model->createFile(
+            $this->attribute,
+            $file->tempName,
+            $file->name,
+            $this->temporary
+        );
+
         if ($file) {
             $presetAfterUpload = $this->model->getFilePresetAfterUpload($this->attribute);
             if (count($presetAfterUpload)) {
@@ -132,26 +134,6 @@ class UploadAction extends Action
         } else {
             return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]); // @codeCoverageIgnore
         }
-    }
-
-    /**
-     * Create a file
-     *
-     * @param yii\web\UploadedFile $file
-     * @return rkit\filemanager\models\File
-     */
-    private function createFile($file)
-    {
-        $file = Yii::$app->fileManager->getDecoder()->createFromPath(
-            $this->model->getFileStorage($this->attribute),
-            $file->tempName,
-            $this->ownerId,
-            $this->model->getFileOwnerType($this->attribute),
-            $this->temporary,
-            $this->model->isFileProtected($this->attribute)
-        );
-
-        return $file;
     }
 
     /**

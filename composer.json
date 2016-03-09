@@ -19,6 +19,7 @@
         "yiisoft/yii2": "^2.0"
     },
     "scripts": {
+        "phpdoc": "phpdoc",
         "test-prepare": [
             "php tests/yii migrate --migrationPath=src/migrations/ --interactive=0",
             "php tests/yii migrate --migrationPath=@tests/migrations/ --interactive=0"

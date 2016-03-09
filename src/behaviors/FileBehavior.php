@@ -40,8 +40,6 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Set Decoder
-     *
      * @internal
      * @return void
      */
@@ -365,6 +363,33 @@ class FileBehavior extends Behavior
         }
 
         return $returnRealPath ? $realPath . $thumbPath : $thumbPath;
+    }
+
+    /**
+     * Create a file
+     *
+     * @param string $attribute Attribute of a model
+     * @param string $path The path of the file
+     * @param string $title The title of file
+     * @param bool $temporary The file is temporary
+     * @return rkit\filemanager\models\File
+     */
+    public function createFile($attribute, $path, $title, $temporary)
+    {
+        $file = new File();
+        $file->path = $path;
+        $file->tmp = $temporary;
+        $file->title = $title;
+        $file->owner_id = $this->owner->primaryKey;
+        $file->owner_type = $this->getFileOwnerType($attribute);
+        $file->protected = $this->isFileProtected($attribute);
+
+        if ($file->save()) {
+            $file->setStorage($this->getFileStorage($attribute));
+            return $file->getStorage()->save($path);
+        }
+
+        return false; // @codeCoverageIgnore
     }
 
     /**

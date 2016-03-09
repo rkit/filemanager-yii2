@@ -2,9 +2,6 @@
 
 ## Table of Contents
 
-* [Decoder](#decoder)
-    * [createFromPath](#createfrompath)
-    * [createFromRemotePath](#createfromremotepath)
 * [File](#file)
     * [setStorage](#setstorage)
     * [getStorage](#getstorage)
@@ -14,7 +11,6 @@
     * [isTmp](#istmp)
     * [getDateOfFile](#getdateoffile)
     * [isOwner](#isowner)
-    * [create](#create)
     * [findAllByOwner](#findallbyowner)
     * [findOneByOwner](#findonebyowner)
     * [deleteByOwner](#deletebyowner)
@@ -31,13 +27,12 @@
     * [getFileStorage](#getfilestorage)
     * [generateThumbName](#generatethumbname)
     * [thumb](#thumb)
+    * [createFile](#createfile)
     * [getFileRulesDescription](#getfilerulesdescription)
 * [FileBind](#filebind)
     * [bindMultiple](#bindmultiple)
 * [FileManager](#filemanager)
     * [getOwnerType](#getownertype)
-    * [setDecoder](#setdecoder)
-    * [getDecoder](#getdecoder)
 * [FormatValidation](#formatvalidation)
     * [getDescription](#getdescription)
 * [LocalStorage](#localstorage)
@@ -48,69 +43,6 @@
     * [saveTemporaryFileToStorage](#savetemporaryfiletostorage)
     * [delete](#delete)
 
-## Decoder
-
-The Decoder for creating files
-
-
-
-* Full name: \rkit\filemanager\Decoder
-
-
-### createFromPath
-
-Create a file from the path
-
-```php
-Decoder::createFromPath(  $storage, string $path, integer $ownerId = -1, integer $ownerType = -1, boolean $temporary = false, boolean $protected = false ): \rkit\filemanager\models\File|boolean
-```
-
-
-
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$storage` | **** |  |
-| `$path` | **string** | Path to the file |
-| `$ownerId` | **integer** | The id of the owner |
-| `$ownerType` | **integer** | The type of the owner |
-| `$temporary` | **boolean** | The file is temporary |
-| `$protected` | **boolean** | The file is protected, not available from the web |
-
-
-
-
----
-
-### createFromRemotePath
-
-Create a file from the remote path
-
-```php
-Decoder::createFromRemotePath(  $storage, string $path, integer $ownerId = -1, integer $ownerType = -1, boolean $temporary = false, boolean $protected = false ): \rkit\filemanager\models\File|boolean
-```
-
-
-
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$storage` | **** |  |
-| `$path` | **string** | Path to the file or URL |
-| `$ownerId` | **integer** | The id of the owner |
-| `$ownerType` | **integer** | The type of the owner |
-| `$temporary` | **boolean** | The file is temporary |
-| `$protected` | **boolean** | The file is protected, not available from the web |
-
-
-
-
----
-
 ## File
 
 ActiveRecord for table "file"
@@ -118,7 +50,7 @@ ActiveRecord for table "file"
 
 
 * Full name: \rkit\filemanager\models\File
-* Parent class:
+* Parent class: 
 
 
 ### setStorage
@@ -262,32 +194,6 @@ File::isOwner( integer $ownerId, integer $ownerType ): boolean
 
 ---
 
-### create
-
-Create a file
-
-```php
-File::create( string $path, integer $ownerId, integer $ownerType, boolean $temporary, boolean $protected ): \rkit\filemanager\models\File|boolean
-```
-
-
-
-* This method is **static**.
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$path` | **string** | The path of the file |
-| `$ownerId` | **integer** | The id of the owner |
-| `$ownerType` | **integer** | The type of the owner |
-| `$temporary` | **boolean** | The file is temporary |
-| `$protected` | **boolean** | The file is protected |
-
-
-
-
----
-
 ### findAllByOwner
 
 Find all by owner
@@ -365,7 +271,7 @@ File::deleteByOwner( \rkit\filemanager\Storage $storage, integer $ownerId, integ
 
 
 * Full name: \rkit\filemanager\behaviors\FileBehavior
-* Parent class:
+* Parent class: 
 
 
 ### uploadDir
@@ -636,6 +542,31 @@ FileBehavior::thumb( string $attribute, string $preset, string $pathToFile = nul
 
 ---
 
+### createFile
+
+Create a file
+
+```php
+FileBehavior::createFile( string $attribute, string $path, string $title, boolean $temporary ): \rkit\filemanager\behaviors\rkit\filemanager\models\File
+```
+
+
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$attribute` | **string** | Attribute of a model |
+| `$path` | **string** | The path of the file |
+| `$title` | **string** | The title of file |
+| `$temporary` | **boolean** | The file is temporary |
+
+
+
+
+---
+
 ### getFileRulesDescription
 
 Get a description of the validation rules in as text
@@ -711,7 +642,7 @@ Component of FileManager
 
 
 * Full name: \rkit\filemanager\FileManager
-* Parent class:
+* Parent class: 
 
 
 ### getOwnerType
@@ -736,44 +667,6 @@ FileManager::getOwnerType( string $ownerType ): void
 
 ---
 
-### setDecoder
-
-Set a Decoder
-
-```php
-FileManager::setDecoder( object $decoder ): void
-```
-
-
-
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `$decoder` | **object** | The Decoder for creating files |
-
-
-
-
----
-
-### getDecoder
-
-Set a Decoder
-
-```php
-FileManager::getDecoder(  ): void
-```
-
-
-
-
-
-
-
----
-
 ## FormatValidation
 
 Formatting of validation rules
@@ -785,7 +678,7 @@ Formatting of validation rules
 
 ### getDescription
 
-Get rules description
+Get a description of the validation rules in as text
 
 ```php
 FormatValidation::getDescription( array $rules ): string
@@ -881,7 +774,7 @@ Save the file to the storage
 If the file is temporary, then in the temporary directory
 
 ```php
-LocalStorage::save( string $path, boolean $isUploadedFile = true ): \rkit\filemanager\models\File|boolean
+LocalStorage::save( string $path ): \rkit\filemanager\models\File|boolean
 ```
 
 
@@ -892,7 +785,6 @@ LocalStorage::save( string $path, boolean $isUploadedFile = true ): \rkit\filema
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `$path` | **string** | The path of the file |
-| `$isUploadedFile` | **boolean** | File has been uploaded or manually created |
 
 
 
@@ -934,4 +826,4 @@ LocalStorage::delete(  )
 
 
 --------
-> This document was automatically generated from source code comments on 2016-02-19 using [phpDocumentor](http://www.phpdoc.org/) and [cvuorinen/phpdoc-markdown-public](https://github.com/cvuorinen/phpdoc-markdown-public)
+> This document was automatically generated from source code comments on 2016-03-10 using [phpDocumentor](http://www.phpdoc.org/) and [cvuorinen/phpdoc-markdown-public](https://github.com/cvuorinen/phpdoc-markdown-public)

@@ -121,19 +121,53 @@ class File extends \yii\db\ActiveRecord
                     $this->ip = ip2long(Yii::$app->request->getUserIP()); // @codeCoverageIgnore
                 } // @codeCoverageIgnore
 
-                $pathInfo = pathinfo($this->path);
+                $this->fillMetaInfo();
 
-                $this->size = filesize($this->path);
-                $this->mime = FileHelper::getMimeType($this->path);
-                $this->title = $pathInfo['filename'];
-                $this->extension = current(FileHelper::getExtensionsByMimeType($this->mime));
-                $this->name = $this->generateName();
+                if ($this->owner_id === null) {
+                    $this->owner_id = 0;
+                }
             }
 
             return true;
         }
 
         return false; // @codeCoverageIgnore
+    }
+
+    private function fillMetaInfo()
+    {
+        $pathInfo = pathinfo($this->path);
+
+        if ($this->title === null) {
+            $this->title = $pathInfo['filename'];
+        }
+
+        $this->size = filesize($this->path);
+        $this->mime = FileHelper::getMimeType($this->path);
+        $this->extension = $this->getExtensionByMimeType($this->mime);
+        $this->name = $this->generateName();
+    }
+
+    private function getExtensionByMimeType($mimeType)
+    {
+        $extensions = FileHelper::getExtensionsByMimeType($mimeType);
+        $pathInfo = pathinfo($this->path);
+        $titleInfo = pathinfo($this->title);
+
+        if (isset($pathInfo['extension'])) {
+            $extension = $pathInfo['extension'];
+        } elseif (isset($titleInfo['extension'])) {
+            $extension = $titleInfo['extension'];
+        } else {
+            $extension = explode('/', $mimeType);
+            $extension = end($extension);
+        }
+
+        if (array_search($extension, $extensions) !== false) {
+            return $extension;
+        }
+
+        return current($extensions);
     }
 
     /**
@@ -234,32 +268,6 @@ class File extends \yii\db\ActiveRecord
         $user = $this->user_id === Yii::$app->user->id || $this->user_id === 0;
 
         return (!$this->tmp && $ownerType && $ownerId) || ($this->tmp && $ownerType && $user);
-    }
-
-    /**
-     * Create a file
-     *
-     * @param string $path The path of the file
-     * @param int $ownerId The id of the owner
-     * @param int $ownerType The type of the owner
-     * @param bool $temporary The file is temporary
-     * @param bool $protected The file is protected
-     * @return File|bool
-     */
-    public static function create($path, $ownerId, $ownerType, $temporary, $protected)
-    {
-        $file = new File();
-        $file->path = $path;
-        $file->tmp = $temporary;
-        $file->owner_id = $ownerId;
-        $file->owner_type = $ownerType;
-        $file->protected = $protected;
-
-        if ($file->save()) {
-            return $file;
-        }
-
-        return false;
     }
 
     /**

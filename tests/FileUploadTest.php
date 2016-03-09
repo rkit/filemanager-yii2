@@ -14,37 +14,6 @@ use rkit\filemanager\models\File;
 
 class FileUploadTest extends BaseTest
 {
-    public function testUploadUnprotectedFile()
-    {
-        list($file, $model) = $this->uploadFileAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-300'
-        ]);
-
-        $this->assertTrue(is_object($model->getFile('image_path')));
-        $this->assertTrue($file->isUnprotected());
-        $this->assertContains(
-            Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected),
-            $file->getStorage()->path(true)
-        );
-    }
-
-    public function testUploadProtectedFile()
-    {
-        list($file, $model) = $this->uploadFileAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_id',
-            'inputName' => 'file-300'
-        ], false);
-
-        $this->assertTrue($file->isProtected());
-        $this->assertContains(
-            Yii::getAlias(Yii::$app->fileManager->uploadDirProtected),
-            $file->getStorage()->path(true)
-        );
-    }
-
     public function testNotTemporary()
     {
         $response = $this->runUploadAction([
@@ -52,7 +21,6 @@ class FileUploadTest extends BaseTest
             'attribute' => 'image_path',
             'inputName' => 'file-300',
             'temporary' => false,
-            'ownerId' => 0
         ]);
 
         $file = File::findOne($response['id']);
@@ -62,21 +30,20 @@ class FileUploadTest extends BaseTest
         $this->checkNotTmpFile($file, 0, $ownerType);
     }
 
-    public function testNotTemporaryWithOwnerId()
+    public function testTemporary()
     {
         $response = $this->runUploadAction([
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-300',
-            'temporary' => false,
-            'ownerId' => 100
+            'temporary' => true,
         ]);
 
         $file = File::findOne($response['id']);
         $file->setStorage($this->storage);
 
         $ownerType = Yii::$app->fileManager->getOwnerType('news.image_path');
-        $this->checkNotTmpFile($file, 100, $ownerType);
+        $this->checkTmpFile($file, 0, $ownerType);
     }
 
     public function testResultFieldId()
@@ -85,22 +52,22 @@ class FileUploadTest extends BaseTest
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-300',
-            'resultFieldId' => 'customName',
+            'resultFieldId' => 'customFieldId',
         ]);
 
-        $this->assertArrayHasKey('customName', $response);
+        $this->assertArrayHasKey('customFieldId', $response);
     }
 
-    public function testRsultFieldPath()
+    public function testResultFieldPath()
     {
         $response = $this->runUploadAction([
             'modelName' => News::className(),
             'attribute' => 'image_path',
             'inputName' => 'file-300',
-            'resultFieldPath' => 'customName',
+            'resultFieldPath' => 'customFieldPath',
         ]);
 
-        $this->assertArrayHasKey('customName', $response);
+        $this->assertArrayHasKey('customFieldPath', $response);
     }
 
     public function testSaveFileId()
@@ -108,10 +75,55 @@ class FileUploadTest extends BaseTest
         list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
             'attribute' => 'image_id',
-            'inputName' => 'file-300'
-        ], false);
+            'inputName' => 'file-300',
+            'temporary' => true
+        ]);
 
-        $this->assertTrue(is_numeric($model->image_id));
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
+        $this->checkNotTmpFile($file, $model->id, $ownerType);
+        $this->assertTrue($model->image_id === $file->id);
+    }
+
+    public function testFailSaveFileId()
+    {
+        list($file, $model) = $this->uploadFileAndBindToModel([
+            'modelName' => News::className(),
+            'attribute' => 'image_id',
+            'inputName' => 'file-300',
+            'temporary' => false
+        ]);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
+        $this->checkNotTmpFile($file, 0, $ownerType);
+        $this->assertTrue($model->image_id === 0);
+    }
+
+    public function testSaveFilePath()
+    {
+        list($file, $model) = $this->uploadFileAndBindToModel([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-300',
+            'temporary' => true
+        ]);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_path');
+        $this->checkNotTmpFile($file, $model->id, $ownerType);
+        $this->assertTrue($model->image_path === $file->getStorage()->path());
+    }
+
+    public function testFailSaveFilePath()
+    {
+        list($file, $model) = $this->uploadFileAndBindToModel([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-300',
+            'temporary' => false
+        ]);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_path');
+        $this->checkNotTmpFile($file, 0, $ownerType);
+        $this->assertEmpty($model->image_path);
     }
 
     public function testDeleteFile()
@@ -124,6 +136,9 @@ class FileUploadTest extends BaseTest
 
         $file->delete();
         $this->assertFileNotExists($file->getStorage()->path(true));
+
+        $file = File::findOne($file->id);
+        $this->assertNull($file);
     }
 
     public function testDeleteModel()
@@ -141,7 +156,7 @@ class FileUploadTest extends BaseTest
         $this->assertNull($file);
     }
 
-    public function testSetEmptyFile()
+    public function testEmptyFilePath()
     {
         list($file, $model) = $this->uploadFileAndBindToModel([
             'modelName' => News::className(),
@@ -154,6 +169,50 @@ class FileUploadTest extends BaseTest
 
         $file = File::findOne($file->id);
         $this->assertNull($file);
+    }
+
+    public function testEmptyFileId()
+    {
+        $model = new News();
+
+        $response = $this->runUploadAction([
+            'modelName' => News::className(),
+            'attribute' => 'image_id',
+            'inputName' => 'file-500'
+        ]);
+
+        $model->image_id = 0;
+        $model->save();
+
+        $this->assertTrue($model->image_id === 0);
+    }
+
+    public function testWrongFilePath()
+    {
+        list($file, $model) = $this->uploadFileAndBindToModel([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-300'
+        ]);
+
+        $model->image_path = 'test';
+        $model->save();
+
+        $this->assertTrue($model->image_path === $file->getStorage()->path());
+    }
+
+    public function testWrongFileId()
+    {
+        list($file, $model) = $this->uploadFileAndBindToModel([
+            'modelName' => News::className(),
+            'attribute' => 'image_id',
+            'inputName' => 'file-300'
+        ]);
+
+        $model->image_id = 100;
+        $model->save();
+
+        $this->assertTrue($model->image_id === $file->id);
     }
 
     /**
@@ -201,40 +260,6 @@ class FileUploadTest extends BaseTest
         Yii::$app->fileManager->getOwnerType('test');
     }
 
-    public function testWrongFilePath()
-    {
-        list($file, $model) = $this->uploadFileAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-300'
-        ]);
-
-        $model->image_path = 'test';
-        $model->save();
-
-        $this->assertTrue($model->image_path === $file->getStorage()->path());
-    }
-
-    public function testWrongFileId()
-    {
-        list($file, $model) = $this->uploadFileAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_id',
-            'inputName' => 'file-300'
-        ], false);
-
-        $model->image_id = 100;
-        $model->save();
-
-        $this->assertTrue($model->image_id === $file->id);
-
-        $model = new News();
-        $model->image_id = 100;
-        $model->save();
-
-        $this->assertTrue($model->image_id === 0);
-    }
-
     public function testDeleteUnnecessaryFile()
     {
         list($file, $model) = $this->uploadFileAndBindToModel([
@@ -253,56 +278,6 @@ class FileUploadTest extends BaseTest
         $model->save();
 
         $this->assertNull(File::findOne($file->id));
-    }
-
-    public function testAnotherOwnerFile()
-    {
-        list($file, $model) = $this->uploadFileAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-300'
-        ]);
-
-        $response = $this->runUploadAction([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-500',
-            'ownerId'   => 100,
-            'temporary' => true
-        ]);
-
-        $model->image_path = $response['id'];
-        $model->save();
-
-        $file = File::findOne($response['id']);
-        $file->setStorage($this->storage);
-
-        $this->assertFalse($file->getStorage()->path() === $model->image_path);
-    }
-
-    public function testSaveNotTmpFile()
-    {
-        list($file, $model) = $this->uploadFileAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-300'
-        ]);
-
-        $response = $this->runUploadAction([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-500',
-            'ownerId' => $model->id,
-            'temporary' => false
-        ]);
-
-        $model->image_path = $response['id'];
-        $model->save();
-
-        $file = File::findOne($response['id']);
-        $file->setStorage($this->storage);
-
-        $this->assertTrue($file->getStorage()->path() === $model->image_path);
     }
 
     public function testFailSaveWithUnlinkFile()
@@ -330,92 +305,107 @@ class FileUploadTest extends BaseTest
         $this->assertFalse($file->getStorage()->path() === $model->image_path);
     }
 
-    public function testFailSaveWithWrongFileId()
+    public function testManualBindFile()
     {
         $model = new News();
 
-        $response = $this->runUploadAction([
-            'modelName' => News::className(),
-            'attribute' => 'image_path',
-            'inputName' => 'file-500'
-        ]);
+        $file = $this->prepareFile('file-100', 'test_create_from_path');
+        $file = $model->createFile('image_path', $file, null, true);
 
-        $model->image_path = 0123123;
+        $model->image_path = $file->id;
+        $model->save();
+
+        $this->assertTrue($model->getFile('image_path')->id === $file->id);
+    }
+
+    public function testWrongManualBindFile()
+    {
+        $model = new News();
+        $model->image_path = 100;
         $model->save();
 
         $this->assertEmpty($model->image_path);
     }
 
-    public function testNotTmpUnprotectedcreateFromRemotePath()
+    public function testManualCreateFileWithDefaultTitle()
     {
-        $decoder = Yii::$app->fileManager->getDecoder();
+        $model = new News();
 
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, false);
+        $file = $model->createFile('image_id', $file, null, true);
 
-        $this->assertTrue(is_object($file));
-        $this->assertFalse($file->isTmp());
-        $this->assertTrue($file->isUnprotected());
-        $this->assertFileExists($file->getStorage()->path(true));
-    }
-
-    public function testNotTmpProtectedcreateFromRemotePath()
-    {
-        $decoder = Yii::$app->fileManager->getDecoder();
-
-        $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, true);
-
-        $this->assertTrue(is_object($file));
-        $this->assertFalse($file->isTmp());
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
+        $this->checkTmpFile($file, 0, $ownerType);
         $this->assertTrue($file->isProtected());
-        $this->assertFileExists($file->getStorage()->path(true));
+        $this->assertTrue($file->title === '100x100_test_create_from_path');
     }
 
-    public function testTmpUnprotectedcreateFromRemotePath()
+    public function testManualCreateFileWithCustomTitle()
     {
-        $decoder = Yii::$app->fileManager->getDecoder();
+        $model = new News();
 
         $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, false);
+        $file = $model->createFile('image_id', $file, 'title 1', true);
 
-        $this->assertTrue(is_object($file));
-        $this->assertFalse($file->isTmp());
-        $this->assertTrue($file->isUnprotected());
-        $this->assertFileExists($file->getStorage()->path(true));
-    }
-
-    public function testTmpProtectedcreateFromRemotePath()
-    {
-        $decoder = Yii::$app->fileManager->getDecoder();
-
-        $file = $this->prepareFile('file-100', 'test_create_from_path');
-        $file = $decoder->createFromRemotePath($this->storage, $file, 100, 200, false, true);
-
-        $this->assertTrue(is_object($file));
-        $this->assertFalse($file->isTmp());
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
+        $this->checkTmpFile($file, 0, $ownerType);
         $this->assertTrue($file->isProtected());
-        $this->assertFileExists($file->getStorage()->path(true));
+        $this->assertTrue($file->title === 'title 1');
     }
 
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Unable to create from `/test/fail.jpg`
-     */
-    public function testFailcreateFromRemotePath()
+    public function testManualCreateNotTmpUnprotectedFile()
     {
-        $decoder = Yii::$app->fileManager->getDecoder();
-        $file = $decoder->createFromRemotePath($this->storage, '/test/fail.jpg', 100, 200, true, false);
+        $model = new News();
+
+        $file = $this->prepareFile('file-100', 'test_create_from_path');
+        $file = $model->createFile('image_path', $file, null, false);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_path');
+        $this->checkNotTmpFile($file, 0, $ownerType);
+        $this->assertTrue($file->isUnProtected());
     }
 
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Unable to create from `/test/fail.jpg`
-     */
-    public function testFailcreateFromPath()
+    public function testManualCreateNotTmpProtectedFile()
     {
-        $decoder = Yii::$app->fileManager->getDecoder();
-        $file = $decoder->createFromPath($this->storage, '/test/fail.jpg', 100, 200, true, false);
+        $model = new News();
+
+        $file = $this->prepareFile('file-100', 'test_create_from_path');
+        $file = $model->createFile('image_id', $file, null, false);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
+        $this->checkNotTmpFile($file, 0, $ownerType);
+        $this->assertTrue($file->isProtected());
+    }
+
+    public function testManualCreateTmpUnprotectedFile()
+    {
+        $model = new News();
+
+        $file = $this->prepareFile('file-100', 'test_create_from_path');
+        $file = $model->createFile('image_path', $file, null, true);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_path');
+        $this->checkTmpFile($file, 0, $ownerType);
+        $this->assertTrue($file->isUnprotected());
+    }
+
+    public function testManualCreateTmpProtectedFile()
+    {
+        $model = new News();
+
+        $file = $this->prepareFile('file-100', 'test_create_from_path');
+        $file = $model->createFile('image_id', $file, null, true);
+
+        $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
+        $this->checkTmpFile($file, 0, $ownerType);
+        $this->assertTrue($file->isProtected());
+    }
+
+    public function testFailManualCreateFile()
+    {
+        $model = new News();
+        $file = $model->createFile('image_id', '/test/fail', 'title 1', true);
+        $this->assertFalse($file);
     }
 
     public function testFailSaveToStorage()

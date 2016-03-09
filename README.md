@@ -287,6 +287,14 @@ $model->getFiles('gallery');
 
 > [See API](/docs#filebehavior)
 
+### Manually create a file
+
+```php
+$model->createFile('preview', '/path/to/file', 'title');
+```
+
+> [See API](/docs#createfile)
+
 ### Get a description of the validation rules in as text
 
 It could be a need for render a form.  

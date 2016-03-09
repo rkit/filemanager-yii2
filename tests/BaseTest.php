@@ -166,10 +166,9 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      * Upload and test a file
      *
      * @param array $config see Properties UploadAction
-     * @param bool $saveFilePath If save 'path' in current model
      * @return array $file and $model
      */
-    protected function uploadFileAndBindToModel($config, $saveFilePath = true)
+    protected function uploadFileAndBindToModel($config)
     {
         $response = $this->runUploadAction($config);
         $response = $this->checkUploadFileResponse($response);
