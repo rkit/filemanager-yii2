@@ -245,7 +245,6 @@ public function actions()
             'type' => 'image',
             'inputName' => 'file',
             'temporary' => false,
-            'ownerId' => 0,
         ]
     ]
 }
