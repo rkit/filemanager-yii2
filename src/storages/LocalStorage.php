@@ -108,7 +108,7 @@ class LocalStorage extends Storage
         if (file_exists($path)) {
             if (FileHelper::createDirectory($this->dir(true))) {
                 $isConsole = Yii::$app instanceof \yii\console\Application;
-                if (!is_uploaded_file($path) ||$isConsole) {
+                if (!is_uploaded_file($path) || $isConsole) {
                     $saved = rename($path, $this->path(true));
                 } else {
                     $saved = move_uploaded_file($path, $this->path(true)); // @codeCoverageIgnore
