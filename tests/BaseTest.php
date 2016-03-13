@@ -49,7 +49,7 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
         $_FILES = [];
         foreach ($this->files as $inputName => $fileInfo) {
             $_FILES[$inputName] = [
-                'name' => $fileInfo['name'] . '.' . $fileInfo['ext'],
+                'name' => $fileInfo['name'],
                 'type' => $fileInfo['type'],
                 'size' => $fileInfo['size'],
                 'tmp_name' => $this->prepareFile($inputName),
@@ -69,10 +69,10 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
     {
         $file = $this->files[$fileIndex];
         $origFile = Yii::getAlias(
-            '@tests/data/files/' . $file['name'] . '.' . $file['ext']
+            '@tests/data/files/' . $file['name']
         );
         $copyFile = Yii::getAlias(
-            '@tests/data/files/tmp/' . $file['name'] . '_' . $prefix . '.' . $file['ext']
+            '@tests/data/files/tmp/' . $prefix . '_' . $file['name']
         );
 
         copy($origFile, $copyFile);

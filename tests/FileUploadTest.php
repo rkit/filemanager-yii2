@@ -337,7 +337,7 @@ class FileUploadTest extends BaseTest
         $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
         $this->checkTmpFile($file, 0, $ownerType);
         $this->assertTrue($file->isProtected());
-        $this->assertTrue($file->title === '100x100_test_create_from_path');
+        $this->assertTrue($file->title === 'test_create_from_path_100x100');
     }
 
     public function testManualCreateFileWithCustomTitle()
@@ -399,6 +399,24 @@ class FileUploadTest extends BaseTest
         $ownerType = Yii::$app->fileManager->getOwnerType('news.image_id');
         $this->checkTmpFile($file, 0, $ownerType);
         $this->assertTrue($file->isProtected());
+    }
+
+    public function testManualCreateFileWithoutExtension()
+    {
+        $file = $this->prepareFile('file-300-without-extension', 'test_without_extension');
+
+        $model = new News();
+        $file = $model->createFile('image_id', $file, 'title 1', true);
+        $this->assertTrue($file->extension === 'png');
+    }
+
+    public function testManualCreateFileWitExtensionInTitle()
+    {
+        $file = $this->prepareFile('file-300-without-extension', 'test_with_extension_in_title');
+
+        $model = new News();
+        $file = $model->createFile('image_id', $file, 'title.jpg', true);
+        $this->assertTrue($file->extension === 'png');
     }
 
     public function testFailManualCreateFile()
