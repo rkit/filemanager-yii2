@@ -234,7 +234,6 @@ Add the following in your config, in section `components`
 
 By default in action upload `temporary` is true and file will be uploaded into tmp directory.  
 After saved the model file will be moved into storage and will be to bound to the model.  
-
 If `temporary` is false, file immediately will be uploaded into storage and will be to bound to the model.  
 
 For example, it could be a need for wysiwyg editor, when you need to immediately save the file after upload and assign the owner:
