@@ -232,7 +232,7 @@ Add the following in your config, in section `components`
 
 ### Temporary files
 
-By default `temporary` is true and file will be uploaded into tmp directory.  
+By default in action upload `temporary` is true and file will be uploaded into tmp directory.  
 After saved the model file will be moved into storage and will be to bound to the model.  
 
 If `temporary` is false, file immediately will be uploaded into storage and will be to bound to the model.  
