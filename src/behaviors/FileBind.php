@@ -36,6 +36,7 @@ class FileBind
                 if ($file) {
                     $this->deleteCurrentFiles($storage, $ownerId, $ownerType, $file);
                     $file->updateAttributes($file->getDirtyAttributes());
+                    $file->setStorage($storage);
                 }
             }
             return $file;
