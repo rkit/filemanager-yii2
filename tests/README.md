@@ -18,8 +18,14 @@
    composer test-coverage
    ```
 
+   or
+
+   ```
+   composer test-coverage-html
+   ```
+
 4. Show coverage dashboard
 
    ```
-   composer test-coverage-show
+   composer test-coverage-html-open
    ```

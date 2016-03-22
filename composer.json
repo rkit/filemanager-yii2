@@ -25,8 +25,9 @@
             "php tests/yii migrate --migrationPath=@tests/migrations/ --interactive=0"
         ],
         "test": "phpunit --colors=always",
-        "test-coverage": "phpunit --coverage-html=tests/tmp/coverage.html --colors=always",
-        "test-coverage-show": "open tests/tmp/coverage.html/index.html"
+        "test-coverage": "phpunit --coverage-text --colors=always",
+        "test-coverage-html": "phpunit --coverage-html=tests/tmp/coverage.html --colors=always",
+        "test-coverage-html-open": "open tests/tmp/coverage.html/index.html"
     },
     "autoload": {
         "psr-4": {
