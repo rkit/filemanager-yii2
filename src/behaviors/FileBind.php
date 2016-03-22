@@ -34,7 +34,7 @@ class FileBind
             if ($file->tmp) {
                 $file = $this->saveTmpDirToStorage($file, $ownerId);
                 if ($file) {
-                    $this->deleteCurrentFiles($storage, $ownerId, $ownerType, $file);
+                    $this->deleteCurrentFiles($storage, $ownerId, $ownerType, [$file->id => $file]);
                     $file->updateAttributes($file->getDirtyAttributes());
                     $file->setStorage($storage);
                 }
@@ -75,7 +75,7 @@ class FileBind
                 unset($newFiles[$fileId]);
                 continue;
             }
-            $this->deleteCurrentFiles($storage, $ownerId, $ownerType, null, $newFiles);
+            $this->deleteCurrentFiles($storage, $ownerId, $ownerType, $newFiles);
         } else {
             $this->deleteCurrentFiles($storage, $ownerId, $ownerType);
         }
@@ -107,17 +107,15 @@ class FileBind
      * @param Storage $storage
      * @param int $ownerId The id of the owner
      * @param int $ownerType The type of the owner
-     * @param rkit\filemanager\models\File $exceptFile
      * @param rkit\filemanager\models\File[] $exceptFiles
      * @return void
      */
-    private function deleteCurrentFiles($storage, $ownerId, $ownerType, $exceptFile = null, $exceptFiles = [])
+    private function deleteCurrentFiles($storage, $ownerId, $ownerType, $exceptFiles = [])
     {
         $currentFiles = File::findAllByOwner($ownerId, $ownerType);
         foreach ($currentFiles as $currFile) {
-            $isExceptFile = $exceptFile !== null && $currFile->id === $exceptFile->id;
             $isExceptFiles = count($exceptFiles) && array_key_exists($currFile->id, $exceptFiles);
-            if (!$isExceptFile && !$isExceptFiles) {
+            if (!$isExceptFiles) {
                 $currFile->setStorage($storage);
                 $currFile->delete();
             }

@@ -116,11 +116,8 @@ class File extends \yii\db\ActiveRecord
                 if (!file_exists($this->path)) {
                     return false;
                 }
-                if (!Yii::$app instanceof \yii\console\Application) {
-                    $this->user_id = Yii::$app->user->isGuest ? 0 : Yii::$app->user->id; // @codeCoverageIgnore
-                    $this->ip = ip2long(Yii::$app->request->getUserIP()); // @codeCoverageIgnore
-                } // @codeCoverageIgnore
 
+                $this->fillUserInfo();
                 $this->fillMetaInfo();
 
                 if ($this->owner_id === null) {
@@ -132,6 +129,14 @@ class File extends \yii\db\ActiveRecord
         }
 
         return false; // @codeCoverageIgnore
+    }
+
+    private function fillUserInfo()
+    {
+        if (!Yii::$app instanceof \yii\console\Application) {
+            $this->user_id = Yii::$app->user->isGuest ? 0 : Yii::$app->user->id; // @codeCoverageIgnore
+            $this->ip = ip2long(Yii::$app->request->getUserIP()); // @codeCoverageIgnore
+        } // @codeCoverageIgnore
     }
 
     private function fillMetaInfo()
