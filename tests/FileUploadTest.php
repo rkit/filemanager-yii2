@@ -126,6 +126,30 @@ class FileUploadTest extends BaseTest
         $this->assertEmpty($model->image_path);
     }
 
+    public function testReUpload()
+    {
+        list($file, $model) = $this->uploadFileAndBindToModel([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-300',
+            'temporary' => true
+        ]);
+
+        $response = $this->runUploadAction([
+            'modelName' => News::className(),
+            'attribute' => 'image_path',
+            'inputName' => 'file-500',
+            'temporary' => true,
+        ]);
+
+        $model->image_path = $response['id'];
+        $model->save();
+
+        $file = File::findOne($response['id']);
+        $file->setStorage($this->storage);
+        $this->assertTrue($model->image_path === $file->getStorage()->path());
+    }
+
     public function testDeleteFile()
     {
         list($file, $model) = $this->uploadFileAndBindToModel([
