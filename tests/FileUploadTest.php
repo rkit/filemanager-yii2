@@ -434,12 +434,12 @@ class FileUploadTest extends BaseTest
         $this->assertTrue($file->extension === 'png');
     }
 
-    public function testManualCreateFileWitExtensionInTitle()
+    public function testManualCreateFileWithExtensionInTitle()
     {
         $file = $this->prepareFile('file-300-without-extension', 'test_with_extension_in_title');
 
         $model = new News();
-        $file = $model->createFile('image_id', $file, 'title.jpg', true);
+        $file = $model->createFile('image_id', $file, 'title.png', true);
         $this->assertTrue($file->extension === 'png');
     }
 

@@ -153,26 +153,31 @@ class File extends \yii\db\ActiveRecord
         $this->name = $this->generateName();
     }
 
+    /**
+     * Get extension By MimeType
+     *
+     * @param string $mimeType MimeType of the file
+     * @return string
+     */
     private function getExtensionByMimeType($mimeType)
     {
         $extensions = FileHelper::getExtensionsByMimeType($mimeType);
-        $pathInfo = pathinfo($this->path);
-        $titleInfo = pathinfo($this->title);
+        $pathExtension = pathinfo($this->path, PATHINFO_EXTENSION);
+        $titleExtension = pathinfo($this->title, PATHINFO_EXTENSION);
 
-        if (isset($pathInfo['extension'])) {
-            $extension = $pathInfo['extension'];
-        } elseif (isset($titleInfo['extension'])) {
-            $extension = $titleInfo['extension'];
+        if (array_search($pathExtension, $extensions) !== false) {
+            return $pathExtension;
+        } elseif (array_search($titleExtension, $extensions) !== false) {
+            return $titleExtension;
         } else {
             $extension = explode('/', $mimeType);
             $extension = end($extension);
+            if (array_search($extension, $extensions) !== false) {
+                return $extension;
+            }
         }
 
-        if (array_search($extension, $extensions) !== false) {
-            return $extension;
-        }
-
-        return current($extensions);
+        return current($extensions); // @codeCoverageIgnore
     }
 
     /**
