@@ -37,7 +37,7 @@
         "intervention/image": "^2.3.2",
         "phpunit/phpunit": "^4.8",
         "phpunit/dbunit": "^1.4",
-        "phpdocumentor/phpdocumentor": "2.*",
+        "phpdocumentor/phpdocumentor": "^2.8.0",
         "cvuorinen/phpdoc-markdown-public": "^0.1.2"
     }
 }
