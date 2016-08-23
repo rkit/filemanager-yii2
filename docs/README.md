@@ -50,7 +50,7 @@ ActiveRecord for table "file"
 
 
 * Full name: \rkit\filemanager\models\File
-* Parent class: 
+* Parent class:
 
 
 ### setStorage
@@ -271,7 +271,7 @@ File::deleteByOwner( \rkit\filemanager\Storage $storage, integer $ownerId, integ
 
 
 * Full name: \rkit\filemanager\behaviors\FileBehavior
-* Parent class: 
+* Parent class:
 
 
 ### uploadDir
@@ -411,7 +411,7 @@ FileBehavior::isFileProtected( string $attribute ): boolean
 Get rules
 
 ```php
-FileBehavior::getFileRules( string $attribute ): array
+FileBehavior::getFileRules( string $attribute, boolean $onlyCoreValidators = false ): array
 ```
 
 
@@ -422,6 +422,7 @@ FileBehavior::getFileRules( string $attribute ): array
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `$attribute` | **string** | Attribute of a model |
+| `$onlyCoreValidators` | **boolean** | Only core validators |
 
 
 
@@ -642,7 +643,7 @@ Component of FileManager
 
 
 * Full name: \rkit\filemanager\FileManager
-* Parent class: 
+* Parent class:
 
 
 ### getOwnerType
@@ -826,4 +827,4 @@ LocalStorage::delete(  )
 
 
 --------
-> This document was automatically generated from source code comments on 2016-03-10 using [phpDocumentor](http://www.phpdoc.org/) and [cvuorinen/phpdoc-markdown-public](https://github.com/cvuorinen/phpdoc-markdown-public)
+> This document was automatically generated from source code comments on 2016-08-23 using [phpDocumentor](http://www.phpdoc.org/) and [cvuorinen/phpdoc-markdown-public](https://github.com/cvuorinen/phpdoc-markdown-public)
