@@ -13,7 +13,31 @@ use tests\data\News;
 
 class RulesTest extends \PHPUnit_Framework_TestCase
 {
-    public function testBaseFileRules()
+    public function testRules()
+    {
+        $model = new News();
+
+        $rules = $model->getFileRules('image_path');
+        $this->assertArrayHasKey('imageSize', $rules);
+        $this->assertArrayHasKey('mimeTypes', $rules);
+        $this->assertArrayHasKey('extensions', $rules);
+        $this->assertArrayHasKey('maxSize', $rules);
+        $this->assertArrayHasKey('tooBig', $rules);
+    }
+
+    public function testRulesWithOnlyCoreValidators()
+    {
+        $model = new News();
+
+        $rules = $model->getFileRules('image_path', true);
+        $this->assertArrayNotHasKey('imageSize', $rules);
+        $this->assertArrayHasKey('mimeTypes', $rules);
+        $this->assertArrayHasKey('extensions', $rules);
+        $this->assertArrayHasKey('maxSize', $rules);
+        $this->assertArrayHasKey('tooBig', $rules);
+    }
+
+    public function testDescription()
     {
         $model = new News();
 
@@ -23,7 +47,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('File types: JPG, JPEG, PNG', $rules);
     }
 
-    public function testImageWithStrictSize()
+    public function testDescriptionImageWithStrictSize()
     {
         $model = new News();
 
@@ -31,7 +55,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Image size: 300x300px', $rules);
     }
 
-    public function testImageWithMinAndMaxSize()
+    public function testDescriptionImageWithMinAndMaxSize()
     {
         $model = new News();
 
@@ -40,7 +64,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Max. size of image: 300x300px', $rules);
     }
 
-    public function testImageWithMinSize()
+    public function testDescriptionImageWithMinSize()
     {
         $model = new News();
 
@@ -48,7 +72,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Min. size of image: 300x300px', $rules);
     }
 
-    public function testImageWithMaxSize()
+    public function testDescriptionImageWithMaxSize()
     {
         $model = new News();
 
@@ -56,7 +80,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Max. size of image: 300x300px', $rules);
     }
 
-    public function testImageWithOnlyMaxWidth()
+    public function testDescriptionImageWithOnlyMaxWidth()
     {
         $model = new News();
 
@@ -64,7 +88,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Max. width 300px', $rules);
     }
 
-    public function testImageWithOnlyMaxHeight()
+    public function testDescriptionImageWithOnlyMaxHeight()
     {
         $model = new News();
 
@@ -72,7 +96,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Max. height 300px', $rules);
     }
 
-    public function testImageWithOnlyMinWidth()
+    public function testDescriptionImageWithOnlyMinWidth()
     {
         $model = new News();
 
@@ -80,7 +104,7 @@ class RulesTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Min. width 300px', $rules);
     }
 
-    public function testImageWithOnlyMinHeight()
+    public function testDescriptionImageWithOnlyMinHeight()
     {
         $model = new News();
 

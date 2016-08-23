@@ -272,11 +272,17 @@ class FileBehavior extends Behavior
      * Get rules
      *
      * @param string $attribute Attribute of a model
+     * @param bool $onlyCoreValidators Only core validators
      * @return array
      */
-    public function getFileRules($attribute)
+    public function getFileRules($attribute, $onlyCoreValidators = false)
     {
-        return ArrayHelper::getValue($this->attributes[$attribute], 'rules', []);
+        $rules = ArrayHelper::getValue($this->attributes[$attribute], 'rules', []);
+        if ($onlyCoreValidators && isset($rules['imageSize'])) {
+            $rules = array_merge($rules, $rules['imageSize']);
+            unset($rules['imageSize']);
+        }
+        return $rules;
     }
 
     /**

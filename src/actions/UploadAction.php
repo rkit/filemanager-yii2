@@ -56,11 +56,6 @@ class UploadAction extends Action
      * @var ActiveRecord $model
      */
     private $model;
-    /**
-     * @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
-     * @var array $rules
-     */
-    private $rules;
 
     public function init()
     {
@@ -69,12 +64,6 @@ class UploadAction extends Action
         }
 
         $this->model = new $this->modelName();
-        $this->rules = $this->model->getFileRules($this->attribute);
-
-        if (isset($this->rules['imageSize'])) {
-            $this->rules = array_merge($this->rules, $this->rules['imageSize']);
-            unset($this->rules['imageSize']);
-        }
     }
 
     public function run()
@@ -87,8 +76,10 @@ class UploadAction extends Action
             );
         }
 
+        $rules = $this->model->getFileRules($this->attribute, true);
+
         $model = new DynamicModel(compact('file'));
-        $model->addRule('file', $this->type, $this->rules)->validate();
+        $model->addRule('file', $this->type, $rules)->validate();
 
         if ($model->hasErrors()) {
             return $this->response(['error' => $model->getFirstError('file')]);
