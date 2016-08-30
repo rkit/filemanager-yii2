@@ -83,9 +83,8 @@ class UploadAction extends Action
 
         if ($model->hasErrors()) {
             return $this->response(['error' => $model->getFirstError('file')]);
-        } else {
-            return $this->upload($file);
         }
+        return $this->upload($file);
     }
 
     /**
@@ -116,15 +115,13 @@ class UploadAction extends Action
                         'attribute' => $this->attribute
                     ])
                 );
-            } else {
-                return $this->response([
-                    $this->resultFieldId => $file->id,
-                    $this->resultFieldPath => $file->getStorage()->path()
-                ]);
             }
-        } else {
-            return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]); // @codeCoverageIgnore
+            return $this->response([
+                $this->resultFieldId => $file->id,
+                $this->resultFieldPath => $file->getStorage()->path()
+            ]);
         }
+        return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]); // @codeCoverageIgnore
     }
 
     /**

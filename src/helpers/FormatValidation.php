@@ -45,6 +45,7 @@ class FormatValidation
      *
      * @param array $rules
      * @return string
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     private static function getImageSizeDescription($rules)
     {

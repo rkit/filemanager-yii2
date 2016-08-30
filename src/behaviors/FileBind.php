@@ -53,6 +53,7 @@ class FileBind
      * @param int $ownerType The type of the owner
      * @param array $files Array of ids
      * @return rkit\filemanager\models\File[]|bool
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function bindMultiple($storage, $ownerId, $ownerType, $files)
     {

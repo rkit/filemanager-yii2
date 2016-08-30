@@ -169,12 +169,11 @@ class File extends \yii\db\ActiveRecord
             return $pathExtension;
         } elseif (array_search($titleExtension, $extensions) !== false) {
             return $titleExtension;
-        } else {
-            $extension = explode('/', $mimeType);
-            $extension = end($extension);
-            if (array_search($extension, $extensions) !== false) {
-                return $extension;
-            }
+        }
+        $extension = explode('/', $mimeType);
+        $extension = end($extension);
+        if (array_search($extension, $extensions) !== false) {
+            return $extension;
         }
 
         return current($extensions); // @codeCoverageIgnore
@@ -259,9 +258,8 @@ class File extends \yii\db\ActiveRecord
     {
         if ($this->isNewRecord || is_object($this->date_create)) {
             return date('Ym');
-        } else {
-            return date_format(date_create($this->date_create), 'Ym');
         }
+        return date_format(date_create($this->date_create), 'Ym');
     }
 
     /**

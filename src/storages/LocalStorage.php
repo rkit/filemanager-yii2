@@ -29,9 +29,8 @@ class LocalStorage extends Storage
     {
         if ($this->getFile()->isProtected()) {
             return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
-        } else {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
         }
+        return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
     }
 
     /**
@@ -64,14 +63,13 @@ class LocalStorage extends Storage
 
         if ($file->tmp) {
             return $this->dirTmp($realPath);
-        } else {
-            $path  = $realPath ? $this->uploadDir() : '';
-            $path .= '/' . Yii::$app->fileManager->publicPath;
-            $path .= '/' . $file->getDateOfFile();
-            $path .= '/' . $file->owner_type . '/' . $file->owner_id . '/' . $file->id;
-
-            return $path;
         }
+        $path  = $realPath ? $this->uploadDir() : '';
+        $path .= '/' . Yii::$app->fileManager->publicPath;
+        $path .= '/' . $file->getDateOfFile();
+        $path .= '/' . $file->owner_type . '/' . $file->owner_id . '/' . $file->id;
+
+        return $path;
     }
 
     /**
@@ -102,6 +100,7 @@ class LocalStorage extends Storage
      *
      * @param string $path The path of the file
      * @return \rkit\filemanager\models\File|bool
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function save($path)
     {

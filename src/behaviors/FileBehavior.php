@@ -65,6 +65,8 @@ class FileBehavior extends Behavior
 
     /**
      * @internal
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
     public function beforeSave($insert)
     {
@@ -104,6 +106,7 @@ class FileBehavior extends Behavior
 
     /**
      * @internal
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
     public function beforeDelete()
     {
@@ -129,18 +132,18 @@ class FileBehavior extends Behavior
     {
         if ($this->isMultiple($attribute)) {
             $this->bind->bindMultiple($storage, $ownerId, $ownerType, $fileId);
-        } else {
-            $file = $this->bind->bindSingle($storage, $ownerId, $ownerType, $fileId);
+            return;
+        }
+        $file = $this->bind->bindSingle($storage, $ownerId, $ownerType, $fileId);
 
-            if (isset($data['saveFilePath']) && $data['saveFilePath'] === true) {
-                $value = $this->prepareFilePath($file, $data['oldValue']);
-            } elseif (isset($data['saveFileId']) && $data['saveFileId'] === true) {
-                $value = $this->prepareFileId($file, $data['oldValue']);
-            }
+        if (isset($data['saveFilePath']) && $data['saveFilePath'] === true) {
+            $value = $this->prepareFilePath($file, $data['oldValue']);
+        } elseif (isset($data['saveFileId']) && $data['saveFileId'] === true) {
+            $value = $this->prepareFileId($file, $data['oldValue']);
+        }
 
-            if (isset($value)) {
-                $this->owner->updateAttributes([$attribute => $value]);
-            }
+        if (isset($value)) {
+            $this->owner->updateAttributes([$attribute => $value]);
         }
     }
 
@@ -190,9 +193,8 @@ class FileBehavior extends Behavior
     {
         if ($this->isFileProtected($attribute)) {
             return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
-        } else {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
         }
+        return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
     }
 
     /**
