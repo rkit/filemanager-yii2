@@ -36,14 +36,14 @@ After saving the model is verified that the file (or files) have link to the cur
 
 ## Documentation
 
-[Guide](/guide)  
-[API Reference](/docs)
+- [Guide](/guide)
+- [API Reference](/docs)
 
 ## Development
 
 ### Tests
 
-[See docs](/tests/#tests)
+- [See docs](/tests/#tests)
 
 ### Coding Standard
 
