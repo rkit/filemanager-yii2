@@ -25,13 +25,11 @@ After saving the model is verified that the file (or files) have link to the cur
 ## Installation
 
 1. Installing using Composer
-
    ```
    composer require rkit/filemanager-yii2
    ```
 
 2. Run migrations
-
    ```
    php yii migrate --migrationPath=@vendor/rkit/filemanager-yii2/src/migrations/ --interactive=0
    ```
