@@ -330,11 +330,11 @@ All storages should be inherited from `rkit\filemanager\Storage`.
 
 ## Development
 
-## Tests
+### Tests
 
 [See docs](/tests/#tests)
 
-## Coding Standard
+### Coding Standard
 
 - PHP Code Sniffer — [phpcs.xml](./phpcs.xml)
 - PHP Mess Detector — [ruleset.xml](./ruleset.xml)
