@@ -36,7 +36,7 @@ After saving the model is verified that the file (or files) have link to the cur
    php yii migrate --migrationPath=@vendor/rkit/filemanager-yii2/src/migrations/ --interactive=0
    ```
 
-### Documentation
+## Documentation
 
 [API Reference](/docs)
 
@@ -327,3 +327,14 @@ $model->thumb('preview', '200x200', '/path/to/file');
 
 Already have a local storage, but you can to create an another storage.  
 All storages should be inherited from `rkit\filemanager\Storage`.
+
+## Development
+
+## Tests
+
+[See docs](/tests/#tests)
+
+## Coding Standard
+
+- PHP Code Sniffer — [phpcs.xml](./phpcs.xml)
+- PHP Mess Detector — [ruleset.xml](./ruleset.xml)
