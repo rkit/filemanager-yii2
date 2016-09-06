@@ -48,4 +48,4 @@ After saving the model is verified that the file (or files) have link to the cur
 ### Coding Standard
 
 - PHP Code Sniffer — [phpcs.xml](./phpcs.xml)
-- PHP Mess Detector — [ruleset.xml](./ruleset.xml)
+- PHP Mess Detector — [phpmd.xml](./phpmd.xml)
