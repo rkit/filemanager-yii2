@@ -7,37 +7,23 @@
 
 ## Features
 
-- AJAX upload
-- Support multiple file uploads
-- Validations of file
-- Presets for files
+- Use [flysystem](https://flysystem.thephpleague.com/)
+- Multiple file uploads
+- Presets (resize, crop) for files
 - Create thumbnails on the fly or after upload
-- Check the owner of a file
-- Storing information about a file in the database
-- Ability to use any component for working with files (resize, crop, etc)
-- Ability to change the way of storing files
-
-## Introduction
-
-The basic idea is that each file has an owner (model).  
-After saving the model is verified that the file (or files) have link to the current model.
+- The ability to specify extra fields for files
+- The ability to use any library for manipulating files (resize, crop, etc)
 
 ## Installation
 
-1. Installing using Composer
-   ```
-   composer require rkit/filemanager-yii2
-   ```
-
-2. Run migrations
-   ```
-   php yii migrate --migrationPath=@vendor/rkit/filemanager-yii2/src/migrations/ --interactive=0
-   ```
+```
+composer require rkit/filemanager-yii2
+```
 
 ## Documentation
 
 - [Guide](/guide)
-- [API Reference](/docs)
+- [API Reference](/api)
 
 ## Development
 

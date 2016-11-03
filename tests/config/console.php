@@ -7,7 +7,7 @@ $config = [
     'basePath' => Yii::getAlias('@tests'),
     'components' => [
         'user' => [
-            'class' => 'tests\data\User',
+            'class' => 'tests\data\models\User',
             'id' => 0
         ],
         'db' => [
@@ -19,26 +19,18 @@ $config = [
             'charset'           => 'utf8',
             'enableSchemaCache' => false
         ],
+        'session' => [
+            'class' => 'yii\web\Session',
+        ],
         'fileManager' => [
             'class' => 'rkit\filemanager\FileManager',
-            'uploadDirProtected' => '@tests/tmp/private',
-            'uploadDirUnprotected' => '@tests/tmp/public',
-            'publicPath' => 'uploads',
-            'ownerTypes' => [
-                'news.image_path' => 1,
-                'news.image_id' => 2,
-                'news.image_gallery' => 3,
-                'news.image_gallery_protected' => 4,
-                'news.image_strict_size' => 5,
-                'news.image_min_max_size' => 6,
-                'news.image_min_size' => 7,
-                'news.image_max_size' => 8,
-                'news.image_only_maxwidth' => 9,
-                'news.image_only_minwidth' => 10,
-                'news.image_only_maxheight' => 11,
-                'news.image_only_minheight' => 12
-            ]
-        ]
+            // 'sessionName' => 'filemanager.uploads',
+        ],
+        // any flysystem component for storage
+        'localFs' => [
+            'class' => 'creocoder\flysystem\LocalFilesystem',
+            'path' => '@tests/tmp/public',
+        ],
     ]
 ];
 

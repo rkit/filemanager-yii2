@@ -12,10 +12,6 @@ use Yii;
 use yii\base\Behavior;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
-use yii\base\InvalidParamException;
-use rkit\filemanager\models\File;
-use rkit\filemanager\helpers\FormatValidation;
-use rkit\filemanager\behaviors\FileBind;
 
 class FileBehavior extends Behavior
 {
@@ -24,9 +20,13 @@ class FileBehavior extends Behavior
      */
     public $attributes = [];
     /**
-     * @var rkit\filemanager\behaviors\FileBind
+     * @var ActiveQuery
      */
-    private static $bind;
+    private $relation;
+    /**
+     * @var FileBind
+     */
+    private $fileBind;
 
     /**
      * @internal
@@ -35,17 +35,9 @@ class FileBehavior extends Behavior
     {
         parent::init();
 
-        $this->setBind();
-        Yii::$app->fileManager->registerTranslations();
-    }
+        $this->fileBind = new FileBind();
 
-    /**
-     * @internal
-     * @return void
-     */
-    public function setBind()
-    {
-        $this->bind = new FileBind();
+        Yii::$app->fileManager->registerTranslations();
     }
 
     /**
@@ -70,7 +62,7 @@ class FileBehavior extends Behavior
      */
     public function beforeSave($insert)
     {
-        foreach ($this->attributes as $attribute => $data) {
+        foreach ($this->attributes as $attribute => $options) {
             $oldValue = $this->owner->isNewRecord ? null : $this->owner->getOldAttribute($attribute);
             $isAttributeChanged = $oldValue === null ? true : $this->owner->isAttributeChanged($attribute);
 
@@ -84,23 +76,39 @@ class FileBehavior extends Behavior
      */
     public function afterSave()
     {
-        foreach ($this->attributes as $attribute => $data) {
-            $fileId = $this->owner->{$attribute};
+        foreach ($this->attributes as $attribute => $options) {
+            $files = $this->owner->{$attribute};
 
-            if ($data['isAttributeChanged'] === false || $fileId === null) {
+            $isAttributeNotChanged = $options['isAttributeChanged'] === false || $files === null;
+            if ($isAttributeNotChanged) {
                 continue;
             }
 
-            $storage = $this->getFileStorage($attribute);
-            $ownerId = $this->owner->primaryKey;
-            $ownerType = $this->getFileOwnerType($attribute);
+            if (is_numeric($files)) {
+                $files = [$files];
+            }
 
-            if ($fileId === [] || $fileId === '') {
-                (new File())->deleteByOwner($storage, $ownerId, $ownerType);
+            if (is_array($files)) {
+                $files = array_filter($files);
+            }
+
+            if ($files === [] || $files === '') {
+                $this->fileBind->delete($this->owner, $attribute, $this->allFiles($attribute));
                 continue;
             }
 
-            $this->binding($data, $attribute, $storage, $ownerId, $ownerType, $fileId);
+            $maxFiles = ArrayHelper::getValue($this->fileRules($attribute, true), 'maxFiles');
+            if (is_array($files) && $maxFiles !== null) {
+                $files = array_slice($files, 0, $maxFiles, true);
+            }
+
+            $files = $this->fileBind->bind($this->owner, $attribute, $files);
+            if (is_array($files)) {
+                $files = array_shift($files);
+            }
+
+            $this->clearState($attribute);
+            $this->setValue($attribute, $files, $options['oldValue']);
         }
     }
 
@@ -110,176 +118,208 @@ class FileBehavior extends Behavior
      */
     public function beforeDelete()
     {
-        foreach ($this->attributes as $attribute => $data) {
-            $ownerType = $this->getFileOwnerType($attribute);
-            $storage = $this->getFileStorage($attribute);
-            (new File())->deleteByOwner($storage, $this->owner->primaryKey, $ownerType);
+        foreach ($this->attributes as $attribute => $options) {
+            $this->fileBind->delete($this->owner, $attribute, $this->allFiles($attribute));
         }
     }
 
-    /**
-     * Prepare the path of the file
-     *
-     * @param array $data
-     * @param string $attribute
-     * @param Strorage $storage
-     * @param int $ownerId
-     * @param int $ownerType
-     * @param mixed $fileId
-     * @return void
-     */
-    private function binding($data, $attribute, $storage, $ownerId, $ownerType, $fileId)
+    private function clearState($attribute)
     {
-        if ($this->isMultiple($attribute)) {
-            $this->bind->bindMultiple($storage, $ownerId, $ownerType, $fileId);
-            return;
-        }
-        $file = $this->bind->bindSingle($storage, $ownerId, $ownerType, $fileId);
+        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
+        unset($state[$attribute]);
+        Yii::$app->session->set(Yii::$app->fileManager->sessionName, $state);
+    }
 
-        if (isset($data['saveFilePath']) && $data['saveFilePath'] === true) {
-            $value = $this->prepareFilePath($file, $data['oldValue']);
-        } elseif (isset($data['saveFileId']) && $data['saveFileId'] === true) {
-            $value = $this->prepareFileId($file, $data['oldValue']);
+    private function setState($attribute, $file)
+    {
+        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
+        if (!is_array($state)) {
+            $state = [];
         }
+        $state[$attribute][] = $file->getPrimaryKey();
+        Yii::$app->session->set(Yii::$app->fileManager->sessionName, $state);
+    }
 
-        if (isset($value)) {
+    private function setValue($attribute, $file, $defaultValue)
+    {
+        $saveFilePath = $this->fileOption($attribute, 'saveFilePathInAttribute');
+        $saveFileId = $this->fileOption($attribute, 'saveFileIdInAttribute');
+
+        if ($saveFilePath || $saveFileId) {
+            if (!$file) {
+                $value = $defaultValue;
+            } elseif ($saveFilePath) {
+                $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+                $value = Yii::getAlias($this->fileOption($attribute, 'baseUrl')) . $handlerTemplatePath($file);
+            } elseif ($saveFileId) {
+                $value = $file->getPrimaryKey();
+            }
+            $this->owner->{$attribute} = $value;
             $this->owner->updateAttributes([$attribute => $value]);
         }
     }
 
     /**
-     * Prepare the path of the file
+     * Generate a thumb
      *
-     * @param mixed $file
-     * @param mixed $oldValue
-     * @return string
+     * @param string $attribute The attribute name
+     * @param string $preset The preset name
+     * @param string $path The file path
+     * @return string The thumb path
      */
-    private function prepareFilePath($file, $oldValue)
+    private function generateThumb($attribute, $preset, $path)
     {
-        if (is_object($file)) {
-            return $file->getStorage()->path();
-        } elseif ($file === false && $oldValue !== null) {
-            return $oldValue;
+        $thumbPath = pathinfo($path, PATHINFO_FILENAME);
+        $thumbPath = str_replace($thumbPath, $preset . '_' . $thumbPath, $path);
+        $realPath = $this->fileStorage($attribute)->path;
+
+        if (!file_exists($realPath . $thumbPath) && file_exists($realPath . $path)) {
+            $handlerPreset = $this->fileOption($attribute, 'preset.'.$preset);
+            $handlerPreset($realPath, $path, $thumbPath);
         }
 
-        return '';
+        return $thumbPath;
     }
 
     /**
-     * Prepare the id of the file
+     * Generate file path by template
      *
-     * @param mixed $file
-     * @param mixed $oldValue
-     * @return int
+     * @param string $attribute The attribute name
+     * @param ActiveRecord $file The file model
+     * @return string The file path
      */
-    private function prepareFileId($file, $oldValue)
+    private function templatePath($attribute, $file = null)
     {
-        if (is_object($file)) {
-            return $file->id;
-        } elseif ($file === false && $oldValue !== null) {
-            return $oldValue;
+        $value = $this->owner->{$attribute};
+
+        $saveFilePath = $this->fileOption($attribute, 'saveFilePathInAttribute');
+        $isFilledPath = $saveFilePath && !empty($value);
+
+        $saveFileId = $this->fileOption($attribute, 'saveFileIdInAttribute');
+        $isFilledId = $saveFileId && is_numeric($value) && $value;
+
+        if (($isFilledPath || $isFilledId) && $file === null) {
+            $file = $this->file($attribute);
         }
 
-        return 0;
-    }
-
-    /**
-     * Get the path to the upload directory
-     *
-     * @param string $attribute Attribute of a model
-     * @return string
-     */
-    public function uploadDir($attribute)
-    {
-        if ($this->isFileProtected($attribute)) {
-            return Yii::getAlias(Yii::$app->fileManager->uploadDirProtected);
+        if ($file !== null) {
+            $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+            return $handlerTemplatePath($file);
         }
-        return Yii::getAlias(Yii::$app->fileManager->uploadDirUnprotected);
+        return $value;
     }
 
     /**
-     * Get the type of the owner in as string
+     * Get relation
      *
-     * @param string $attribute Attribute of a model
-     * @return string
+     * @param string $attribute The attribute name
+     * @return \ActiveQuery
      */
-    private function getStringOwnerType($attribute)
+    public function fileRelation($attribute)
     {
-        return $this->owner->tableName() . '.' . $attribute;
+        if ($this->relation === null) {
+            $this->relation = $this->owner->getRelation($this->fileOption($attribute, 'relation'));
+        }
+        return $this->relation;
     }
 
     /**
-     * Get the type of the owner
+     * Get file option
      *
-     * @param string $attribute Attribute of a model
-     * @return int
+     * @param string $attribute The attribute name
+     * @param string $option Option name
+     * @param mixed $defaultValue Default value
+     * @return mixed
      */
-    public function getFileOwnerType($attribute)
+    public function fileOption($attribute, $option, $defaultValue = null)
     {
-        return Yii::$app->fileManager->getOwnerType($this->getStringOwnerType($attribute));
+        return ArrayHelper::getValue($this->attributes[$attribute], $option, $defaultValue);
+    }
+
+    /**
+     * Get file storage
+     *
+     * @param string $attribute The attribute name
+     * @return \Flysystem
+     */
+    public function fileStorage($attribute)
+    {
+        return Yii::$app->get($this->fileOption($attribute, 'storage'));
+    }
+
+    /**
+     * Get file path
+     *
+     * @param string $attribute The attribute name
+     * @param ActiveRecord $file Use this file model
+     * @return string The file path
+     */
+    public function filePath($attribute, $file = null)
+    {
+        $path = $this->templatePath($attribute, $file);
+        return $this->fileStorage($attribute)->path . $path;
+    }
+
+    /**
+     * Get file url
+     *
+     * @param string $attribute The attribute name
+     * @param ActiveRecord $file Use this file model
+     * @return string The file url
+     */
+    public function fileUrl($attribute, $file = null)
+    {
+        $path = $this->templatePath($attribute, $file);
+        return Yii::getAlias($this->fileOption($attribute, 'baseUrl')) . $path;
+    }
+
+    /**
+     * Get extra fields of file
+     *
+     * @param string $attribute The attribute name
+     * @return array
+     */
+    public function fileExtraFields($attribute)
+    {
+        $fields = $this->fileBind->relations($this->owner, $attribute);
+        if (!$this->fileOption($attribute, 'multiple')) {
+            return array_shift($fields);
+        }
+        return $fields;
     }
 
     /**
      * Get files
      *
-     * @param string $attribute Attribute of a model
-     * @return array
+     * @param string $attribute The attribute name
+     * @return \ActiveRecord[] The file models
      */
-    public function getFiles($attribute)
+    public function allFiles($attribute)
     {
-        $files = File::findAllByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
-        foreach ($files as $file) {
-            $file->setStorage($this->getFileStorage($attribute));
-        }
-
-        return $files;
+        return $this->fileBind->files($this->owner, $attribute);
     }
 
     /**
      * Get the file
      *
-     * @param string $attribute Attribute of a model
-     * @return File|null
+     * @param string $attribute The attribute name
+     * @return \ActiveRecord The file model
      */
-    public function getFile($attribute)
+    public function file($attribute)
     {
-        $file = File::findOneByOwner($this->owner->primaryKey, $this->getFileOwnerType($attribute));
-        $file->setStorage($this->getFileStorage($attribute));
-        return $file;
-    }
-
-    /**
-     * Check whether the upload of multiple files
-     *
-     * @param string $attribute Attribute of a model
-     * @return bool
-     */
-    public function isMultiple($attribute)
-    {
-        return ArrayHelper::getValue($this->attributes[$attribute], 'multiple', false);
-    }
-
-    /**
-     * Checks whether the file is protected
-     *
-     * @param string $attribute Attribute of a model
-     * @return bool
-     */
-    public function isFileProtected($attribute)
-    {
-        return ArrayHelper::getValue($this->attributes[$attribute], 'protected', false);
+        return $this->fileBind->file($this->owner, $attribute);
     }
 
     /**
      * Get rules
      *
-     * @param string $attribute Attribute of a model
+     * @param string $attribute The attribute name
      * @param bool $onlyCoreValidators Only core validators
      * @return array
      */
-    public function getFileRules($attribute, $onlyCoreValidators = false)
+    public function fileRules($attribute, $onlyCoreValidators = false)
     {
-        $rules = ArrayHelper::getValue($this->attributes[$attribute], 'rules', []);
+        $rules = $this->fileOption($attribute, 'rules', []);
         if ($onlyCoreValidators && isset($rules['imageSize'])) {
             $rules = array_merge($rules, $rules['imageSize']);
             unset($rules['imageSize']);
@@ -288,140 +328,86 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Get the presets of the file
+     * Get file state
      *
-     * @param string $attribute Attribute of a model
+     * @param string $attribute The attribute name
      * @return array
      */
-    public function getFilePreset($attribute)
+    public function fileState($attribute)
     {
-        return array_keys(ArrayHelper::getValue($this->attributes[$attribute], 'preset', []));
+        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
+        return ArrayHelper::getValue($state === null ? [] : $state, $attribute, []);
     }
 
     /**
      * Get the presets of the file for apply after upload
      *
-     * @param string $attribute Attribute of a model
+     * @param string $attribute The attribute name
      * @return array
      */
-    public function getFilePresetAfterUpload($attribute)
+    public function filePresetAfterUpload($attribute)
     {
-        $preset = ArrayHelper::getValue($this->attributes[$attribute], 'applyPresetAfterUpload', false);
+        $preset = $this->fileOption($attribute, 'applyPresetAfterUpload', []);
         if (is_string($preset) && $preset === '*') {
-            return $this->getFilePreset($attribute);
-        } elseif (is_array($preset)) {
-            return $preset;
+            return array_keys($this->fileOption($attribute, 'preset', []));
         }
-
-        return [];
+        return $preset;
     }
 
     /**
-     * Get the storage of the file
+     * Create a thumb and return url
      *
-     * @param string $attribute Attribute of a model
-     * @return Storage
-     * @throws InvalidParamException
+     * @param string $attribute The attribute name
+     * @param string $preset The preset name
+     * @param ActiveRecord $file Use this file model
+     * @return string The file url
      */
-    public function getFileStorage($attribute)
+    public function thumbUrl($attribute, $preset, $file = null)
     {
-        $storage = ArrayHelper::getValue($this->attributes[$attribute], 'storage', null);
-        if ($storage) {
-            return new $storage();
-        }
+        $path = $this->templatePath($attribute, $file);
+        $thumbPath = $this->generateThumb($attribute, $preset, $path);
 
-        throw new InvalidParamException('The storage is not defined'); // @codeCoverageIgnore
+        return Yii::getAlias($this->fileOption($attribute, 'baseUrl')) . $thumbPath;
     }
 
     /**
-     * Generate a thumb name
+     * Create a thumb and return full path
      *
-     * @param string $path The path of the file
-     * @param string $prefix Prefix for name of the file
-     * @return string
+     * @param string $attribute The attribute name
+     * @param string $preset The preset name
+     * @param ActiveRecord $file Use this file model
+     * @return string The file path
      */
-    public function generateThumbName($path, $prefix)
+    public function thumbPath($attribute, $preset, $file = null)
     {
-        $fileName = pathinfo($path, PATHINFO_FILENAME);
-        return str_replace($fileName, $prefix . '_' . $fileName, $path);
-    }
+        $path = $this->templatePath($attribute, $file);
+        $thumbPath = $this->generateThumb($attribute, $preset, $path);
 
-    /**
-     * Resize image
-     *
-     * @param string $attribute Attribute of a model
-     * @param string $preset The name of the preset
-     * @param string $pathToFile Use this path to the file
-     * @param bool $returnRealPath Return the real path to the file
-     * @return string
-     */
-    public function thumb($attribute, $preset, $pathToFile = null, $returnRealPath = false)
-    {
-        $realPath = $this->uploadDir($attribute);
-        $publicPath = $pathToFile ? $pathToFile : $this->owner->$attribute;
-        $thumbPath = $this->generateThumbName($publicPath, $preset);
-
-        if (!file_exists($realPath . $thumbPath)) {
-            if (file_exists($realPath . $publicPath)) {
-                $thumbInit = ArrayHelper::getValue($this->attributes[$attribute]['preset'], $preset);
-                if ($thumbInit) {
-                    $thumbInit($realPath, $publicPath, $thumbPath);
-                }
-            }
-        }
-
-        return $returnRealPath ? $realPath . $thumbPath : $thumbPath;
+        return $this->fileStorage($attribute)->path . $thumbPath;
     }
 
     /**
      * Create a file
      *
-     * @param string $attribute Attribute of a model
-     * @param string $path The path of the file
-     * @param string $title The title of file
-     * @param bool $temporary The file is temporary
-     * @return rkit\filemanager\models\File
+     * @param string $attribute The attribute name
+     * @param string $path The file path
+     * @param string $name The file name
+     * @return \ActiveRecord The file model
      */
-    public function createFile($attribute, $path, $title, $temporary)
+    public function createFile($attribute, $path, $name)
     {
-        $file = new File();
-        $file->path = $path;
-        $file->tmp = $temporary;
-        $file->title = $title;
-        $file->owner_id = $this->owner->primaryKey;
-        $file->owner_type = $this->getFileOwnerType($attribute);
-        $file->protected = $this->isFileProtected($attribute);
-
-        if ($file->save()) {
-            $file->setStorage($this->getFileStorage($attribute));
-            return $file->getStorage()->save($path);
-        }
-
+        $handlerCreateFile = $this->fileOption($attribute, 'createFile');
+        $file = $handlerCreateFile($path, $name);
+        if ($file) {
+            $storage = $this->fileStorage($attribute);
+            $contents = file_get_contents($path);
+            $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+            if ($storage->write($handlerTemplatePath($file), $contents)) {
+                $this->setState($attribute, $file);
+                $this->owner->{$attribute} = $file->id;
+                return $file;
+            }
+        } // @codeCoverageIgnore
         return false; // @codeCoverageIgnore
-    }
-
-    /**
-     * Get a description of the validation rules in as text
-     *
-     * Example
-     *
-     * ```php
-     * $form->field($model, $attribute)->hint($model->getFileRulesDescription($attribute)
-     * ```
-     *
-     * Output
-     *
-     * ```
-     * Min. size of image: 300x300px
-     * File types: JPG, JPEG, PNG
-     * Max. file size: 1.049 MB
-     * ```
-     *
-     * @param string $attribute Attribute of a model
-     * @return string
-     */
-    public function getFileRulesDescription($attribute)
-    {
-        return FormatValidation::getDescription($this->attributes[$attribute]['rules']);
     }
 }

@@ -2,16 +2,18 @@
 <phpdoc>
     <title>FileManager for Yii2</title>
     <parser>
-        <target>build-docs</target>
+        <target>build-api</target>
     </parser>
     <transformer>
-        <target>docs</target>
+        <target>api</target>
     </transformer>
     <transformations>
         <template name="vendor/cvuorinen/phpdoc-markdown-public/data/templates/markdown-public" />
     </transformations>
     <files>
         <directory>src</directory>
+        <ignore>src/FileManager.php</ignore>
+        <ignore>src/behaviors/FileBind.php</ignore>
         <ignore>tests/*</ignore>
         <ignore>migrations/*</ignore>
         <ignore>actions/*</ignore>

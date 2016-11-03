@@ -1,36 +1,64 @@
 # Guide
 
-## Configuration
-
-Add the following in your config, in section `components`
-
-``` php
-'fileManager' => [
-    'class' => 'rkit\filemanager\FileManager',
-    // directory for files inaccessible from the web
-    'uploadDirProtected' => '@app/runtime',
-    // directory for files available from the web
-    'uploadDirUnprotected' => '@app/web',
-    // path in a directory of upload
-    'publicPath' => 'uploads',
-    // an array of the types of owners
-    // in the format of `table.attribute` => `unique value`
-    'ownerTypes' => [
-        'news.text' => 1,
-        'news.preview' => 2,
-        'news.gallery' => 3,
-        'user_profile.photo' => 4,
-    ]
-]
-```
+This extension does not contain any widget for ajax upload.  
+You can to use any widget, for example: [fileapi-widget-yii2](https://github.com/rkit/fileapi-widget-yii2)  
+But what is important, is that **the input value should contain the id of a file or an array of ids.**
 
 ## Usage
 
-### Basic usage
+For example, we have a model `News`, and we want to add the ability to upload files.  
+Let's do it.
 
-1. **Controller**
+1. **Configuring components**
 
-   ``` php
+   ```php
+   'fileManager' => [
+       'class' => 'rkit\filemanager\FileManager',
+       // 'sessionName' => 'filemanager.uploads',
+   ],
+   // any flysystem component for storage, for example https://github.com/creocoder/yii2-flysystem
+   'localFs' => [
+       'class' => 'creocoder\flysystem\LocalFilesystem',
+       'path' => '@webroot/uploads',
+   ],
+   ```
+
+2. **Creating migrations**
+
+   Migration for a model `File` (and of course you need to create the model)
+
+   ```php
+   php yii migrate/create create_file_table --fields="title:string:notNull:defaultValue(''),name:string:notNull:defaultValue(''),date_create:timestamp,date_update:timestamp"
+   ```
+   > You can add any extra fields, such as `user_id`, `ip`, `size`, `extension`
+
+   Migration for a join table
+
+   ```php
+   php yii migrate/create create_news_files_table --fields="news_id:integer:notNull:defaultValue(0),file_id:integer:notNull:defaultValue(0)"
+   ```
+   > You can add any extra fields, such as `type` to divide files by type or `position` to set sort order
+
+3. **Applying Migrations**
+
+   ```php
+   php yii migrate
+   ```
+
+4. **Declaring a relation**
+
+   ```php
+   public function getFiles($callable = null)
+   {
+        return $this
+            ->hasMany(File::className(), ['id' => 'file_id'])
+            ->viaTable('news_files', ['news_id' => 'id'], $callable);
+   }
+   ```
+
+5. **Adding upload action**
+
+   ```php
    public function behaviors()
    {
        return [
@@ -48,27 +76,17 @@ Add the following in your config, in section `components`
        return [
            'preview-upload' => [
                'class' => 'rkit\filemanager\actions\UploadAction',
-               'modelName' => 'app\models\News',
+               'modelClass' => 'app\models\News',
                'attribute' => 'preview',
-               // the type of the file (`image` or `file`)
-               'type' => 'image',
-               // the name of the file input field
                'inputName' => 'file',
            ],
        ];
    }
    ```
 
-2. **Model**
+6. **Adding behavior**
 
-   > The example uses [Intervention\Image](https://github.com/Intervention/image), but this is optional.  
-   > You can use any library for working with files.
-
-   ``` php
-   // any component to resize/crop images
-   use Intervention\Image\ImageManagerStatic as Image;
-   …
-
+   ```php
    public function behaviors()
    {
        return [
@@ -76,214 +94,184 @@ Add the following in your config, in section `components`
                'class' => 'rkit\filemanager\behaviors\FileBehavior',
                'attributes' => [
                    'preview' => [
-                       // local storages
-                       'storage' => 'rkit\filemanager\storages\LocalStorage',
-                       // save path of the file in this attribute
-                       'saveFilePath' => true,
-                       // @see http://www.yiiframework.com/doc-2.0/guide-tutorial-core-validators.html
+                       // any flysystem component for storage
+                       'storage' => 'localFs',
+                       // the base URL for files
+                       'baseUrl' => '@web/uploads',
+                       // file type (default `image`)
+                       'type' => 'image',
+                       // relation name
+                       'relation' => 'files',
+                       // save file path in attribute (default `false`)
+                       'saveFilePathInAttribute' => true,
+                       // a callback for generating file path
+                       // `function(ActiveRecord $file): string`
+                       'templatePath' => function ($file) {
+                           $date = new \DateTime(is_object($file->date_create) ? null : $file->date_create);
+                           return '/' . $date->format('Ym') . '/' . $file->id . '/' . $file->name;
+                       },
+                       // a callback for creating `File` model
+                       // `function(string $path, string $name): ActiveRecord`
+                       'createFile' => function ($path, $name) {
+                           $file = new File();
+                           $file->title = $name;
+                           $file->generateName(pathinfo($name, PATHINFO_EXTENSION));
+                           $file->save();
+                           return $file;
+                       },
+                       // core validators
                        'rules' => [
                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
                            'mimeTypes' => ['image/png', 'image/jpg', 'image/jpeg'],
                            'extensions' => ['jpg', 'jpeg', 'png'],
                            'maxSize' => 1024 * 1024 * 1, // 1 MB
+                           'maxFiles' => 1,
                            'tooBig' => Yii::t('app', 'File size must not exceed') . ' 1Mb'
-                       ],
-
-                       // presets for the files, can be used on the fly
-                       // or you can to apply them after upload
+                       ]),
+                       // the names[] of presets with callbacks
+                       // `function(string $realPath, string $publicPath, string $thumbPath)`
                        'preset' => [
-                           '200x200' => function ($realPath, $publicPath, $thumbPath) {
-                               // any manipulation on the file
-                               Image::make($realPath . $publicPath)
-                                   ->fit(200, 200)
-                                   ->save($realPath . $thumbPath, 100);
-                           },
                            '220x220' => function ($realPath, $publicPath, $thumbPath) {
-                               // any manipulation on the file
-                               Image::make($realPath . $publicPath)
-                                   ->fit(220, 220)
-                                   ->save($realPath . $thumbPath, 100);
+                                // you can to use any library for manipulating with files
+                                Image::make($realPath . $publicPath)
+                                    ->fit(220, 220)
+                                    ->save($realPath . $thumbPath, 100);
                            },
-                       ],
-
-                       // * — to apply all presets after upload
-                       // or an array with the names[] of presets
-                       'applyPresetAfterUpload' => '*'
-                   ]
+                       ]),
+                       // the names[] of presets or `*` to apply all
+                       'applyPresetAfterUpload' => ['220x220']
+                   ],
                ]
            ]
        ];
    }
    ```
 
-3. **View**
-
-   Any widget for ajax upload (you can use [the widget for FileApi](https://github.com/rkit/fileapi-widget-yii2))  
-   **IMPORTANT**: In the value of input should be the id of a file or an array of ids.
-
-### Gallery
-
-1. **Controller**
-
-   ``` php
-   public function actions()
-   {
-       return [
-           'gallery-upload' => [
-               'class' => 'rkit\filemanager\actions\UploadAction',
-               'modelName' => 'app\models\News',
-               'attribute' => 'gallery',
-               // the type of the file (`image` or `file`)
-               'type' => 'image',
-               // the name of the file input field
-               'inputName' => 'file',
-               // multiple files
-               'multiple'  => true,
-               // path to the template for uploaded a file
-               'template'  => Yii::getAlias('@app/path/to/file')
-           ]
-       ]
-   }
-   ```
-
-2. **Model**
-
-   ``` php
-   public function behaviors()
-   {
-       return [
-           [
-               'class' => 'rkit\filemanager\behaviors\FileBehavior',
-               'attributes' => [
-                   'gallery' => [
-                       // local storages
-                       'storage' => 'rkit\filemanager\storages\LocalStorage',
-                       // multiple files
-                       'multiple' => true,
-                       'preset' => [
-                           '80x80' => function ($realPath, $publicPath, $thumbPath) {
-                               // any manipulation on the file
-                               Image::make($realPath . $publicPath)
-                                   ->fit(80, 80)
-                                   ->save($realPath . $thumbPath, 100);
-                           },
-                       ],
-                       'applyPresetAfterUpload' => ['80x80']
-                   ]
-               ]
-           ]
-       ];
-   }
-   ```
-
-3. **Template** for uploaded a file
-
-   ``` php
-   <li>
-     <a href="<?= $file->getStorage()->path()?>" target="_blank">
-       <img src="<?= $model->thumb('gallery', '80x80', $file->getStorage()->path())?>">
-     </a>
-     <?= Html::textInput(Html::getInputName($model, $attribute) . '[' . $file->id .']', $file->title, [
-         'class' => 'form-control',
-     ])?>
-   </li>
-
-   ```
-
-### Temporary files
-
-By default in action upload `temporary` is true and file will be uploaded into tmp directory.  
-After saved the model file will be moved into storage and will be to bound to the model.  
-If `temporary` is false, file immediately will be uploaded into storage and will be to bound to the model.  
-
-For example, it could be a need for wysiwyg editor, when you need to immediately save the file after upload and assign the owner:
-
-``` php
-public function actions()
-{
-    return [
-        'text-upload' => [
-            'class' => 'rkit\filemanager\actions\UploadAction',
-            'modelName' => 'app\models\News',
-            'attribute' => 'text',
-            'type' => 'image',
-            'inputName' => 'file',
-            'temporary' => false,
-        ]
-    ]
-}
-```
-
-### Save path (or id) of the file in field of a model
-
-You can save the file path in the model, then use `$model->attribute`, to get quickly the path to the file
+## Behavior settings
 
 ```php
-public function behaviors()
-{
+// any flysystem component for storage
+'storage' => 'localFs',
+// the base URL for files
+'baseUrl' => '@web/uploads',
+// file type (default `image`)
+'type' => 'image',
+// multiple files (default `false`)
+'multiple' => false,
+// path to template for upload response (the default is an array with id and path of file)
+'template' => null,
+// a relation name
+'relation' => 'files',
+// save file path in attribute (default `false`)
+'saveFilePathInAttribute' => true,
+// save file id in attribute (default `false`)
+'saveFileIdInAttribute' => false,
+// a callback for generating file path
+// `function(ActiveRecord $file): string`
+'templatePath' => function ($file) {
+    $date = new \DateTime(is_object($file->date_create) ? null : $file->date_create);
+    return '/' . $date->format('Ym') . '/' . $file->id . '/' . $file->name;
+},
+// a callback for creating `File` model
+// `function(string $path, string $name): ActiveRecord`
+'createFile' => function ($path, $name) {
+    $file = new File();
+    $file->title = $name;
+    $file->generateName(pathinfo($name, PATHINFO_EXTENSION));
+    $file->save();
+    return $file;
+},
+// a callback for updating `File` model, triggered every time after saving model
+// important: return model without saving
+// `function(ActiveRecord $file): ActiveRecord`
+'updateFile' => function ($file) {
+    // you can modify attributes (without saving)
+    return $file;
+},
+// a callback for filling extra fields, triggered every time after saving model
+// `function(ActiveRecord $file, array $fields): array new extra fields`
+'extraFields' => function ($file, $fields) {
     return [
-        [
-            'class' => 'rkit\filemanager\behaviors\FileBehavior',
-            'attributes' => [
-                'preview' => [
-                    …
-                    // save path of the file in this attribute
-                    'saveFilePath' => true,
-                    // or save id of the file in this attribute
-                    'saveFileId' => true,
-                    …
+         'type' => 1, if you want to divide files by type
+         'position' => $positions[$file->id], // if you want to set sort order
+    ];
+},
+// a callback for customizing the relation associated with the junction table
+// `function(ActiveQuery $query): ActiveQuery`
+'relationQuery' => function ($query) {
+    return $query->andWhere(['type' => 1]); // to select a specific type of file
+},
+// core validators
+'rules' => [
+    'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
+    'mimeTypes' => ['image/png', 'image/jpg', 'image/jpeg'],
+    'extensions' => ['jpg', 'jpeg', 'png'],
+    'maxSize' => 1024 * 1024 * 1, // 1 MB
+    'maxFiles' => 1,
+    'tooBig' => Yii::t('app', 'File size must not exceed') . ' 1Mb'
+]),
+// the names[] of presets with callbacks
+// `function(string $realPath, string $publicPath, string $thumbPath)`
+'preset' => [
+    '220x220' => function ($realPath, $publicPath, $thumbPath) {
+         // you can to use any library for manipulating with files
+         Image::make($realPath . $publicPath)
+             ->fit(220, 220)
+             ->save($realPath . $thumbPath, 100);
+    },
+]),
+// the names[] of presets or `*` to apply all
+'applyPresetAfterUpload' => ['220x220']
 ```
 
-### Get files
+### API
 
-If one file
+To get file
 
 ```php
-$model->getFile('preview');
+$model->file('preview');
 ```
 
 If multiple files
 
 ```php
-$model->getFiles('gallery');
+$model->allFiles('gallery');
 ```
 
-> [See API](../docs#filebehavior)
+To get file full path
 
-### Manually create a file
+```php
+$model->filePath('preview');
+```
+
+To get file url
+
+```php
+$model->fileUrl('gallery');
+```
+
+To create a file manually
 
 ```php
 $model->createFile('preview', '/path/to/file', 'title');
 ```
 
-> [See API](../docs#createfile)
-
-### Get a description of the validation rules in as text
-
-It could be a need for render a form.  
+To create thumbnail and return url
 
 ```php
-$model->getFileRulesDescription('preview')
+$model->thumbUrl('preview', '200x200');
 ```
 
-> [See API and example](../docs#getfilerulesdescription)
-
-### Presets
-
-Presets can be used on the fly or you can to apply them after upload.  
-Presets are cached.
+To create thumbnail and return full path
 
 ```php
-// Apply a preset and return public path
-$model->thumb('preview', '200x200');
-
-// Apply a preset for a custom path to the file
-$model->thumb('preview', '200x200', '/path/to/file');
+$model->thumbPath('preview', '200x200');
 ```
 
-> [See API](../docs#thumb)
+To get extra fields
 
-### Storages
+```php
+$model->fileExtraFields('preview');
+```
 
-Already have a local storage, but you can to create an another storage.  
-All storages should be inherited from `rkit\filemanager\Storage`.
+> [See more in API](../api)

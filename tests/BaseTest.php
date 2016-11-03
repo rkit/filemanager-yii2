@@ -10,74 +10,72 @@ namespace tests;
 
 use Yii;
 use yii\helpers\FileHelper;
-use tests\data\Controller;
-use tests\data\News;
+use tests\data\controllers\Controller;
 use rkit\filemanager\actions\UploadAction;
-use rkit\filemanager\models\File;
 
-abstract class BaseTest extends \PHPUnit_Framework_TestCase
+abstract class BaseTest extends \PHPUnit_Extensions_Database_TestCase
 {
-    protected $storage = 'rkit\filemanager\storages\LocalStorage';
-
-    public $files = [];
-
-    protected function setUp()
+    /**
+     * @inheritdoc
+     */
+    public function getConnection()
     {
-        $this->storage = new $this->storage();
-        $this->prepareFiles();
+        Yii::$app->getDb()->open();
+        return $this->createDefaultDBConnection(\Yii::$app->getDb()->pdo);
     }
 
-    protected function tearDown()
+    /**
+     * @inheritdoc
+     */
+    public function getDataSet()
     {
-        File::deleteAll();
-        News::deleteAll();
+        $data = require Yii::getAlias('@tests/data/fixtures/file.php');
+        return new \PHPUnit_Extensions_Database_DataSet_ArrayDataSet($data);
+    }
 
-        $fileManager = Yii::$app->fileManager;
+    /**
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
+    public static function setUpBeforeClass()
+    {
+        FileHelper::createDirectory(Yii::getAlias('@tests/data/files/tmp'));
+        $_FILES = require Yii::getAlias('@tests/data/files.php');
+    }
 
-        FileHelper::removeDirectory(Yii::getAlias($fileManager->uploadDirProtected));
-        FileHelper::removeDirectory(Yii::getAlias($fileManager->uploadDirUnprotected));
+    /**
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
+    public static function tearDownAfterClass()
+    {
+        FileHelper::removeDirectory(Yii::getAlias('@tests/tmp/public'));
         FileHelper::removeDirectory(Yii::getAlias('@tests/data/files/tmp'));
 
         unset($_FILES);
     }
 
-    private function prepareFiles()
+    /**
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
+    public function tearDown()
     {
-        $this->files = require Yii::getAlias('@tests/data/files.php');
-        FileHelper::createDirectory(Yii::getAlias('@tests/data/files/tmp'));
-
-        $_FILES = [];
-        foreach ($this->files as $inputName => $fileInfo) {
-            $_FILES[$inputName] = [
-                'name' => $fileInfo['name'],
-                'type' => $fileInfo['type'],
-                'size' => $fileInfo['size'],
-                'tmp_name' => $this->prepareFile($inputName),
-                'error' => 0
-            ];
-        }
+        $db = Yii::$app->getDb()->createCommand();
+        $db->truncateTable('news')->execute();
+        $db->truncateTable('news_files')->execute();
     }
 
     /**
-     * Prepare a file for test
-     *
-     * @param string $fileIndex See property $files
-     * @param string $prefix Prefix for a file
-     * @return string Path to file
+     * @SuppressWarnings(PHPMD.Superglobals)
      */
-    protected function prepareFile($fileIndex, $prefix = 'copy')
+    public function createTmpFile($fileName)
     {
-        $file = $this->files[$fileIndex];
-        $origFile = Yii::getAlias(
-            '@tests/data/files/' . $file['name']
-        );
-        $copyFile = Yii::getAlias(
-            '@tests/data/files/tmp/' . $prefix . '_' . $file['name']
-        );
+        if (!isset($_FILES[$fileName])) {
+            return false;
+        }
 
-        copy($origFile, $copyFile);
+        $file = $_FILES[$fileName];
+        copy(Yii::getAlias('@tests/data/files/' . $file['name']), $file['tmp_name']);
 
-        return $copyFile;
+        return $file['tmp_name'];
     }
 
     /**
@@ -86,137 +84,22 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      * @param array $config
      * @return mixed The result of the action
      */
-    protected function runUploadAction($config)
+    public function runUploadAction($config)
     {
+        $this->createTmpFile($config['inputName']);
+
         $action = new UploadAction('upload', new Controller('test', Yii::$app), $config);
         return $action->run();
     }
 
-    /**
-     * Test tmp a file
-     *
-     * @param string $file
-     * @param string $ownerId
-     * @param string $ownerType
-     * @return void
-     */
-    protected function checkTmpFile($file, $ownerId, $ownerType)
+    public function createObject($modelClass, $options = [], $id = null)
     {
-        $this->assertTrue(is_object($file));
-        $this->assertFileExists($file->getStorage()->path(true));
-        $this->assertTrue($file->isTmp());
-        $this->assertTrue((bool)$file->tmp);
-        $this->assertTrue($file->owner_id === $ownerId);
-        $this->assertTrue($file->owner_type === $ownerType);
-    }
+          $options;
+          $behavior = require Yii::getAlias('@tests/data/behavior.php');
 
-    /**
-     * Test not tmp a file
-     *
-     * @param string $file
-     * @param string $ownerId
-     * @param string $ownerType
-     * @return void
-     */
-    protected function checkNotTmpFile($file, $ownerId, $ownerType)
-    {
-        $this->assertTrue(is_object($file));
-        $this->assertFileExists($file->getStorage()->path(true));
-        $this->assertFalse($file->isTmp());
-        $this->assertTrue(!(bool)$file->tmp);
-        $this->assertTrue($file->owner_id === $ownerId);
-        $this->assertTrue($file->owner_type === $ownerType);
-    }
+          $model = $id ? $modelClass::findOne($id) : new $modelClass;
+          $model->attachBehavior('fileManager', $behavior);
 
-    /**
-     * Test response after uploading the file
-     *
-     * @param array $response
-     * @return array $response
-     */
-    protected function checkUploadFileResponse($response)
-    {
-        $this->assertCount(2, $response);
-        $this->assertArrayHasKey('id', $response);
-        $this->assertArrayHasKey('path', $response);
-
-        return $response;
-    }
-
-    /**
-     * Test response after uploading the gallery
-     *
-     * @param array $response
-     * @return array $response
-     */
-    protected function checkUploadGalleryResponse($response)
-    {
-        preg_match('/News\[(.*?)\]\[(.*?)\]/', $response, $matches);
-
-        $this->assertTrue(is_string($response));
-        $this->assertTrue(isset($matches[2]));
-        $this->assertTrue(is_numeric($matches[2]));
-
-        $matches[1] = $matches[2];
-
-        return $matches;
-    }
-
-    /**
-     * Upload and test a file
-     *
-     * @param array $config see Properties UploadAction
-     * @return array $file and $model
-     */
-    protected function uploadFileAndBindToModel($config)
-    {
-        $response = $this->runUploadAction($config);
-        $response = $this->checkUploadFileResponse($response);
-
-        $file = File::findOne($response['id']);
-        $file->setStorage($this->storage);
-
-        $model = new News(['title' => 'test', $config['attribute'] => $file->id]);
-        $ownerType = $model->getFileOwnerType($config['attribute']);
-
-        $this->assertTrue($model->save());
-
-        $file = File::findOne($file->id);
-        $file->setStorage($this->storage);
-
-        return [$file, $model];
-    }
-
-    /**
-     * Upload and test a gallery
-     *
-     * @param array $config see Properties UploadAction
-     * @return array $files and $model
-     */
-    protected function uploadMultipleAndBindToModel($config)
-    {
-        $response = $this->runUploadAction($config);
-        $response = $this->checkUploadGalleryResponse($response);
-
-        $file = File::findOne($response[1]);
-        $file->setStorage($this->storage);
-
-        $model = new News([
-            'title' => 'test',
-            $config['attribute'] => [$file->id => 'test']
-        ]);
-        $ownerType = $model->getFileOwnerType($config['attribute']);
-
-        $this->assertTrue($model->save());
-
-        $files = $model->getFiles($config['attribute']);
-        $this->assertCount(1, $files);
-
-        foreach ($files as $file) {
-            $file->setStorage($this->storage);
-            $this->assertContains('test', $file->title);
-        }
-
-        return [$files, $model];
+          return $model;
     }
 }

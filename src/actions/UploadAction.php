@@ -13,33 +13,26 @@ use yii\base\Action;
 use yii\base\DynamicModel;
 use yii\base\InvalidParamException;
 use yii\web\UploadedFile;
+use yii\helpers\ArrayHelper;
 
 class UploadAction extends Action
 {
     /**
-     * @var string $modelName The name of model
+     * @var string $modelClass Class name of the model
      */
-    public $modelName;
+    public $modelClass;
     /**
-     * @var string $attribute
+     * @var string $modelObject Model
+     */
+    public $modelObject;
+    /**
+     * @var string $attribute Attribute name of the model
      */
     public $attribute;
     /**
      * @var string $inputName The name of the file input field
      */
     public $inputName;
-    /**
-     * @var string $type The type of the file (`image` or `file`)
-     */
-    public $type = 'image';
-    /**
-     * @var string $multiple Multiple files
-     */
-    public $multiple = false;
-    /**
-     * @var string $template Path to template for multiple files
-     */
-    public $template;
     /**
      * @var string $resultFieldId The name of the field that contains the id of the file in the response
      */
@@ -49,21 +42,19 @@ class UploadAction extends Action
      */
     public $resultFieldPath = 'path';
     /**
-     * @var bool $temporary The file is temporary
-     */
-    public $temporary = true;
-    /**
      * @var ActiveRecord $model
      */
     private $model;
 
     public function init()
     {
-        if ($this->modelName === null) {
-            throw new InvalidParamException('The "modelName" attribute must be set.');
+        if ($this->modelClass === null && $this->modelObject === null) {
+            throw new InvalidParamException(
+                get_class($this) . '::$modelClass or ' .get_class($this) . '::$modelObject must be set'
+            );
         }
 
-        $this->model = new $this->modelName();
+        $this->model = $this->modelClass ? new $this->modelClass : $this->modelObject;
     }
 
     public function run()
@@ -76,15 +67,26 @@ class UploadAction extends Action
             );
         }
 
-        $rules = $this->model->getFileRules($this->attribute, true);
+        $rules = $this->model->fileRules($this->attribute, true);
+        $type = $this->model->fileOption($this->attribute, 'type', 'image');
 
         $model = new DynamicModel(compact('file'));
-        $model->addRule('file', $this->type, $rules)->validate();
 
+        $maxFiles = ArrayHelper::getValue($rules, 'maxFiles');
+        if ($maxFiles !== null && $maxFiles > 1) {
+            $model->file = [$model->file];
+        }
+
+        $model->addRule('file', $type, $rules)->validate();
         if ($model->hasErrors()) {
             return $this->response(['error' => $model->getFirstError('file')]);
         }
-        return $this->upload($file);
+
+        if (is_array($model->file)) {
+            $model->file = $model->file[0];
+        }
+
+        return $this->save($model->file);
     }
 
     /**
@@ -92,24 +94,20 @@ class UploadAction extends Action
      *
      * @param UploadedFile $file
      * @return string JSON
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
-    private function upload($file)
+    private function save($file)
     {
-        $file = $this->model->createFile(
-            $this->attribute,
-            $file->tempName,
-            $file->name,
-            $this->temporary
-        );
-
+        $file = $this->model->createFile($this->attribute, $file->tempName, $file->name);
         if ($file) {
-            $presetAfterUpload = $this->model->getFilePresetAfterUpload($this->attribute);
+            $presetAfterUpload = $this->model->filePresetAfterUpload($this->attribute);
             if (count($presetAfterUpload)) {
-                $this->applyPreset($file->getStorage()->path(), $presetAfterUpload);
+                $this->applyPreset($presetAfterUpload, $file);
             }
-            if ($this->multiple) {
+            $template = $this->model->fileOption($this->attribute, 'template');
+            if ($template) {
                 return $this->response(
-                    $this->controller->renderFile($this->template, [
+                    $this->controller->renderFile(Yii::getAlias($template), [
                         'file' => $file,
                         'model' => $this->model,
                         'attribute' => $this->attribute
@@ -117,8 +115,8 @@ class UploadAction extends Action
                 );
             }
             return $this->response([
-                $this->resultFieldId => $file->id,
-                $this->resultFieldPath => $file->getStorage()->path()
+                $this->resultFieldId => $file->getPrimaryKey(),
+                $this->resultFieldPath => $this->model->fileUrl($this->attribute, $file),
             ]);
         }
         return $this->response(['error' => Yii::t('filemanager-yii2', 'Error saving file')]); // @codeCoverageIgnore
@@ -127,14 +125,14 @@ class UploadAction extends Action
     /**
      * Apply preset for file
      *
-     * @param string $path
      * @param array $presetAfterUpload
+     * @param ActiveRecord $file The file model
      * @return void
      */
-    private function applyPreset($path, $presetAfterUpload)
+    private function applyPreset($presetAfterUpload, $file)
     {
         foreach ($presetAfterUpload as $preset) {
-            $this->model->thumb($this->attribute, $preset, $path);
+            $this->model->thumbUrl($this->attribute, $preset, $file);
         }
     }
 

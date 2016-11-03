@@ -10,7 +10,6 @@ namespace rkit\filemanager;
 
 use Yii;
 use yii\base\Component;
-use yii\base\InvalidParamException;
 
 /**
  * Component of FileManager
@@ -20,21 +19,9 @@ use yii\base\InvalidParamException;
 class FileManager extends Component
 {
     /**
-     * @var string Directory to upload files protected, not accessible from the web
+     * @var string Session variable name
      */
-    public $uploadDirProtected = '@runtime';
-    /**
-     * @var string Directory to upload files, accessible from the web
-     */
-    public $uploadDirUnprotected = '@app/web';
-    /**
-     * @var string Public path to files
-     */
-    public $publicPath = 'uploads';
-    /**
-     * @var array Type of owner in format: title:string => type:int
-     */
-    public $ownerTypes = [];
+    public $sessionName = 'filemanager.uploads';
 
     /**
      * @internal
@@ -42,24 +29,7 @@ class FileManager extends Component
     public function init()
     {
         parent::init();
-
         $this->registerTranslations();
-    }
-
-    /**
-     * Get owner type
-     *
-     * @param string $ownerType The type of the owner
-     * @return void
-     * @throws InvalidParamException
-     */
-    public function getOwnerType($ownerType)
-    {
-        if (!isset($this->ownerTypes[$ownerType])) {
-            throw new InvalidParamException('This type `' . $ownerType . '` is not found');
-        }
-
-        return $this->ownerTypes[$ownerType];
     }
 
     /**

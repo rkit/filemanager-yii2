@@ -6,9 +6,9 @@
  * @license [MIT](http://opensource.org/licenses/MIT)
  */
 
-namespace tests\data;
+namespace tests\data\controllers;
 
-class User
+class Controller extends \yii\web\Controller
 {
-    public $id = null;
+
 }

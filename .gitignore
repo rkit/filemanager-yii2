@@ -5,4 +5,4 @@ Thumbs.db
 /vendor
 /tests/tmp
 /tests/data/files/tmp
-/build-docs
+/build-api

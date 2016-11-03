@@ -21,7 +21,6 @@
     "scripts": {
         "phpdoc": "phpdoc",
         "test-prepare": [
-            "php tests/yii migrate --migrationPath=src/migrations/ --interactive=0",
             "php tests/yii migrate --migrationPath=@tests/migrations/ --interactive=0"
         ],
         "test": "phpunit --colors=always",
@@ -38,6 +37,8 @@
         "phpunit/phpunit": "^4.8",
         "phpunit/dbunit": "^1.4",
         "phpdocumentor/phpdocumentor": "^2.8.0",
-        "cvuorinen/phpdoc-markdown-public": "^0.1.2"
+        "cvuorinen/phpdoc-markdown-public": "^0.1.2",
+        "league/flysystem": "^1.0",
+        "creocoder/yii2-flysystem": "^0.8.1"
     }
 }

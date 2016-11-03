@@ -9,71 +9,259 @@
 namespace tests;
 
 use Yii;
-use tests\data\News;
-use rkit\filemanager\models\File;
+use tests\data\models\File;
 
 class MultipleUploadTest extends BaseTest
 {
-    public function testClearGallery()
+    private $modelClass = 'tests\data\models\News';
+
+    public function setUp()
     {
-        list($files, $model) = $this->uploadMultipleAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_gallery',
-            'inputName' => 'file-300',
-            'multiple' => true,
-            'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]);
-
-        $this->assertCount(1, $model->getFiles('image_gallery'));
-
-        $model->image_gallery = [];
-        $model->save();
-
-        $this->assertCount(0, $model->getFiles('image_gallery'));
+        parent::setUp();
     }
 
-    public function testWrongGallery()
+    public function testUpload()
     {
-        list($files, $model) = $this->uploadMultipleAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_gallery',
-            'inputName' => 'file-300',
-            'multiple' => true,
-            'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
-        ]);
-
-        $model->image_gallery = ['1000' => 'test'];
-        $model->save();
-
-        $this->assertCount(0, $model->getFiles('image_gallery'));
-    }
-
-    public function testFailSaveGallery()
-    {
-        list($files, $model) = $this->uploadMultipleAndBindToModel([
-            'modelName' => News::className(),
-            'attribute' => 'image_gallery',
-            'inputName' => 'file-300',
-            'multiple' => true,
-            'template' => Yii::getAlias('@tests/data/views/gallery-item.php')
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true
         ]);
 
         $response = $this->runUploadAction([
-            'modelName' => News::className(),
-            'attribute' => 'image_gallery',
-            'inputName' => 'file-500'
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
         ]);
 
+        $this->assertCount(2, $response);
+        $this->assertArrayHasKey('id', $response);
+        $this->assertArrayHasKey('path', $response);
+
         $file = File::findOne($response['id']);
-        $file->setStorage($this->storage);
+        $this->assertInstanceOf(File::className(), $file);
 
-        unlink($file->getStorage()->path(true));
+        $path = $model->filePath('gallery', $file);
+        $this->assertFileExists($path);
+    }
 
-        $model->image_gallery = [$response['id'] => 'test'];
+    public function testUploadWithTemplate()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'template' => '@tests/data/views/gallery-item.php',
+        ]);
+
+        $response = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        preg_match('/value=\"(.*?)\"/', $response, $matches);
+
+        $this->assertTrue(is_string($response));
+        $this->assertCount(2, $matches);
+        $this->assertTrue(is_numeric($matches[1]));
+    }
+
+    public function testUploadAndBind()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'rules.maxFiles' => 2,
+        ]);
+
+        $response1 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $response2 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $model->gallery = [$response1['id'], $response2['id']];
         $model->save();
 
-        $files = $model->getFiles('image_gallery');
+        $files = $model->allFiles('gallery');
+        $this->assertCount(2, $files);
 
-        $this->assertCount(0, $files);
+        foreach ($files as $file) {
+            $this->assertInstanceOf(File::className(), $file);
+            $this->assertFileExists($model->filePath('gallery', $file));
+        }
+    }
+
+    public function testAddFile()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'rules.maxFiles' => 2,
+        ]);
+
+        $response1 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $model->gallery = [$response1['id']];
+        $model->save();
+
+        $response2 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $model->gallery = [$response1['id'], $response2['id']];
+        $model->save();
+
+        $files = $model->allFiles('gallery');
+        $this->assertCount(2, $files);
+
+        foreach ($files as $file) {
+            $this->assertInstanceOf(File::className(), $file);
+            $this->assertFileExists($model->filePath('gallery', $file));
+        }
+    }
+
+    public function testUpdateLinks()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'extraFields' => function () {
+                return [
+                    'type' => 2,
+                    'position' => 1,
+                ];
+            }
+        ]);
+
+        $response = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300'
+        ]);
+
+        $model->gallery = [$response['id']];
+        $model->save();
+
+        $fields = $model->fileExtraFields('gallery');
+        $this->assertEquals($fields[$response['id']]['position'], 1);
+
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'extraFields' => function () {
+                return [
+                    'type' => 2,
+                    'position' => 2,
+                ];
+            }
+        ], $model->id);
+
+        $model->gallery = [$response['id']];
+        $model->title = 'tester';
+        $model->save();
+
+        $fields = $model->fileExtraFields('gallery');
+        $this->assertEquals($fields[$response['id']]['position'], 2);
+    }
+
+    public function testMaxFiles()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'rules.maxFiles' => 1,
+        ]);
+
+        $response1 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+        $response2 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $model->gallery = [$response1['id'], $response2['id']];
+        $model->save();
+
+        $files = $model->allFiles('gallery');
+        $this->assertCount(1, $files);
+    }
+
+    public function testClearFiles()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true,
+            'rules.maxFiles' => 2,
+        ]);
+
+        $response1 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+        $response2 = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $model->gallery = [$response1['id'], $response2['id']];
+        $model->save();
+
+        $files = $model->allFiles('gallery');
+        $this->assertCount(2, $files);
+
+        $model->gallery = [];
+        $model->save();
+
+        $this->assertCount(0, $model->allFiles('gallery'));
+    }
+
+    public function testDeleteWrongItem()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true
+        ]);
+
+        $response = $this->runUploadAction([
+            'modelObject' => $model,
+            'attribute' => 'gallery',
+            'inputName' => 'file-300',
+        ]);
+
+        $model->gallery = [$response['id'], 9999];
+        $model->save();
+
+        $this->assertCount(1, $model->allFiles('gallery'));
+    }
+
+    public function testDeleteWrongGallery()
+    {
+        $model = $this->createObject($this->modelClass, [
+            'field' => 'gallery',
+            'multiple' => true
+        ]);
+
+        $model->gallery = [9999];
+        $model->save();
+
+        $this->assertCount(0, $model->allFiles('gallery'));
     }
 }
