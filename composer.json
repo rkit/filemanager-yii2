@@ -16,7 +16,9 @@
         "source": "https://github.com/rkit/filemanager-yii2"
     },
     "require": {
-        "yiisoft/yii2": "^2.0"
+        "yiisoft/yii2": "^2.0",
+        "creocoder/yii2-flysystem": "^0.8.1",
+        "intervention/image": "^2.3.2"
     },
     "scripts": {
         "phpdoc": "phpdoc",
@@ -33,12 +35,9 @@
         }
     },
     "require-dev": {
-        "intervention/image": "^2.3.2",
         "phpunit/phpunit": "^4.8",
         "phpunit/dbunit": "^1.4",
         "phpdocumentor/phpdocumentor": "^2.8.0",
-        "cvuorinen/phpdoc-markdown-public": "^0.1.2",
-        "league/flysystem": "^1.0",
-        "creocoder/yii2-flysystem": "^0.8.1"
+        "cvuorinen/phpdoc-markdown-public": "^0.1.2"
     }
 }
