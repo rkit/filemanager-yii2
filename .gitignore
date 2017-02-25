@@ -2,7 +2,7 @@
 Thumbs.db
 *.log
 
-/vendor
-/tests/tmp
-/tests/data/files/tmp
-/build-api
+vendor/
+tests/tmp/
+tests/data/files/tmp/
+build-api/
