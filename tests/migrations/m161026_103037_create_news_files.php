@@ -13,10 +13,10 @@ class m161026_103037_create_news_files extends \yii\db\Migration
 
         $this->createTable('{{%news_files}}', [
             'id' => Schema::TYPE_PK,
-            'news_id' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
-            'file_id' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
-            'type' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
-            'position' => Schema::TYPE_INTEGER . " NOT NULL DEFAULT 0",
+            'news_id' => Schema::TYPE_INTEGER . ' NOT NULL DEFAULT 0',
+            'file_id' => Schema::TYPE_INTEGER . ' NOT NULL DEFAULT 0',
+            'type' => Schema::TYPE_INTEGER . ' NOT NULL DEFAULT 0',
+            'position' => Schema::TYPE_INTEGER . ' NOT NULL DEFAULT 0',
         ], $tableOptions);
 
         $this->createIndex('link', '{{%news_files}}', 'news_id, file_id');
