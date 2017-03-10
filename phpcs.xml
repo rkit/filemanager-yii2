@@ -2,17 +2,33 @@
 <ruleset name="PSR-MOD">
     <description>Based on PSR-2</description>
 
-    <exclude-pattern>*/vendor/*</exclude-pattern>
-    <exclude-pattern>*/views/*</exclude-pattern>
-    <exclude-pattern>*/migrations/*</exclude-pattern>
-    <exclude-pattern>*.md</exclude-pattern>
-
     <rule ref="PSR2">
+        <!-- exclude rules -->
         <exclude name="PSR1.Classes.ClassDeclaration"/>
         <exclude name="PSR1.Files.SideEffects"/>
         <exclude name="Squiz.WhiteSpace.SuperfluousWhitespace"/>
+        <!-- exclude files -->
+        <exclude-pattern>*.md</exclude-pattern>
+        <exclude-pattern>*/views/*</exclude-pattern>
     </rule>
 
+    <!-- Use single quote -->
+    <rule ref="Squiz.Strings.DoubleQuoteUsage" />
+    <rule ref="Squiz.Strings.DoubleQuoteUsage.ContainsVar">
+       <severity>0</severity>
+    </rule>
+
+    <!-- Ignore missing namespace for migrations -->
+    <rule ref="PSR1.Classes.ClassDeclaration.MissingNamespace">
+       <exclude-pattern>*/migrations/*</exclude-pattern>
+    </rule>
+
+    <!-- Ignore camel caps format for class name of migrations -->
+    <rule ref="Squiz.Classes.ValidClassName.NotCamelCaps">
+       <exclude-pattern>*/migrations/*</exclude-pattern>
+    </rule>
+
+    <!-- Line Length -->
     <rule ref="Generic.Files.LineLength">
         <properties>
             <property name="lineLimit" value="120"/>
