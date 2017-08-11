@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - data-mysql-5.7:/var/lib/mysql
+    restart: always
+    env_file: .env
+
+volumes:
+  data-mysql-5.7:
+    driver: local
