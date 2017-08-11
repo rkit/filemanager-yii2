@@ -93,7 +93,7 @@ class FileBehavior extends Behavior
             }
 
             if ($files === [] || $files === '') {
-                $this->fileBind->delete($this->owner, $attribute, $this->allFiles($attribute));
+                $this->fileBind->delete($this->owner, $attribute, $this->files($attribute));
                 continue;
             }
 
@@ -119,7 +119,7 @@ class FileBehavior extends Behavior
     public function beforeDelete()
     {
         foreach ($this->attributes as $attribute => $options) {
-            $this->fileBind->delete($this->owner, $attribute, $this->allFiles($attribute));
+            $this->fileBind->delete($this->owner, $attribute, $this->files($attribute));
         }
     }
 
@@ -294,7 +294,7 @@ class FileBehavior extends Behavior
      * @param string $attribute The attribute name
      * @return \ActiveRecord[] The file models
      */
-    public function allFiles($attribute)
+    public function files($attribute)
     {
         return $this->fileBind->files($this->owner, $attribute);
     }

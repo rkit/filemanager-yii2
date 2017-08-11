@@ -142,8 +142,13 @@ class FileBind
     private function updateFiles($model, $attribute, $files)
     {
         $handlerUpdateFile = $model->fileOption($attribute, 'updateFile');
-        if ($handlerUpdateFile) {
-            foreach ($files as $file) {
+        $relation = $model->fileOption($attribute, 'relation');
+        $isMultiple = $model->fileOption($attribute, 'multiple');
+
+        $relationValue = [];
+        foreach ($files as $file) {
+            $relationValue[] = $file;
+            if ($handlerUpdateFile) {
                 $fileUpd = $handlerUpdateFile($file);
                 $dirtyAttributes = $fileUpd->getDirtyAttributes();
                 if (count($dirtyAttributes)) {
@@ -151,6 +156,11 @@ class FileBind
                 }
             }
         }
+
+        if (!$isMultiple) {
+            $relationValue = array_shift($relationValue);
+        }
+        $model->populateRelation($relation, $relationValue);
     }
 
     public function delete($model, $attribute, $files)
@@ -169,6 +179,7 @@ class FileBind
                     $storage->delete($filePath);
                 }
             }
+
             if ($file->delete()) {
                 $db->delete($relation->via->from[0], [
                     current($relation->link) => $file->getPrimaryKey()
@@ -184,15 +195,8 @@ class FileBind
     public function relations($model, $attribute)
     {
         $relation = $model->fileRelation($attribute);
-        $handlerRelationQuery = $model->fileOption($attribute, 'relationQuery');
-        $query = null;
 
-        if ($handlerRelationQuery) {
-            $query = Query::create($handlerRelationQuery($model->find()));
-        }
-
-        $query = $query ?: new Query();
-        return $query
+        return (new Query())
             ->from($relation->via->from[0])
             ->andWhere([key($relation->via->link) => $model->getPrimaryKey()])
             ->indexBy(current($relation->link))
@@ -203,18 +207,14 @@ class FileBind
     {
         $relation = $model->fileRelation($attribute);
         $relationName = $model->fileOption($attribute, 'relation');
-        $handlerRelationQuery = $model->fileOption($attribute, 'relationQuery');
 
-        $query = call_user_func_array([$model, 'get' . $relationName], [$handlerRelationQuery]);
+        $query = call_user_func([$model, 'get' . $relationName]);
         return $query->indexBy(key($relation->link))->all();
     }
 
     public function file($model, $attribute)
     {
         $relation = $model->fileOption($attribute, 'relation');
-        $handlerRelationQuery = $model->fileOption($attribute, 'relationQuery');
-
-        $query = call_user_func_array([$model, 'get' . $relation], [$handlerRelationQuery]);
-        return $query->one();
+        return $model->$relation;
     }
 }

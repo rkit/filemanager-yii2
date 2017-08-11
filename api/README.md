@@ -9,7 +9,7 @@
     * [filePath](#filepath)
     * [fileUrl](#fileurl)
     * [fileExtraFields](#fileextrafields)
-    * [allFiles](#allfiles)
+    * [files](#files)
     * [file](#file)
     * [fileRules](#filerules)
     * [fileState](#filestate)
@@ -25,7 +25,7 @@
 
 
 * Full name: \rkit\filemanager\behaviors\FileBehavior
-* Parent class: 
+* Parent class:
 
 
 ### fileRelation
@@ -172,12 +172,12 @@ FileBehavior::fileExtraFields( string $attribute ): array
 
 ---
 
-### allFiles
+### files
 
 Get files
 
 ```php
-FileBehavior::allFiles( string $attribute ): array&lt;mixed,\ActiveRecord&gt;
+FileBehavior::files( string $attribute ): array&lt;mixed,\ActiveRecord&gt;
 ```
 
 

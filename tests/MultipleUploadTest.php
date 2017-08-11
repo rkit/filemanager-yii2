@@ -22,11 +22,7 @@ class MultipleUploadTest extends BaseTest
 
     public function testUpload()
     {
-        $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true
-        ]);
-
+        $model = $this->createObject($this->modelClass);
         $response = $this->runUploadAction([
             'modelObject' => $model,
             'attribute' => 'gallery',
@@ -47,8 +43,6 @@ class MultipleUploadTest extends BaseTest
     public function testUploadWithTemplate()
     {
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'template' => '@tests/data/views/gallery-item.php',
         ]);
 
@@ -68,8 +62,6 @@ class MultipleUploadTest extends BaseTest
     public function testUploadAndBind()
     {
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'rules.maxFiles' => 2,
         ]);
 
@@ -88,7 +80,7 @@ class MultipleUploadTest extends BaseTest
         $model->gallery = [$response1['id'], $response2['id']];
         $model->save();
 
-        $files = $model->allFiles('gallery');
+        $files = $model->files('gallery');
         $this->assertCount(2, $files);
 
         foreach ($files as $file) {
@@ -100,8 +92,6 @@ class MultipleUploadTest extends BaseTest
     public function testAddFile()
     {
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'rules.maxFiles' => 2,
         ]);
 
@@ -123,7 +113,7 @@ class MultipleUploadTest extends BaseTest
         $model->gallery = [$response1['id'], $response2['id']];
         $model->save();
 
-        $files = $model->allFiles('gallery');
+        $files = $model->files('gallery');
         $this->assertCount(2, $files);
 
         foreach ($files as $file) {
@@ -135,8 +125,6 @@ class MultipleUploadTest extends BaseTest
     public function testUpdateLinks()
     {
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'extraFields' => function () {
                 return [
                     'type' => 2,
@@ -158,8 +146,6 @@ class MultipleUploadTest extends BaseTest
         $this->assertEquals($fields[$response['id']]['position'], 1);
 
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'extraFields' => function () {
                 return [
                     'type' => 2,
@@ -179,8 +165,6 @@ class MultipleUploadTest extends BaseTest
     public function testMaxFiles()
     {
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'rules.maxFiles' => 1,
         ]);
 
@@ -198,15 +182,13 @@ class MultipleUploadTest extends BaseTest
         $model->gallery = [$response1['id'], $response2['id']];
         $model->save();
 
-        $files = $model->allFiles('gallery');
+        $files = $model->files('gallery');
         $this->assertCount(1, $files);
     }
 
     public function testClearFiles()
     {
         $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true,
             'rules.maxFiles' => 2,
         ]);
 
@@ -224,22 +206,18 @@ class MultipleUploadTest extends BaseTest
         $model->gallery = [$response1['id'], $response2['id']];
         $model->save();
 
-        $files = $model->allFiles('gallery');
+        $files = $model->files('gallery');
         $this->assertCount(2, $files);
 
         $model->gallery = [];
         $model->save();
 
-        $this->assertCount(0, $model->allFiles('gallery'));
+        $this->assertCount(0, $model->files('gallery'));
     }
 
     public function testDeleteWrongItem()
     {
-        $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true
-        ]);
-
+        $model = $this->createObject($this->modelClass);
         $response = $this->runUploadAction([
             'modelObject' => $model,
             'attribute' => 'gallery',
@@ -249,19 +227,16 @@ class MultipleUploadTest extends BaseTest
         $model->gallery = [$response['id'], 9999];
         $model->save();
 
-        $this->assertCount(1, $model->allFiles('gallery'));
+        $this->assertCount(1, $model->files('gallery'));
     }
 
     public function testDeleteWrongGallery()
     {
-        $model = $this->createObject($this->modelClass, [
-            'field' => 'gallery',
-            'multiple' => true
-        ]);
+        $model = $this->createObject($this->modelClass);
 
         $model->gallery = [9999];
         $model->save();
 
-        $this->assertCount(0, $model->allFiles('gallery'));
+        $this->assertCount(0, $model->files('gallery'));
     }
 }

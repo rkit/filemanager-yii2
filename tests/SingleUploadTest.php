@@ -133,7 +133,7 @@ class SingleUploadTest extends BaseTest
         $model = $this->createObject($this->modelClass, [
             'extraFields' => function () {
                 return [
-                    'type' => 2,
+                    'type' => 1,
                     'position' => 1,
                 ];
             }
@@ -154,7 +154,7 @@ class SingleUploadTest extends BaseTest
         $model = $this->createObject($this->modelClass, [
             'extraFields' => function () {
                 return [
-                    'type' => 2,
+                    'type' => 1,
                     'position' => 2,
                 ];
             }
@@ -203,9 +203,11 @@ class SingleUploadTest extends BaseTest
 
         $model->image = $response['id'];
         $model->save();
+
+        $this->assertFileExists($model->filePath('image'));
+
         $model->delete();
 
-        $this->assertNull($model->file('image'));
         $this->assertFileNotExists($model->filePath('image'));
     }
 

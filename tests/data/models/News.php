@@ -32,10 +32,29 @@ class News extends \yii\db\ActiveRecord
         ];
     }
 
-    public function getFiles($callable = null)
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getImageFile()
     {
         return $this
-            ->hasMany(File::className(), ['id' => 'file_id'])
-            ->viaTable('news_files', ['news_id' => 'id'], $callable);
+            ->hasOne(File::class, ['id' => 'file_id'])
+            ->viaTable('{{%news_files}}', ['news_id' => 'id'], function ($query) {
+                $query->where(['type' => 1]);
+            });
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getGalleryFiles()
+    {
+        return $this
+            ->hasMany(File::class, ['id' => 'file_id'])
+            ->viaTable('{{%news_files}}', ['news_id' => 'id'], function ($query) {
+                $query->where(['type' => 2]);
+            })
+            ->innerJoin('{{%news_files}}', '`file_id` = `file`.`id`')
+            ->orderBy(['position' => SORT_ASC]);
     }
 }

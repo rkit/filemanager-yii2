@@ -48,11 +48,11 @@ Let's do it.
 4. **Declaring a relation**
 
    ```php
-   public function getFiles($callable = null)
+   public function getPreviewFile()
    {
         return $this
             ->hasMany(File::className(), ['id' => 'file_id'])
-            ->viaTable('news_files', ['news_id' => 'id'], $callable);
+            ->viaTable('news_files', ['news_id' => 'id']);
    }
    ```
 
@@ -101,7 +101,7 @@ Let's do it.
                        // file type (default `image`)
                        'type' => 'image',
                        // relation name
-                       'relation' => 'files',
+                       'relation' => 'previewFile',
                        // save file path in attribute (default `false`)
                        'saveFilePathInAttribute' => true,
                        // a callback for generating file path
@@ -161,7 +161,7 @@ Let's do it.
 // path to template for upload response (the default is an array with id and path of file)
 'template' => null,
 // a relation name
-'relation' => 'files',
+'relation' => 'previewFile',
 // save file path in attribute (default `false`)
 'saveFilePathInAttribute' => true,
 // save file id in attribute (default `false`)
@@ -196,11 +196,6 @@ Let's do it.
          'position' => $positions[$file->id], // if you want to set sort order
     ];
 },
-// a callback for customizing the relation associated with the junction table
-// `function(ActiveQuery $query): ActiveQuery`
-'relationQuery' => function ($query) {
-    return $query->andWhere(['type' => 1]); // to select a specific type of file
-},
 // core validators
 'rules' => [
     'imageSize' => ['minWidth' => 300, 'minHeight' => 300],
@@ -232,10 +227,16 @@ To get file
 $model->file('preview');
 ```
 
+or by relation name
+
+```php
+$model->previewFile;
+```
+
 If multiple files
 
 ```php
-$model->allFiles('gallery');
+$model->files('gallery');
 ```
 
 To get file full path
