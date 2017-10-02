@@ -42,6 +42,10 @@ class UploadAction extends Action
      */
     public $resultFieldPath = 'path';
     /**
+     * @var bool $saveAfterUpload Save after upload
+     */
+    public $saveAfterUpload = false;
+    /**
      * @var ActiveRecord $model
      */
     private $model;
@@ -86,7 +90,7 @@ class UploadAction extends Action
             $model->file = $model->file[0];
         }
 
-        return $this->save($model->file);
+        return $this->upload($model->file);
     }
 
     /**
@@ -96,10 +100,13 @@ class UploadAction extends Action
      * @return string JSON
      * @SuppressWarnings(PHPMD.ElseExpression)
      */
-    private function save($file)
+    private function upload($file)
     {
         $file = $this->model->createFile($this->attribute, $file->tempName, $file->name);
         if ($file) {
+            if ($this->saveAfterUpload) {
+                $this->model->save(false);
+            }
             $presetAfterUpload = $this->model->filePresetAfterUpload($this->attribute);
             if (count($presetAfterUpload)) {
                 $this->applyPreset($presetAfterUpload, $file);
