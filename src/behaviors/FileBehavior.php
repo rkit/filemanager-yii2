@@ -8,6 +8,7 @@
 
 namespace rkit\filemanager\behaviors;
 
+use rkit\filemanager\models\FileUploadSession;
 use Yii;
 use yii\base\Behavior;
 use yii\db\ActiveRecord;
@@ -125,19 +126,23 @@ class FileBehavior extends Behavior
 
     private function clearState($attribute)
     {
-        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
-        unset($state[$attribute]);
-        Yii::$app->session->set(Yii::$app->fileManager->sessionName, $state);
+        FileUploadSession::deleteAll([
+            'created_user_id' => Yii::$app->user->id,
+            'target_model_class' => get_class($this->owner),
+            'target_model_id' => $this->owner->getPrimaryKey(),
+            'target_model_attribute' => $attribute,
+        ]);
     }
 
     private function setState($attribute, $file)
     {
-        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
-        if (!is_array($state)) {
-            $state = [];
-        }
-        $state[$attribute][] = $file->getPrimaryKey();
-        Yii::$app->session->set(Yii::$app->fileManager->sessionName, $state);
+        $rec = new FileUploadSession();
+        $rec->created_user_id = Yii::$app->user->id;
+        $rec->file_id = $file->getPrimaryKey();
+        $rec->target_model_attribute = $attribute; // TODO: write model/object id?
+        $rec->target_model_id = (!$this->owner->isNewRecord ? $this->owner->getPrimaryKey() : null);
+        $rec->target_model_class = get_class($this->owner);
+        $rec->save(false);
     }
 
     private function setValue($attribute, $file, $defaultValue)
@@ -335,8 +340,17 @@ class FileBehavior extends Behavior
      */
     public function fileState($attribute)
     {
-        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
-        return ArrayHelper::getValue($state === null ? [] : $state, $attribute, []);
+        $data = FileUploadSession::find()->where([
+            'created_user_id' => Yii::$app->user->id,
+            'target_model_class' => get_class($this->owner),
+            'target_model_id' => $this->owner->getPrimaryKey(),
+            'target_model_attribute' => $attribute,
+            ])->all();
+        if ($data) {
+            return ArrayHelper::getColumn($data, ['file_id']);
+        } else {
+            return [];
+        }
     }
 
     /**

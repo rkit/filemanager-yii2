@@ -39,6 +39,13 @@ Let's do it.
    ```
    > You can add any extra fields, such as `type` to divide files by type or `position` to set sort order
 
+    Migration for upload session
+
+   ```php
+   php yii migrate/create create_file_upload_session_table --fields="file_id:integer:notNull:defaultValue(0),created_user_id:integer:notNull:defaultValue(0),target_model_id:integer:notNull:defaultValue(0),target_model_class:string:notNull:defaultValue(''),target_model_attribute:string:notNull:defaultValue(''),created_on:datetime"
+   ```
+   > You can add any extra fields, such as `type` to divide files by type or `position` to set sort order
+
 3. **Applying Migrations**
 
    ```php
