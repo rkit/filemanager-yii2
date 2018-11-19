@@ -6,6 +6,8 @@
  */
 
 namespace rkit\filemanager\models;
+use yii\behaviors\BlameableBehavior;
+use yii\db\Expression;
 
 /**
  * Class FileUploadSession
