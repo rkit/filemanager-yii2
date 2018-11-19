@@ -7,6 +7,7 @@
 
 namespace rkit\filemanager\models;
 use yii\behaviors\BlameableBehavior;
+use yii\behaviors\TimestampBehavior;
 use yii\db\Expression;
 
 /**
