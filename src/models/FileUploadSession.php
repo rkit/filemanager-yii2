@@ -44,6 +44,7 @@ class FileUploadSession  extends \yii\db\ActiveRecord
             [
                 'class' => TimestampBehavior::class,
                 'createdAtAttribute' => 'created_on',
+                'updatedAtAttribute' => false,
                 'value' => new Expression('NOW()'),
             ],
         ];
