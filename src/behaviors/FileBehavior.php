@@ -108,7 +108,7 @@ class FileBehavior extends Behavior
                 $files = array_shift($files);
             }
 
-            $this->clearState($attribute);
+            $this->clearState($attribute, $files);
             $this->setValue($attribute, $files, $options['oldValue']);
         }
     }
@@ -124,14 +124,25 @@ class FileBehavior extends Behavior
         }
     }
 
-    private function clearState($attribute)
+    public function clearState($attribute, $files)
     {
-        FileUploadSession::deleteAll([
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+        $query = [
             'created_user_id' => Yii::$app->user->id,
             'target_model_class' => get_class($this->owner),
             'target_model_id' => $this->owner->getPrimaryKey(),
             'target_model_attribute' => $attribute,
-        ]);
+        ];
+        if ($files) {
+            $fileIDs = ArrayHelper::getColumn($files, 'id');
+            $query['file_id'] = $fileIDs;
+        }
+        FileUploadSession::deleteAll($query);
+        $query['target_model_id'] = null;
+        FileUploadSession::deleteAll($query);  // for cases of uploads when original model was a new record at the moment of uploads
+        return;
     }
 
     private function setState($attribute, $file)
@@ -340,12 +351,17 @@ class FileBehavior extends Behavior
      */
     public function fileState($attribute)
     {
-        $data = FileUploadSession::find()->where([
+        $query = FileUploadSession::find()->where([
             'created_user_id' => Yii::$app->user->id,
             'target_model_class' => get_class($this->owner),
-            'target_model_id' => $this->owner->getPrimaryKey(),
             'target_model_attribute' => $attribute,
-            ])->all();
+        ]);
+        $query->andWhere(['or',
+            ['target_model_id' => $this->owner->getPrimaryKey()],
+            ['target_model_id' => null] // for cases of uploads when original model was a new record at the moment of uploads
+        ]);
+
+        $data = $query->all();
         if ($data) {
             return ArrayHelper::getColumn($data, ['file_id']);
         } else {
