@@ -104,12 +104,13 @@ class FileBehavior extends Behavior
             }
 
             $files = $this->fileBind->bind($this->owner, $attribute, $files);
-            if (is_array($files)) {
-                $files = array_shift($files);
-            }
 
             $this->clearState($attribute, $files);
-            $this->setValue($attribute, $files, $options['oldValue']);
+
+            if (is_array($files)) {
+                $files = array_shift($files);
+                $this->setValue($attribute, $files, $options['oldValue']);
+            }
         }
     }
 
@@ -156,6 +157,12 @@ class FileBehavior extends Behavior
         $rec->save(false);
     }
 
+    /**
+     * for models with single upload only
+     * @param $attribute
+     * @param $file
+     * @param $defaultValue
+     */
     private function setValue($attribute, $file, $defaultValue)
     {
         $saveFilePath = $this->fileOption($attribute, 'saveFilePathInAttribute');
@@ -360,7 +367,6 @@ class FileBehavior extends Behavior
             ['target_model_id' => $this->owner->getPrimaryKey()],
             ['target_model_id' => null] // for cases of uploads when original model was a new record at the moment of uploads
         ]);
-
         $data = $query->all();
         if ($data) {
             return ArrayHelper::getColumn($data, ['file_id']);
