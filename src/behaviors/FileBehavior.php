@@ -446,4 +446,35 @@ class FileBehavior extends Behavior
         } // @codeCoverageIgnore
         return false; // @codeCoverageIgnore
     }
+
+    /**
+     * Create a file from remote URL
+     *
+     * @author Sergii Gamaiunov <devkadabra@gmail.com>
+     *
+     * @param string $attribute The attribute name
+     * @param \igogo5yo\uploadfromurl\UploadFromUrl $remoteFile
+     * @param string $name The file name
+     * @return \ActiveRecord The file model
+     */
+    public function createRemoteFile($attribute, $remoteFile, $name)
+    {
+        $url = $remoteFile->url;
+        $handlerCreateFile = $this->fileOption($attribute, 'createRemoteFile');
+        $file = $handlerCreateFile($remoteFile, $name);
+        if ($file) {
+            $storage = $this->fileStorage($attribute);
+            $stream = fopen($url, 'r');
+            $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+            if ($storage->putStream($handlerTemplatePath($file), $stream)) {
+                if (is_resource($stream)) { // some adapters close resources on their own
+                    fclose($stream);
+                }
+                $this->setState($attribute, $file);
+                $this->owner->{$attribute} = $file->id;
+                return $file;
+            }
+        } // @codeCoverageIgnore
+        return false; // @codeCoverageIgnore
+    }
 }

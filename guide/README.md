@@ -126,6 +126,17 @@ Let's do it.
                            $file->save();
                            return $file;
                        },
+                       // a callback for creating `File` model for remote uploads
+                       'createRemoteFile' => function ($info, $name) {
+                            $file = new File();
+                            $file->title = $name;
+                            $file->created_on = new yii\db\Expression('NOW()');
+                            $file->created_user_id = Yii::$app->user->id;
+                            $file->size_bytes = $info->size;
+                            $file->generateName($info->url, $name, $this);
+                            $file->save();
+                            return $file;
+                        },
                        // core validators
                        'rules' => [
                            'imageSize' => ['minWidth' => 300, 'minHeight' => 300],

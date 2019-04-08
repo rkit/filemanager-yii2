@@ -16,7 +16,8 @@
         "source": "https://github.com/rkit/filemanager-yii2"
     },
     "require": {
-        "yiisoft/yii2": "^2.0"
+        "yiisoft/yii2": "^2.0",
+        "igogo5yo/yii2-upload-from-url": "^1.4"
     },
     "scripts": {
         "phpdoc": "phpdoc",
