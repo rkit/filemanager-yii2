@@ -127,6 +127,9 @@ class FileBehavior extends Behavior
 
     public function clearState($attribute, $files)
     {
+        if (!isset(Yii::$app->user)) {
+            return [];
+        }
         if (!is_array($files)) {
             $files = [$files];
         }
@@ -358,6 +361,9 @@ class FileBehavior extends Behavior
      */
     public function fileState($attribute)
     {
+        if (!isset(Yii::$app->user)) {
+            return [];
+        }
         $query = FileUploadSession::find()->where([
             'created_user_id' => Yii::$app->user->id,
             'target_model_class' => get_class($this->owner),
@@ -470,7 +476,9 @@ class FileBehavior extends Behavior
                 if (is_resource($stream)) { // some adapters close resources on their own
                     fclose($stream);
                 }
-                $this->setState($attribute, $file);
+                if (isset(Yii::$app->user)) {
+                    $this->setState($attribute, $file);
+                }
                 $this->owner->{$attribute} = $file->id;
                 return $file;
             }
