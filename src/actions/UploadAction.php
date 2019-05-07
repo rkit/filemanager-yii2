@@ -46,6 +46,13 @@ class UploadAction extends Action
      */
     public $saveAfterUpload = false;
     /**
+     * @var callable $onSuccess Function to be returned after successful upload instead of responce. Function signature
+     * is ```function (File $file, ActiveRecord $model){}```, where `File` is the model that's configured in `createFile`
+     * option of model's file behavior configuration
+     * @since 5.3.0
+     */
+    public $onSuccess;
+    /**
      * @var ActiveRecord $model
      */
     private $model;
@@ -110,6 +117,14 @@ class UploadAction extends Action
             $presetAfterUpload = $this->model->filePresetAfterUpload($this->attribute);
             if (count($presetAfterUpload)) {
                 $this->applyPreset($presetAfterUpload, $file);
+            }
+            if ($this->onSuccess) {
+                $responce = call_user_func($this->onSuccess, $file, $this->model);
+                if (is_array($responce)) {
+                    return $this->controller->asJson($responce);
+                } else {
+                    return $responce;
+                }
             }
             $template = $this->model->fileOption($this->attribute, 'template');
             if ($template) {
