@@ -4,12 +4,16 @@
     "keywords": ["yii2", "extension", "file manager", "manager", "upload", "resize", "files"],
     "homepage": "https://github.com/rkit/filemanager-yii2",
     "type": "yii2-extension",
-    "version": "5.3.1",
+    "version": "5.4.1",
     "license": "MIT",
     "authors": [
         {
             "name": "Igor Romanov",
             "email": "rkit.ru@gmail.com"
+        },
+        {
+            "name": "Sergii Gamaiunov",
+            "email": "devkadabra@gmail.com"
         }
     ],
     "support": {
