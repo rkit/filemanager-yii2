@@ -28,6 +28,10 @@ class FileBehavior extends Behavior
      * @var FileBind
      */
     private $fileBind;
+    /**
+     * @var string name of application component that represents `user`
+     */
+    public $userComponent = 'user';
 
     /**
      * @internal
@@ -125,16 +129,24 @@ class FileBehavior extends Behavior
         }
     }
 
+    protected function getUser()
+    {
+        if (!$this->userComponent || !isset(Yii::$app->{$this->userComponent})) {
+            return false;
+        }
+        return Yii::$app->{$this->userComponent};
+    }
+
     public function clearState($attribute, $files)
     {
-        if (!isset(Yii::$app->user)) {
+        if (!$this->getUser()) {
             return [];
         }
         if (!is_array($files)) {
             $files = [$files];
         }
         $query = [
-            'created_user_id' => Yii::$app->user->id,
+            'created_user_id' => $this->getUser()->id,
             'target_model_class' => get_class($this->owner),
             'target_model_id' => $this->owner->getPrimaryKey(),
             'target_model_attribute' => $attribute,
@@ -152,7 +164,7 @@ class FileBehavior extends Behavior
     private function setState($attribute, $file)
     {
         $rec = new FileUploadSession();
-        $rec->created_user_id = Yii::$app->user->id;
+        $rec->created_user_id = $this->getUser()->id;
         $rec->file_id = $file->getPrimaryKey();
         $rec->target_model_attribute = $attribute; // TODO: write model/object id?
         $rec->target_model_id = (!$this->owner->isNewRecord ? $this->owner->getPrimaryKey() : null);
@@ -361,11 +373,11 @@ class FileBehavior extends Behavior
      */
     public function fileState($attribute)
     {
-        if (!isset(Yii::$app->user)) {
+        if (!$this->getUser()) {
             return [];
         }
         $query = FileUploadSession::find()->where([
-            'created_user_id' => Yii::$app->user->id,
+            'created_user_id' => $this->getUser()->id,
             'target_model_class' => get_class($this->owner),
             'target_model_attribute' => $attribute,
         ]);
@@ -476,7 +488,7 @@ class FileBehavior extends Behavior
                 if (is_resource($stream)) { // some adapters close resources on their own
                     fclose($stream);
                 }
-                if (isset(Yii::$app->user)) {
+                if ($this->getUser()) {
                     $this->setState($attribute, $file);
                 }
                 $this->owner->{$attribute} = $file->id;
