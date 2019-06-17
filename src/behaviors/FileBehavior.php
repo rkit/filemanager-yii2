@@ -20,14 +20,22 @@ class FileBehavior extends Behavior
      * @var array
      */
     public $attributes = [];
+
     /**
      * @var ActiveQuery
      */
     private $relation;
+
     /**
      * @var FileBind
      */
     private $fileBind;
+
+    /**
+     * @var array
+     */
+    protected static $classPathMap = [];
+
     /**
      * @var string name of application component that represents `user`
      */
@@ -147,7 +155,7 @@ class FileBehavior extends Behavior
         }
         $query = [
             'created_user_id' => $this->getUser()->id,
-            'target_model_class' => get_class($this->owner),
+            'target_model_class' => static::getClass(get_class($this->owner)),
             'target_model_id' => $this->owner->getPrimaryKey(),
             'target_model_attribute' => $attribute,
         ];
@@ -168,7 +176,7 @@ class FileBehavior extends Behavior
         $rec->file_id = $file->getPrimaryKey();
         $rec->target_model_attribute = $attribute; // TODO: write model/object id?
         $rec->target_model_id = (!$this->owner->isNewRecord ? $this->owner->getPrimaryKey() : null);
-        $rec->target_model_class = get_class($this->owner);
+        $rec->target_model_class = static::getClass(get_class($this->owner));
         $rec->save(false);
     }
 
@@ -378,7 +386,7 @@ class FileBehavior extends Behavior
         }
         $query = FileUploadSession::find()->where([
             'created_user_id' => $this->getUser()->id,
-            'target_model_class' => get_class($this->owner),
+            'target_model_class' => static::getClass(get_class($this->owner)),
             'target_model_attribute' => $attribute,
         ]);
         $query->andWhere(['or',
@@ -496,5 +504,37 @@ class FileBehavior extends Behavior
             }
         } // @codeCoverageIgnore
         return false; // @codeCoverageIgnore
+    }
+
+    /**
+     * Add class alias to be able to upload files for different versions of a model to a single API endpoint
+     *
+     * Example:
+     * ```
+     * class OldCar extends Car
+     * {
+     *      public function init()
+     *      {
+     *          parent::init();
+     *          $this->car_type = 'old;
+     *          FileBehavior::addClassAlias(get_class($this), Car::className());
+     *      }
+     *
+     *      public function formName() {
+     *          return 'Car';
+     *      }
+     * }
+     * ```
+     * @param $source
+     * @param $mapTo
+     */
+    public static function addClassAlias($source, $mapTo) {
+        static::$classPathMap[$source] = $mapTo;
+    }
+
+    protected static function getClass($source) {
+        return isset(static::$classPathMap[$source])
+            ? static::$classPathMap[$source]
+            : $source;
     }
 }
