@@ -42,6 +42,12 @@ class FileBehavior extends Behavior
     public $userComponent = 'user';
 
     /**
+     * @since 5.6.0
+     * @var bool
+     */
+    protected $markedLinked = false;
+
+    /**
      * @internal
      */
     public function init()
@@ -465,7 +471,9 @@ class FileBehavior extends Behavior
             $contents = file_get_contents($path);
             $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
             if ($storage->write($handlerTemplatePath($file), $contents)) {
-                $this->setState($attribute, $file);
+                if (!$this->markedLinked) {
+                    $this->setState($attribute, $file);
+                }
                 $this->owner->{$attribute} = $file->id;
                 return $file;
             }
@@ -497,7 +505,9 @@ class FileBehavior extends Behavior
                     fclose($stream);
                 }
                 if ($this->getUser()) {
-                    $this->setState($attribute, $file);
+                    if (!$this->markedLinked) {
+                        $this->setState($attribute, $file);
+                    }
                 }
                 $this->owner->{$attribute} = $file->id;
                 return $file;
@@ -536,5 +546,15 @@ class FileBehavior extends Behavior
         return isset(static::$classPathMap[$source])
             ? static::$classPathMap[$source]
             : $source;
+    }
+
+    /**
+     * Mark current upload session as already linked (e.g. file is linked during `createFile`) to avoid duplicate links
+     * @return $this
+     * @since 5.6.0
+     */
+    public function markLinked() {
+        $this->markedLinked = true;
+        return $this;
     }
 }
