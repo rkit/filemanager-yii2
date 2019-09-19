@@ -489,7 +489,10 @@ class FileBehavior extends Behavior
             $storage = $this->fileStorage($attribute);
             $contents = file_get_contents($path);
             $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
-            if ($storage->write($handlerTemplatePath($file), $contents)) {
+            if ($storage->write($handlerTemplatePath($file), $contents, [
+                // set correct mime type:
+                'mimetype' => yii\helpers\FileHelper::getMimeTypeByExtension($name),
+            ])) {
                 $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
                 if (!$this->markedLinked && !$disableAutobind) {
                     $this->setState($attribute, $file);
