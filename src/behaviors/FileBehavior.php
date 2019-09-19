@@ -11,6 +11,7 @@ namespace rkit\filemanager\behaviors;
 use rkit\filemanager\models\FileUploadSession;
 use Yii;
 use yii\base\Behavior;
+use yii\base\Exception;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 
@@ -95,7 +96,13 @@ class FileBehavior extends Behavior
      */
     public function afterSave()
     {
-        foreach ($this->attributes as $attribute => $options) {
+        foreach ($this->attributes as $attribute => $options)
+        {
+            $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
+            if ($disableAutobind) {
+                continue;
+            }
+
             $files = $this->owner->{$attribute};
 
             $isAttributeNotChanged = $options['isAttributeChanged'] === false || $files === null;
@@ -139,7 +146,10 @@ class FileBehavior extends Behavior
     public function beforeDelete()
     {
         foreach ($this->attributes as $attribute => $options) {
-            $this->fileBind->delete($this->owner, $attribute, $this->files($attribute));
+            $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
+            if (!$disableAutobind) {
+                $this->fileBind->delete($this->owner, $attribute, $this->files($attribute));
+            }
         }
     }
 
@@ -333,6 +343,9 @@ class FileBehavior extends Behavior
      */
     public function fileExtraFields($attribute)
     {
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            return [];
+        }
         $fields = $this->fileBind->relations($this->owner, $attribute);
         if (!$this->fileOption($attribute, 'multiple')) {
             return array_shift($fields);
@@ -348,6 +361,9 @@ class FileBehavior extends Behavior
      */
     public function files($attribute)
     {
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            throw new Exception('Accessing `files()` is not allowed when auto-bind is disabled, see `FileBehavior::$disableAutobind`');
+        }
         return $this->fileBind->files($this->owner, $attribute);
     }
 
@@ -359,6 +375,9 @@ class FileBehavior extends Behavior
      */
     public function file($attribute)
     {
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            throw new Exception('Accessing `file()` is not allowed when auto-bind is disabled, see `FileBehavior::$disableAutobind`');
+        }
         return $this->fileBind->file($this->owner, $attribute);
     }
 
@@ -471,7 +490,8 @@ class FileBehavior extends Behavior
             $contents = file_get_contents($path);
             $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
             if ($storage->write($handlerTemplatePath($file), $contents)) {
-                if (!$this->markedLinked) {
+                $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
+                if (!$this->markedLinked && !$disableAutobind) {
                     $this->setState($attribute, $file);
                 }
                 $this->owner->{$attribute} = $file->id;
@@ -551,7 +571,7 @@ class FileBehavior extends Behavior
     /**
      * Mark current upload session as already linked (e.g. file is linked during `createFile`) to avoid duplicate links
      * @return $this
-     * @since 5.7.0
+     * @since 5.6.0
      */
     public function markLinked() {
         $this->markedLinked = true;
