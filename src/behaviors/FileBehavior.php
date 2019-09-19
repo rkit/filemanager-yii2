@@ -551,7 +551,7 @@ class FileBehavior extends Behavior
     /**
      * Mark current upload session as already linked (e.g. file is linked during `createFile`) to avoid duplicate links
      * @return $this
-     * @since 5.6.0
+     * @since 5.7.0
      */
     public function markLinked() {
         $this->markedLinked = true;
