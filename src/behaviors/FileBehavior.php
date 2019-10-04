@@ -319,7 +319,9 @@ class FileBehavior extends Behavior
     public function filePath($attribute, $file = null)
     {
         $path = $this->templatePath($attribute, $file);
-        return $this->fileStorage($attribute)->path . $path;
+        /** @var Filesystem $fs */
+        $fs = $this->fileStorage($attribute);
+        return $fs->getAdapter()->getPathPrefix() . $path;
     }
 
     /**
