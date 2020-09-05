@@ -260,13 +260,14 @@ class FileBehavior extends Behavior
         $saveFileId = $this->fileOption($attribute, 'saveFileIdInAttribute');
         $isFilledId = $saveFileId && is_numeric($value) && $value;
 
-        if (($isFilledPath || $isFilledId) && $file === null) {
-            $file = $this->file($attribute);
-        }
-
-        if ($file !== null) {
-            $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
-            return $handlerTemplatePath($file);
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            if (($isFilledPath || $isFilledId) && $file === null) {
+                $file = $this->file($attribute);
+            }
+            if ($file !== null) {
+                $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+                return $handlerTemplatePath($file);
+            }
         }
         return $value;
     }
