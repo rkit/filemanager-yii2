@@ -44,8 +44,8 @@
         "phpunit/dbunit": "^1.4",
         "phpdocumentor/phpdocumentor": "^2.8.0",
         "cvuorinen/phpdoc-markdown-public": "^0.1.2",
-        "league/flysystem": "^1.0",
-        "creocoder/yii2-flysystem": "^0.8.1",
+        "league/flysystem": "*",
+        "creocoder/yii2-flysystem": "*",
         "squizlabs/php_codesniffer": "3.0.0RC1"
     }
 }
