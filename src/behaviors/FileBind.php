@@ -175,7 +175,7 @@ class FileBind
             foreach ($presets as $preset) {
                 $thumbPath = $model->thumbPath($attribute, $preset, $file);
                 $filePath = str_replace($storage->path, '', $thumbPath);
-                if ($storage->has($filePath)) {
+                if ($storage->fileExists($filePath)) {
                     $storage->delete($filePath);
                 }
             }
@@ -185,7 +185,7 @@ class FileBind
                     current($relation->link) => $file->getPrimaryKey()
                 ])->execute();
                 $filePath = $handlerTemplatePath($file);
-                if ($storage->has($filePath)) {
+                if ($storage->fileExists($filePath)) {
                     $storage->delete($filePath);
                 }
             }

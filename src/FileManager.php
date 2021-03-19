@@ -19,11 +19,6 @@ use yii\base\Component;
 class FileManager extends Component
 {
     /**
-     * @var string Session variable name
-     */
-    public $sessionName = 'filemanager.uploads';
-
-    /**
      * @internal
      */
     public function init()

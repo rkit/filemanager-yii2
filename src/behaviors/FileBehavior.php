@@ -8,8 +8,10 @@
 
 namespace rkit\filemanager\behaviors;
 
+use rkit\filemanager\models\FileUploadSession;
 use Yii;
 use yii\base\Behavior;
+use yii\base\Exception;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 
@@ -19,14 +21,32 @@ class FileBehavior extends Behavior
      * @var array
      */
     public $attributes = [];
+
     /**
      * @var ActiveQuery
      */
     private $relation;
+
     /**
      * @var FileBind
      */
     private $fileBind;
+
+    /**
+     * @var array
+     */
+    protected static $classPathMap = [];
+
+    /**
+     * @var string name of application component that represents `user`
+     */
+    public $userComponent = 'user';
+
+    /**
+     * @since 5.6.0
+     * @var bool
+     */
+    protected $markedLinked = false;
 
     /**
      * @internal
@@ -76,7 +96,13 @@ class FileBehavior extends Behavior
      */
     public function afterSave()
     {
-        foreach ($this->attributes as $attribute => $options) {
+        foreach ($this->attributes as $attribute => $options)
+        {
+            $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
+            if ($disableAutobind) {
+                continue;
+            }
+
             $files = $this->owner->{$attribute};
 
             $isAttributeNotChanged = $options['isAttributeChanged'] === false || $files === null;
@@ -103,12 +129,13 @@ class FileBehavior extends Behavior
             }
 
             $files = $this->fileBind->bind($this->owner, $attribute, $files);
+
+            $this->clearState($attribute, $files);
+
             if (is_array($files)) {
                 $files = array_shift($files);
+                $this->setValue($attribute, $files, $options['oldValue']);
             }
-
-            $this->clearState($attribute);
-            $this->setValue($attribute, $files, $options['oldValue']);
         }
     }
 
@@ -119,27 +146,62 @@ class FileBehavior extends Behavior
     public function beforeDelete()
     {
         foreach ($this->attributes as $attribute => $options) {
-            $this->fileBind->delete($this->owner, $attribute, $this->files($attribute));
+            $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
+            if (!$disableAutobind) {
+                $this->fileBind->delete($this->owner, $attribute, $this->files($attribute));
+            }
         }
     }
 
-    private function clearState($attribute)
+    protected function getUser()
     {
-        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
-        unset($state[$attribute]);
-        Yii::$app->session->set(Yii::$app->fileManager->sessionName, $state);
+        if (!$this->userComponent || !isset(Yii::$app->{$this->userComponent})) {
+            return false;
+        }
+        return Yii::$app->{$this->userComponent};
+    }
+
+    public function clearState($attribute, $files)
+    {
+        if (!$this->getUser()) {
+            return [];
+        }
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+        $query = [
+            'created_user_id' => $this->getUser()->id,
+            'target_model_class' => static::getClass(get_class($this->owner)),
+            'target_model_id' => $this->owner->getPrimaryKey(),
+            'target_model_attribute' => $attribute,
+        ];
+        if ($files) {
+            $fileIDs = ArrayHelper::getColumn($files, 'id');
+            $query['file_id'] = $fileIDs;
+        }
+        FileUploadSession::deleteAll($query);
+        $query['target_model_id'] = null;
+        FileUploadSession::deleteAll($query);  // for cases of uploads when original model was a new record at the moment of uploads
+        return;
     }
 
     private function setState($attribute, $file)
     {
-        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
-        if (!is_array($state)) {
-            $state = [];
-        }
-        $state[$attribute][] = $file->getPrimaryKey();
-        Yii::$app->session->set(Yii::$app->fileManager->sessionName, $state);
+        $rec = new FileUploadSession();
+        $rec->created_user_id = $this->getUser()->id;
+        $rec->file_id = $file->getPrimaryKey();
+        $rec->target_model_attribute = $attribute; // TODO: write model/object id?
+        $rec->target_model_id = (!$this->owner->isNewRecord ? $this->owner->getPrimaryKey() : null);
+        $rec->target_model_class = static::getClass(get_class($this->owner));
+        $rec->save(false);
     }
 
+    /**
+     * for models with single upload only
+     * @param $attribute
+     * @param $file
+     * @param $defaultValue
+     */
     private function setValue($attribute, $file, $defaultValue)
     {
         $saveFilePath = $this->fileOption($attribute, 'saveFilePathInAttribute');
@@ -198,13 +260,14 @@ class FileBehavior extends Behavior
         $saveFileId = $this->fileOption($attribute, 'saveFileIdInAttribute');
         $isFilledId = $saveFileId && is_numeric($value) && $value;
 
-        if (($isFilledPath || $isFilledId) && $file === null) {
-            $file = $this->file($attribute);
-        }
-
-        if ($file !== null) {
-            $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
-            return $handlerTemplatePath($file);
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            if (($isFilledPath || $isFilledId) && $file === null) {
+                $file = $this->file($attribute);
+            }
+            if ($file !== null) {
+                $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+                return $handlerTemplatePath($file);
+            }
         }
         return $value;
     }
@@ -257,7 +320,9 @@ class FileBehavior extends Behavior
     public function filePath($attribute, $file = null)
     {
         $path = $this->templatePath($attribute, $file);
-        return $this->fileStorage($attribute)->path . $path;
+        /** @var Filesystem $fs */
+        $fs = $this->fileStorage($attribute);
+        return $fs->getAdapter()->getPathPrefix() . $path;
     }
 
     /**
@@ -281,6 +346,9 @@ class FileBehavior extends Behavior
      */
     public function fileExtraFields($attribute)
     {
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            return [];
+        }
         $fields = $this->fileBind->relations($this->owner, $attribute);
         if (!$this->fileOption($attribute, 'multiple')) {
             return array_shift($fields);
@@ -296,6 +364,9 @@ class FileBehavior extends Behavior
      */
     public function files($attribute)
     {
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            throw new Exception('Accessing `files()` is not allowed when auto-bind is disabled, see `FileBehavior::$disableAutobind`');
+        }
         return $this->fileBind->files($this->owner, $attribute);
     }
 
@@ -307,6 +378,9 @@ class FileBehavior extends Behavior
      */
     public function file($attribute)
     {
+        if ($this->fileOption($attribute, 'disableAutobind')) {
+            throw new Exception('Accessing `file()` is not allowed when auto-bind is disabled, see `FileBehavior::$disableAutobind`');
+        }
         return $this->fileBind->file($this->owner, $attribute);
     }
 
@@ -335,8 +409,24 @@ class FileBehavior extends Behavior
      */
     public function fileState($attribute)
     {
-        $state = Yii::$app->session->get(Yii::$app->fileManager->sessionName);
-        return ArrayHelper::getValue($state === null ? [] : $state, $attribute, []);
+        if (!$this->getUser()) {
+            return [];
+        }
+        $query = FileUploadSession::find()->where([
+            'created_user_id' => $this->getUser()->id,
+            'target_model_class' => static::getClass(get_class($this->owner)),
+            'target_model_attribute' => $attribute,
+        ]);
+        $query->andWhere(['or',
+            ['target_model_id' => $this->owner->getPrimaryKey()],
+            ['target_model_id' => null] // for cases of uploads when original model was a new record at the moment of uploads
+        ]);
+        $data = $query->all();
+        if ($data) {
+            return ArrayHelper::getColumn($data, ['file_id']);
+        } else {
+            return [];
+        }
     }
 
     /**
@@ -402,12 +492,95 @@ class FileBehavior extends Behavior
             $storage = $this->fileStorage($attribute);
             $contents = file_get_contents($path);
             $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
-            if ($storage->write($handlerTemplatePath($file), $contents)) {
-                $this->setState($attribute, $file);
+            if ($storage->write($handlerTemplatePath($file), $contents, [
+                // set correct mime type:
+                'mimetype' => yii\helpers\FileHelper::getMimeTypeByExtension($name),
+            ])) {
+                $disableAutobind = $this->fileOption($attribute, 'disableAutobind');
+                if (!$this->markedLinked && !$disableAutobind) {
+                    $this->setState($attribute, $file);
+                }
                 $this->owner->{$attribute} = $file->id;
                 return $file;
             }
         } // @codeCoverageIgnore
         return false; // @codeCoverageIgnore
+    }
+
+    /**
+     * Create a file from remote URL
+     *
+     * @author Sergii Gamaiunov <devkadabra@gmail.com>
+     *
+     * @param string $attribute The attribute name
+     * @param \igogo5yo\uploadfromurl\UploadFromUrl $remoteFile
+     * @param string $name The file name
+     * @return \ActiveRecord The file model
+     */
+    public function createRemoteFile($attribute, $remoteFile, $name)
+    {
+        $url = $remoteFile->url;
+        $handlerCreateFile = $this->fileOption($attribute, 'createRemoteFile');
+        $file = $handlerCreateFile($remoteFile, $name);
+        if ($file) {
+            $storage = $this->fileStorage($attribute);
+            $stream = fopen($url, 'r');
+            $handlerTemplatePath = $this->fileOption($attribute, 'templatePath');
+            if ($storage->putStream($handlerTemplatePath($file), $stream)) {
+                if (is_resource($stream)) { // some adapters close resources on their own
+                    fclose($stream);
+                }
+                if ($this->getUser()) {
+                    if (!$this->markedLinked) {
+                        $this->setState($attribute, $file);
+                    }
+                }
+                $this->owner->{$attribute} = $file->id;
+                return $file;
+            }
+        } // @codeCoverageIgnore
+        return false; // @codeCoverageIgnore
+    }
+
+    /**
+     * Add class alias to be able to upload files for different versions of a model to a single API endpoint
+     *
+     * Example:
+     * ```
+     * class OldCar extends Car
+     * {
+     *      public function init()
+     *      {
+     *          parent::init();
+     *          $this->car_type = 'old;
+     *          FileBehavior::addClassAlias(get_class($this), Car::className());
+     *      }
+     *
+     *      public function formName() {
+     *          return 'Car';
+     *      }
+     * }
+     * ```
+     * @param $source
+     * @param $mapTo
+     */
+    public static function addClassAlias($source, $mapTo) {
+        static::$classPathMap[$source] = $mapTo;
+    }
+
+    protected static function getClass($source) {
+        return isset(static::$classPathMap[$source])
+            ? static::$classPathMap[$source]
+            : $source;
+    }
+
+    /**
+     * Mark current upload session as already linked (e.g. file is linked during `createFile`) to avoid duplicate links
+     * @return $this
+     * @since 5.6.0
+     */
+    public function markLinked() {
+        $this->markedLinked = true;
+        return $this;
     }
 }

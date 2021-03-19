@@ -4,11 +4,16 @@
     "keywords": ["yii2", "extension", "file manager", "manager", "upload", "resize", "files"],
     "homepage": "https://github.com/rkit/filemanager-yii2",
     "type": "yii2-extension",
+    "version": "5.8.1",
     "license": "MIT",
     "authors": [
         {
             "name": "Igor Romanov",
             "email": "rkit.ru@gmail.com"
+        },
+        {
+            "name": "Sergii Gamaiunov",
+            "email": "devkadabra@gmail.com"
         }
     ],
     "support": {
@@ -16,7 +21,8 @@
         "source": "https://github.com/rkit/filemanager-yii2"
     },
     "require": {
-        "yiisoft/yii2": "^2.0"
+        "yiisoft/yii2": "^2.0",
+        "igogo5yo/yii2-upload-from-url": "^1.4"
     },
     "scripts": {
         "phpdoc": "phpdoc",
@@ -38,8 +44,8 @@
         "phpunit/dbunit": "^1.4",
         "phpdocumentor/phpdocumentor": "^2.8.0",
         "cvuorinen/phpdoc-markdown-public": "^0.1.2",
-        "league/flysystem": "^1.0",
-        "creocoder/yii2-flysystem": "^0.8.1",
+        "league/flysystem": "*",
+        "creocoder/yii2-flysystem": "*",
         "squizlabs/php_codesniffer": "3.0.0RC1"
     }
 }
